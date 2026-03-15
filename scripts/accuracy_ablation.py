@@ -637,7 +637,7 @@ def run_ablation(
     print("\n  --- Learning Rate Sweep ---")
     print(f"  (hidden=64, layers=2, dropout=0.0)")
     for lr in learning_rates:
-        key = jax.random.fold_in(base_key, hash(("lr", lr)))
+        key = jax.random.fold_in(base_key, abs(hash(("lr", lr))) % (2**31))
         model = build_model("UniGATConv", in_dim, 64, 2, num_classes, 0.0, key)
         metrics = train_and_evaluate(
             model, hg, labels_jnp, train_mask, val_mask, test_mask,
@@ -653,7 +653,7 @@ def run_ablation(
     print("\n  --- Hidden Dim Sweep ---")
     print(f"  (lr=1e-3, layers=2, dropout=0.0)")
     for hd in hidden_dims:
-        key = jax.random.fold_in(base_key, hash(("hd", hd)))
+        key = jax.random.fold_in(base_key, abs(hash(("hd", hd))) % (2**31))
         model = build_model("UniGATConv", in_dim, hd, 2, num_classes, 0.0, key)
         metrics = train_and_evaluate(
             model, hg, labels_jnp, train_mask, val_mask, test_mask,
@@ -669,7 +669,7 @@ def run_ablation(
     print("\n  --- Num Layers Sweep ---")
     print(f"  (lr=1e-3, hidden=64, dropout=0.0)")
     for nl in num_layers_list:
-        key = jax.random.fold_in(base_key, hash(("nl", nl)))
+        key = jax.random.fold_in(base_key, abs(hash(("nl", nl))) % (2**31))
         model = build_model("UniGATConv", in_dim, 64, nl, num_classes, 0.0, key)
         metrics = train_and_evaluate(
             model, hg, labels_jnp, train_mask, val_mask, test_mask,
@@ -685,7 +685,7 @@ def run_ablation(
     print("\n  --- Dropout Sweep ---")
     print(f"  (lr=1e-3, hidden=64, layers=2)")
     for dp in dropouts:
-        key = jax.random.fold_in(base_key, hash(("dp", dp)))
+        key = jax.random.fold_in(base_key, abs(hash(("dp", dp))) % (2**31))
         model = build_model("UniGATConv", in_dim, 64, 2, num_classes, dp, key)
         metrics = train_and_evaluate(
             model, hg, labels_jnp, train_mask, val_mask, test_mask,
@@ -769,7 +769,7 @@ def run_task_comparison(
 
         for conv_name in conv_names:
             key = jax.random.fold_in(
-                base_key, hash((task_name, conv_name))
+                base_key, hash((task_name, conv_name))) % (2**31)
             )
             model = build_model(
                 conv_name, in_dim, hidden, n_layers, num_classes, dropout, key
