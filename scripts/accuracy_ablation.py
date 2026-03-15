@@ -769,7 +769,7 @@ def run_task_comparison(
 
         for conv_name in conv_names:
             key = jax.random.fold_in(
-                base_key, hash((task_name, conv_name))) % (2**31)
+                base_key, abs(hash((task_name, conv_name))) % (2**31)
             )
             model = build_model(
                 conv_name, in_dim, hidden, n_layers, num_classes, dropout, key
