@@ -280,7 +280,8 @@ def validate_module_structure(data: dict) -> dict:
         else:
             expr_flat = temporal_expr.reshape(n_genes, -1)
     else:
-        expr_flat = temporal_expr
+        # temporal_expr is (T, n_genes) — transpose to (n_genes, T) for per-gene vectors
+        expr_flat = temporal_expr.T
 
     # Compute pairwise Pearson correlations for a random sample
     rng = np.random.RandomState(42)
