@@ -231,23 +231,18 @@ DHG_MODELS = {
 }
 
 
-def train_dhg_model(
+def _train_dhg_model_on_device(
     model_cls,
     dataset: dict,
     epochs: int,
+    device,
     lr: float = 0.01,
     weight_decay: float = 5e-4,
 ):
-    """Train a DHG model (PyTorch) and return metrics.
-
-    Returns
-    -------
-    dict with keys: test_acc, train_time, infer_time, peak_mem_mb
-    """
+    """Core DHG training loop on a specific device.  Called by train_dhg_model."""
     import torch
     import torch.nn.functional as F
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"  [DHG] Training {model_cls.name} on {device}")
 
     features = dataset["features"].to(device)
@@ -265,7 +260,7 @@ def train_dhg_model(
     )
 
     # Reset peak memory tracking
-    if torch.cuda.is_available():
+    if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
         torch.cuda.synchronize()
 
@@ -297,7 +292,7 @@ def train_dhg_model(
                 f"val_acc={val_acc:.4f}"
             )
 
-    if torch.cuda.is_available():
+    if device.type == "cuda":
         torch.cuda.synchronize()
     train_time = time.perf_counter() - t_start
 
@@ -313,7 +308,7 @@ def train_dhg_model(
         test_acc = (test_preds == labels[test_mask]).float().mean().item()
 
     # --- Inference time ---
-    if torch.cuda.is_available():
+    if device.type == "cuda":
         torch.cuda.synchronize()
     infer_times = []
     model.eval()
@@ -321,13 +316,13 @@ def train_dhg_model(
         for _ in range(INFERENCE_RUNS):
             t0 = time.perf_counter()
             _ = model(features, hg)
-            if torch.cuda.is_available():
+            if device.type == "cuda":
                 torch.cuda.synchronize()
             infer_times.append(time.perf_counter() - t0)
     infer_time = np.mean(infer_times)
 
     # --- Peak memory ---
-    if torch.cuda.is_available():
+    if device.type == "cuda":
         peak_mem_mb = torch.cuda.max_memory_allocated(device) / (1024**2)
     else:
         peak_mem_mb = float("nan")
@@ -335,7 +330,7 @@ def train_dhg_model(
     print(
         f"  [DHG] {model_cls.name}: test_acc={test_acc:.4f}, "
         f"train={train_time:.2f}s, infer={infer_time*1000:.2f}ms, "
-        f"mem={peak_mem_mb:.1f}MB"
+        f"mem={peak_mem_mb:.1f}MB, device={device}"
     )
 
     return {
@@ -343,7 +338,54 @@ def train_dhg_model(
         "train_time": train_time,
         "infer_time": infer_time,
         "peak_mem_mb": peak_mem_mb,
+        "device": str(device),
     }
+
+
+def train_dhg_model(
+    model_cls,
+    dataset: dict,
+    epochs: int,
+    lr: float = 0.01,
+    weight_decay: float = 5e-4,
+):
+    """Train a DHG model (PyTorch) and return metrics.
+
+    Attempts CUDA first.  If a RuntimeError indicates a device mismatch (a
+    known DHG bug with PyTorch >= 2.11 where sparse hypergraph tensors stay
+    on CPU), the training is automatically retried on CPU so the benchmark
+    can still produce valid accuracy / timing numbers.
+
+    Returns
+    -------
+    dict with keys: test_acc, train_time, infer_time, peak_mem_mb, device
+    """
+    import torch
+
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        try:
+            return _train_dhg_model_on_device(
+                model_cls, dataset, epochs, device, lr, weight_decay,
+            )
+        except RuntimeError as exc:
+            if "device" in str(exc).lower() or "expected all tensors" in str(exc).lower():
+                print(
+                    f"  [DHG] CUDA failed with device-mismatch error "
+                    f"(known DHG bug): {exc}"
+                )
+                print("  [DHG] Retrying on CPU...")
+                # Free CUDA memory from the failed attempt
+                gc.collect()
+                torch.cuda.empty_cache()
+            else:
+                raise  # Re-raise non-device-related RuntimeErrors
+
+    # Fallback (or only option) — run on CPU
+    device = torch.device("cpu")
+    return _train_dhg_model_on_device(
+        model_cls, dataset, epochs, device, lr, weight_decay,
+    )
 
 
 # ===================================================================
