@@ -452,32 +452,52 @@ def build_hgx_model(
 
     if conv_name == "SheafDiffusion":
         nnz = int(jnp.sum(incidence > 0))
-        # Guard against OOM: skip SheafDiffusion for very large problems
-        if num_classes > 100 or nnz > 50000:
+        # Use hidden_dim for sheaf stalk dimensions instead of in_dim.
+        # Using in_dim (e.g. 1433 for Cora) creates restriction maps of
+        # shape (nnz, in_dim, in_dim) which requires
+        # nnz * in_dim^2 * 4 bytes -- for Cora that is
+        # 22800 * 1433 * 1433 * 4 ≈ 188 GB, causing OOM.
+        # With hidden_dim=64: 22800 * 64 * 64 * 4 ≈ 374 MB.
+        sheaf_stalk_dim = hidden_dim
+
+        # Guard against OOM: estimate restriction-map memory
+        # Factor of 3 accounts for maps + Adam first/second moments
+        maps_bytes = nnz * sheaf_stalk_dim * sheaf_stalk_dim * 4 * 3
+        maps_gb = maps_bytes / (1024**3)
+        if maps_gb > 8.0 or nnz > 200000:
             warnings.warn(
-                f"Skipping SheafDiffusion: num_classes={num_classes}, nnz={nnz} "
-                f"(thresholds: num_classes>100 or nnz>50000). "
-                f"Likely to OOM."
+                f"Skipping SheafDiffusion: estimated restriction-map memory "
+                f"= {maps_gb:.1f} GB (nnz={nnz}, stalk_dim={sheaf_stalk_dim}). "
+                f"Threshold: 8 GB or nnz>200000."
             )
             return None, True
+
+        k1, k2, k3 = jax.random.split(k1, 3)
+
+        # Project from in_dim -> hidden_dim before sheaf diffusion
+        proj_in = eqx.nn.Linear(in_dim, sheaf_stalk_dim, key=k1)
         sheaf = hgx_lib.SheafDiffusion(
             num_steps=3,
-            in_dim=in_dim,
-            edge_stalk_dim=in_dim,
+            in_dim=sheaf_stalk_dim,
+            edge_stalk_dim=sheaf_stalk_dim,
             num_incidences=nnz,
-            key=k1,
+            key=k2,
         )
-        readout = eqx.nn.Linear(in_dim, num_classes, key=k2)
+        readout = eqx.nn.Linear(sheaf_stalk_dim, num_classes, key=k3)
 
         class _SheafClassifier(eqx.Module):
+            proj_in: eqx.nn.Linear
             sheaf: hgx_lib.SheafDiffusion
             readout: eqx.nn.Linear
 
             def __call__(self, hg):
-                x = self.sheaf(hg)
+                # Project node features to sheaf stalk dimension
+                x = jax.vmap(self.proj_in)(hg.node_features)
+                hg_proj = eqx.tree_at(lambda h: h.node_features, hg, x)
+                x = self.sheaf(hg_proj)
                 return jax.vmap(self.readout)(x)
 
-        model = _SheafClassifier(sheaf=sheaf, readout=readout)
+        model = _SheafClassifier(proj_in=proj_in, sheaf=sheaf, readout=readout)
         return model, True
 
     conv_map = {
