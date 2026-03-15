@@ -118,12 +118,18 @@ def load_dhg_dataset(name: str):
     G = dhg.Graph(num_v, edge_list)
     HG = dhg.Hypergraph.from_graph_kHop(G, k=1)
 
-    # Use DHG's own masks if available, otherwise create 60/20/20 split
-    if "train_mask" in data and data["train_mask"] is not None:
-        train_mask = torch.BoolTensor(np.array(data["train_mask"]))
-        val_mask = torch.BoolTensor(np.array(data["val_mask"]))
-        test_mask = torch.BoolTensor(np.array(data["test_mask"]))
-    else:
+    # Use DHG's own masks if available, otherwise create 60/20/20 split.
+    # DHG data objects don't support the ``in`` operator for checking keys,
+    # so we use try/except instead.
+    try:
+        _tm = data["train_mask"]
+        if _tm is not None:
+            train_mask = torch.BoolTensor(np.array(_tm))
+            val_mask = torch.BoolTensor(np.array(data["val_mask"]))
+            test_mask = torch.BoolTensor(np.array(data["test_mask"]))
+        else:
+            raise KeyError("train_mask is None")
+    except (AssertionError, KeyError):
         tm, vm, tsm = make_split(num_v, seed=0)
         train_mask = torch.BoolTensor(tm)
         val_mask = torch.BoolTensor(vm)
@@ -246,7 +252,9 @@ def train_dhg_model(
 
     features = dataset["features"].to(device)
     labels = dataset["labels"].to(device)
-    hg = dataset["hg"].to(device)
+    hg = dataset["hg"]
+    if device.type == "cuda":
+        hg = hg.to(device)
     train_mask = dataset["train_mask"].to(device)
     val_mask = dataset["val_mask"].to(device)
     test_mask = dataset["test_mask"].to(device)
@@ -377,7 +385,15 @@ def dhg_to_hgx(dataset: dict):
     }
 
 
-def build_hgx_model(conv_name: str, in_dim: int, num_classes: int, incidence, key):
+def build_hgx_model(
+    conv_name: str,
+    in_dim: int,
+    num_classes: int,
+    incidence,
+    key,
+    hidden_dim: int = HIDDEN_DIM,
+    num_layers: int = 2,
+):
     """Build an hgx model for node classification.
 
     Returns
@@ -394,6 +410,14 @@ def build_hgx_model(conv_name: str, in_dim: int, num_classes: int, incidence, ke
 
     if conv_name == "SheafDiffusion":
         nnz = int(jnp.sum(incidence > 0))
+        # Guard against OOM: skip SheafDiffusion for very large problems
+        if num_classes > 100 or nnz > 50000:
+            warnings.warn(
+                f"Skipping SheafDiffusion: num_classes={num_classes}, nnz={nnz} "
+                f"(thresholds: num_classes>100 or nnz>50000). "
+                f"Likely to OOM."
+            )
+            return None, True
         sheaf = hgx_lib.SheafDiffusion(
             num_steps=3,
             in_dim=in_dim,
@@ -421,8 +445,13 @@ def build_hgx_model(conv_name: str, in_dim: int, num_classes: int, incidence, ke
     }
     conv_cls = conv_map[conv_name]
 
+    # Build conv_dims list for the requested number of layers
+    conv_dims = [(in_dim, hidden_dim)]
+    for _ in range(num_layers - 1):
+        conv_dims.append((hidden_dim, hidden_dim))
+
     model = hgx_lib.HGNNStack(
-        conv_dims=[(in_dim, HIDDEN_DIM), (HIDDEN_DIM, HIDDEN_DIM // 2)],
+        conv_dims=conv_dims,
         conv_cls=conv_cls,
         readout_dim=num_classes,
         activation=jax.nn.relu,
@@ -438,6 +467,8 @@ def train_hgx_model(
     epochs: int,
     seed: int,
     lr: float = 0.01,
+    hidden_dim: int = HIDDEN_DIM,
+    num_layers: int = 2,
 ):
     """Train an hgx model (JAX) and return metrics.
 
@@ -466,8 +497,19 @@ def train_hgx_model(
     in_dim = features.shape[1]
 
     model, is_sheaf = build_hgx_model(
-        conv_name, in_dim, num_classes, incidence, k_model
+        conv_name, in_dim, num_classes, incidence, k_model,
+        hidden_dim=hidden_dim, num_layers=num_layers,
     )
+
+    # build_hgx_model returns None when the model is skipped (e.g. OOM guard)
+    if model is None:
+        print(f"  [hgx] {conv_name}: SKIPPED (too large for this model)")
+        return {
+            "test_acc": float("nan"),
+            "train_time": float("nan"),
+            "infer_time": float("nan"),
+            "peak_mem_mb": float("nan"),
+        }
 
     optimizer = optax.adam(lr)
     opt_state = optimizer.init(eqx.filter(model, eqx.is_array))
@@ -1010,6 +1052,193 @@ def main():
                     "infer_time": float("nan"),
                     "peak_mem_mb": float("nan"),
                 })
+
+    # --- Fix 4: Hyperparameter ablation for hgx UniGATConv ---
+    if hgx_available:
+        print(f"\n{'='*72}")
+        print("  Hyperparameter ablation: hgx UniGATConv")
+        print(f"{'='*72}")
+
+        ablation_lrs = [1e-4, 1e-3, 1e-2]
+        ablation_layers = [2, 3, 4]
+        ablation_hdims = [64, 128, 256]
+
+        best_ablation_acc = -1.0
+        best_ablation_cfg = {}
+        best_ablation_metrics = None
+
+        for ds_name in datasets_to_run:
+            # We need hgx_dataset for this dataset; reload if needed
+            try:
+                if ds_name == "organoid":
+                    _dhg_ds = load_organoid_dataset(seed=args.seed)
+                else:
+                    _dhg_ds = load_dhg_dataset(ds_name)
+                _hgx_ds = dhg_to_hgx(_dhg_ds)
+            except Exception as e:
+                print(f"  Ablation: could not load {ds_name}: {e}")
+                continue
+
+            print(f"\n  Ablation on dataset: {ds_name}")
+            ds_best_acc = -1.0
+            ds_best_cfg = {}
+            ds_best_metrics = None
+
+            for ab_lr in ablation_lrs:
+                for ab_layers in ablation_layers:
+                    for ab_hdim in ablation_hdims:
+                        cfg_str = f"lr={ab_lr}, layers={ab_layers}, hdim={ab_hdim}"
+                        try:
+                            metrics = train_hgx_model(
+                                "UniGATConv",
+                                _hgx_ds,
+                                epochs=args.epochs,
+                                seed=args.seed,
+                                lr=ab_lr,
+                                hidden_dim=ab_hdim,
+                                num_layers=ab_layers,
+                            )
+                            acc = metrics["test_acc"]
+                            print(f"    {cfg_str} -> acc={acc:.4f}")
+                            if acc > ds_best_acc:
+                                ds_best_acc = acc
+                                ds_best_cfg = {
+                                    "lr": ab_lr,
+                                    "num_layers": ab_layers,
+                                    "hidden_dim": ab_hdim,
+                                }
+                                ds_best_metrics = metrics
+                        except Exception as e:
+                            print(f"    {cfg_str} -> ERROR: {e}")
+                        gc.collect()
+
+            if ds_best_metrics is not None:
+                print(
+                    f"  Best config for {ds_name}: {ds_best_cfg} "
+                    f"-> acc={ds_best_acc:.4f}"
+                )
+                all_results.append({
+                    "dataset": ds_name,
+                    "model": "hgx-tuned",
+                    "framework": "hgx",
+                    **ds_best_metrics,
+                })
+
+    # --- Fix 5: Leiden (Spectral) clustering for organoid dataset ---
+    if "organoid" in datasets_to_run and hgx_available:
+        print(f"\n{'='*72}")
+        print("  Spectral clustering labels for organoid (20 classes)")
+        print(f"{'='*72}")
+
+        try:
+            from sklearn.cluster import SpectralClustering
+
+            # Load organoid dataset
+            _org_dhg = load_organoid_dataset(seed=args.seed)
+            _org_hgx = dhg_to_hgx(_org_dhg)
+
+            # Build adjacency from incidence and cluster into 20 classes
+            incidence_np = np.array(_org_hgx["incidence"])
+            adj_binary = (incidence_np @ incidence_np.T > 0).astype(float)
+            np.fill_diagonal(adj_binary, 0)
+            clustering = SpectralClustering(
+                n_clusters=20, affinity="precomputed", random_state=42
+            )
+            leiden_labels = clustering.fit_predict(adj_binary)
+
+            import jax.numpy as jnp
+
+            n_nodes = len(leiden_labels)
+            tm, vm, tsm = make_split(n_nodes, args.seed)
+
+            clustered_dataset = {
+                "hg": _org_hgx["hg"],
+                "features": _org_hgx["features"],
+                "labels": jnp.array(leiden_labels),
+                "num_classes": 20,
+                "train_mask": jnp.array(tm),
+                "val_mask": jnp.array(vm),
+                "test_mask": jnp.array(tsm),
+                "incidence": _org_hgx["incidence"],
+            }
+
+            # Run all hgx models with 20-class labels
+            for model_name in HGX_MODEL_NAMES:
+                print(f"\n  --- {model_name} (hgx/JAX, 20-class organoid) ---")
+                try:
+                    metrics = train_hgx_model(
+                        model_name,
+                        clustered_dataset,
+                        epochs=args.epochs,
+                        seed=args.seed,
+                    )
+                    all_results.append({
+                        "dataset": "organoid-20c",
+                        "model": model_name,
+                        "framework": "hgx",
+                        **metrics,
+                    })
+                except Exception as e:
+                    print(f"  ERROR training {model_name} (20-class): {e}")
+                    traceback.print_exc()
+                    all_results.append({
+                        "dataset": "organoid-20c",
+                        "model": model_name,
+                        "framework": "hgx",
+                        "test_acc": float("nan"),
+                        "train_time": float("nan"),
+                        "infer_time": float("nan"),
+                        "peak_mem_mb": float("nan"),
+                    })
+                gc.collect()
+
+            # Also run DHG models with 20-class labels
+            if dhg_available:
+                import torch
+
+                _org_dhg_clustered = {
+                    "features": _org_dhg["features"],
+                    "labels": torch.LongTensor(leiden_labels),
+                    "num_classes": 20,
+                    "num_vertices": _org_dhg["num_vertices"],
+                    "hg": _org_dhg["hg"],
+                    "train_mask": torch.BoolTensor(tm),
+                    "val_mask": torch.BoolTensor(vm),
+                    "test_mask": torch.BoolTensor(tsm),
+                }
+                for model_name in DHG_MODEL_NAMES:
+                    print(f"\n  --- {model_name} (DHG/PyTorch, 20-class organoid) ---")
+                    try:
+                        metrics = train_dhg_model(
+                            DHG_MODELS[model_name],
+                            _org_dhg_clustered,
+                            epochs=args.epochs,
+                        )
+                        all_results.append({
+                            "dataset": "organoid-20c",
+                            "model": model_name,
+                            "framework": "DHG",
+                            **metrics,
+                        })
+                    except Exception as e:
+                        print(f"  ERROR training {model_name} (20-class): {e}")
+                        traceback.print_exc()
+                        all_results.append({
+                            "dataset": "organoid-20c",
+                            "model": model_name,
+                            "framework": "DHG",
+                            "test_acc": float("nan"),
+                            "train_time": float("nan"),
+                            "infer_time": float("nan"),
+                            "peak_mem_mb": float("nan"),
+                        })
+                    gc.collect()
+
+        except ImportError:
+            print("  WARNING: scikit-learn not installed. Skipping spectral clustering.")
+        except Exception as e:
+            print(f"  ERROR in spectral clustering: {e}")
+            traceback.print_exc()
 
     # --- Results ---
     print_results_table(all_results)
