@@ -192,20 +192,61 @@ def main(data_dir: Path, num_bins: int = 10, feature_dim: int = 16) -> None:
     # ------------------------------------------------------------------
     # Step 5: Compute PCA features for nodes
     # ------------------------------------------------------------------
-    with _timer(f"Step 5 — PCA node features (dim={feature_dim})"):
+    with _timer("Step 5 — PCA node features (PPCA dimensionality estimation)"):
         rng = np.random.default_rng(42)
         n_subset = min(5000, n_cells)
         subset_idx = rng.choice(n_cells, size=n_subset, replace=False)
         subset = scaled[:, subset_idx].astype(np.float64)  # (n_genes, n_subset)
 
-        # Gene-gene covariance
+        # Gene-gene covariance + full eigendecomposition
         cov = np.cov(subset)  # (n_genes, n_genes)
-
-        # Eigendecomposition — top `feature_dim` eigenvectors
         eigvals, eigvecs = np.linalg.eigh(cov)
-        node_features = eigvecs[:, -feature_dim:].astype(np.float32)  # (n_genes, feature_dim)
+        eigvals_desc = eigvals[::-1]  # descending order
+
+        # --- PPCA dimensionality estimation (Minka/MELODIC, from neurojax) ---
+        d_max = len(eigvals_desc)
+        lambdas = np.maximum(eigvals_desc, 1e-19)
+        log_lam = np.log(lambdas)
+        cs_log = np.cumsum(log_lam)
+        cs_lam = np.cumsum(lambdas)
+        sum_noise = cs_lam[-1] - cs_lam
+
+        all_k = np.arange(1, d_max)
+        m_noise = d_max - all_k
+        v = np.maximum(sum_noise[all_k - 1] / m_noise, 1e-19)
+        log_lik = -(n_subset / 2) * (cs_log[all_k - 1] + m_noise * np.log(v))
+        m_params = d_max * all_k - 0.5 * all_k * (all_k + 1)
+
+        aic = log_lik - m_params
+        bic = log_lik - 0.5 * m_params * np.log(n_subset)
+        k_aic = int(np.argmax(aic) + 1)
+        k_bic = int(np.argmax(bic) + 1)
+        k_consensus = int(round((k_aic + k_bic) / 2))
+
+        # Explained variance
+        total_var = eigvals_desc.sum()
+        cumvar = np.cumsum(eigvals_desc) / total_var
+        k_90 = int(np.searchsorted(cumvar, 0.90) + 1)
+        k_95 = int(np.searchsorted(cumvar, 0.95) + 1)
+
+        print(f"        Eigenspectrum (PPCA/MELODIC):")
+        print(f"          AIC optimal: k={k_aic}")
+        print(f"          BIC optimal: k={k_bic}")
+        print(f"          Consensus:   k={k_consensus}")
+        print(f"          90% var:     k={k_90},  95% var: k={k_95}")
+
+        # Use consensus if default, otherwise user's choice
+        if feature_dim == 16:
+            effective_dim = max(2, min(k_consensus, 64))
+            print(f"          Using consensus: {effective_dim}")
+        else:
+            effective_dim = feature_dim
+            print(f"          Using user-specified: {effective_dim}")
+
+        node_features = eigvecs[:, -effective_dim:].astype(np.float32)
         print(f"        node_features shape: {node_features.shape}")
 
+        np.save(out_dir / "eigenvalues.npy", eigvals_desc.astype(np.float32))
         np.save(out_dir / "node_features_pca.npy", node_features)
 
     # ------------------------------------------------------------------
