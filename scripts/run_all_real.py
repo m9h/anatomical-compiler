@@ -823,18 +823,21 @@ def analysis_7_perturbation(data, hg, epochs, key):
         n_genes = masks.shape[1]
 
         # Train on first 6, test on last 2
+        # Broadcast effects to match gene_dim (PCA features)
+        feat_dim_pert = hg.node_features.shape[1]
         train_masks = masks[:6]
-        train_expr = effects[:6].reshape(6, n_genes, 1)
+        train_expr = jnp.broadcast_to(effects[:6, :, None], (6, n_genes, feat_dim_pert))
         train_fates = fates[:6]
         test_masks = masks[6:]
-        test_expr = effects[6:].reshape(2, n_genes, 1)
+        test_expr = jnp.broadcast_to(effects[6:, :, None], (2, n_genes, feat_dim_pert))
         test_fates = fates[6:]
 
         k_model, k_train = jax.random.split(key)
 
-        print(f"  Training PerturbationPredictor: 6 train, 2 test, gene_dim=1")
+        feat_dim = hg.node_features.shape[1]  # 16
+        print(f"  Training PerturbationPredictor: 6 train, 2 test, gene_dim={feat_dim}")
         predictor = hgx.PerturbationPredictor(
-            gene_dim=1, hidden_dim=64, num_fates=3,
+            gene_dim=feat_dim, hidden_dim=64, num_fates=3,
             conv_cls=hgx.UniGCNConv, num_layers=2, key=k_model,
         )
         predictor = hgx.train_perturbation_predictor(
@@ -919,17 +922,35 @@ def analysis_8_topology(data, hg, seed):
             else:
                 fate_hgs[f_name] = None
 
-        # Compute persistence
+        # Compute persistence on SUBSAMPLED hypergraph (full graph OOMs with ripser)
         diagrams_dict = {}
         use_synthetic = False
+        max_nodes_persist = 500  # subsample to avoid OOM
         try:
+            if hg.num_nodes > max_nodes_persist:
+                sub_idx = np.random.choice(hg.num_nodes, max_nodes_persist, replace=False)
+                sub_inc = incidence_np[sub_idx]
+                active_edges = sub_inc.sum(axis=0) >= 2
+                sub_inc = sub_inc[:, active_edges]
+                sub_feat = features[sub_idx]
+                hg_sub = hgx.from_incidence(jnp.array(sub_inc), node_features=sub_feat)
+                print(f"    Subsampled to {max_nodes_persist} nodes for persistence")
+            else:
+                hg_sub = hg
             diagrams_dict["full"] = hgx.compute_persistence(
-                hg, filtration="weight", max_dim=1,
+                hg_sub, filtration="weight", max_dim=1,
             )
             for f_name in FATES:
                 if fate_hgs[f_name] is not None:
+                    f_hg = fate_hgs[f_name]
+                    if f_hg.num_nodes > max_nodes_persist:
+                        sub_idx = np.random.choice(f_hg.num_nodes, max_nodes_persist, replace=False)
+                        sub_inc_f = np.array(f_hg.incidence)[sub_idx]
+                        active_f = sub_inc_f.sum(axis=0) >= 2
+                        sub_inc_f = sub_inc_f[:, active_f]
+                        f_hg = hgx.from_incidence(jnp.array(sub_inc_f), node_features=features[sub_idx])
                     diagrams_dict[f_name] = hgx.compute_persistence(
-                        fate_hgs[f_name], filtration="weight", max_dim=1,
+                        f_hg, filtration="weight", max_dim=1,
                     )
             for label, dgms in diagrams_dict.items():
                 h0 = len(dgms[0]) if len(dgms) > 0 else 0
@@ -958,9 +979,11 @@ def analysis_8_topology(data, hg, seed):
 
         L1 = laplacians[1] if len(laplacians) > 1 else None
         eigvals_L1 = None
-        if L1 is not None and L1.shape[0] > 0:
+        if L1 is not None and L1.shape[0] > 0 and L1.shape[0] <= 5000:
             eigvals_L1 = np.array(jnp.linalg.eigvalsh(L1))
             print(f"    L1: {L1.shape}")
+        elif L1 is not None:
+            print(f"    L1: {L1.shape} (too large for eigendecomp, skipping)")
 
         # Persistence landscapes
         landscapes = {}
