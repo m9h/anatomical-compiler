@@ -237,7 +237,7 @@ def main(data_dir: Path, num_bins: int = 10, feature_dim: int = 16) -> None:
 
         # Use consensus if default, otherwise user's choice
         if feature_dim == 16:
-            effective_dim = max(2, min(k_consensus, 64))
+            effective_dim = max(2, k_consensus)
             print(f"          Using consensus: {effective_dim}")
         else:
             effective_dim = feature_dim
