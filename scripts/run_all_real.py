@@ -270,7 +270,7 @@ def betti_from_diagrams(diagrams, threshold):
 def analysis_1_module_detection(data, hg, epochs, key):
     with Timer("Analysis 1: Module Detection"):
         labels = jnp.array(data["module_labels"])
-        in_dim = 16  # node_features_pca dim
+        in_dim = hg.node_features.shape[1]  # node_features_pca dim
         num_modules = int(data["module_labels"].max()) + 1
 
         print(f"  Nodes: {hg.num_nodes}, Edges: {hg.num_edges}")
@@ -407,7 +407,7 @@ def analysis_3_conv_comparison(data, hg, epochs, key):
     with Timer("Analysis 3: Convolution Comparison"):
         incidence = jnp.array(data["incidence"])
         labels = jnp.array(data["module_labels"])
-        in_dim = 16
+        in_dim = hg.node_features.shape[1]
         num_modules = int(data["module_labels"].max()) + 1
 
         results = {}
