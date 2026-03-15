@@ -40,10 +40,14 @@ import optax
 try:
     import hgx
 except ImportError:
-    sys.exit(
-        "ERROR: hgx is not installed. Install with:\n"
-        "  uv pip install -e ../hgx"
-    )
+    sys.exit("ERROR: hgx is not installed. pip install -e /path/to/hgx")
+
+try:
+    import devograph
+    HAS_DEVOGRAPH = True
+except ImportError:
+    devograph = None
+    HAS_DEVOGRAPH = False
 
 try:
     import diffrax
@@ -543,13 +547,13 @@ def analysis_4_neural_ode(data, epochs, key):
             snapshots.append(hg_t)
 
         times = jnp.array(pseudotime_centers)
-        temp_hg = hgx.from_snapshots(snapshots, times=times)
+        temp_hg = devograph.from_snapshots(snapshots, times=times)
 
         # Fit Neural ODE with dim=1
         conv = hgx.UniGCNConv(1, 1, key=k1)
         print(f"  Fitting Neural ODE on {T} snapshots, {n_genes} genes, dim=1")
         t_start = time.time()
-        neural_ode = hgx.fit_neural_ode(temp_hg, conv, key=k2, epochs=epochs, lr=1e-3)
+        neural_ode = devograph.fit_neural_ode(temp_hg, conv, key=k2, epochs=epochs, lr=1e-3)
         elapsed = time.time() - t_start
         print(f"  Training time: {elapsed:.1f}s")
 
@@ -582,7 +586,7 @@ def analysis_4_neural_ode(data, epochs, key):
         avg_rollout_mse = float(np.mean(rollout_mses))
 
         # Full trajectory for visualization
-        ts_traj, ode_trajectory = hgx.trajectory(
+        ts_traj, ode_trajectory = devograph.trajectory(
             neural_ode, hg0, t0=float(times[0]), t1=float(times[-1]), num_steps=50,
         )
 
@@ -633,9 +637,9 @@ def analysis_5_poincare(data, epochs, key):
 
         # --- Poincare model ---
         print("  Training Poincare LatentODE...")
-        poincare_model = hgx.LatentHypergraphODE(
+        poincare_model = devograph.LatentHypergraphODE(
             obs_dim=obs_dim, latent_dim=latent_dim,
-            conv_cls=hgx.PoincareHypergraphConv, key=k1,
+            conv_cls=devograph.PoincareHypergraphConv, key=k1,
         )
         optimizer = optax.adam(1e-3)
         opt_state = optimizer.init(eqx.filter(poincare_model, eqx.is_array))
@@ -673,7 +677,7 @@ def analysis_5_poincare(data, epochs, key):
 
         # --- Euclidean model ---
         print("  Training Euclidean LatentODE...")
-        euclidean_model = hgx.LatentHypergraphODE(
+        euclidean_model = devograph.LatentHypergraphODE(
             obs_dim=obs_dim, latent_dim=latent_dim,
             conv_cls=hgx.UniGCNConv, key=k2,
         )
@@ -736,7 +740,7 @@ def analysis_6_sde(data, epochs, key):
         num_train = T - 3
 
         conv_sde = hgx.UniGCNConv(1, 1, key=k1)
-        sde = hgx.HypergraphNeuralSDE(
+        sde = devograph.HypergraphNeuralSDE(
             conv=conv_sde, num_nodes=n_genes, node_dim=1,
             sigma_init=0.1, key=k2,
         )
@@ -836,11 +840,11 @@ def analysis_7_perturbation(data, hg, epochs, key):
 
         feat_dim = hg.node_features.shape[1]  # 16
         print(f"  Training PerturbationPredictor: 6 train, 2 test, gene_dim={feat_dim}")
-        predictor = hgx.PerturbationPredictor(
+        predictor = devograph.PerturbationPredictor(
             gene_dim=feat_dim, hidden_dim=64, num_fates=3,
             conv_cls=hgx.UniGCNConv, num_layers=2, key=k_model,
         )
-        predictor = hgx.train_perturbation_predictor(
+        predictor = devograph.train_perturbation_predictor(
             predictor, hg,
             perturbations=train_masks,
             targets=(train_expr, train_fates),
@@ -856,7 +860,7 @@ def analysis_7_perturbation(data, hg, epochs, key):
             if tf not in key_tf_indices:
                 continue
             idx = key_tf_indices[tf]
-            pred_ko, pred_fate = hgx.in_silico_knockout(predictor, hg, idx)
+            pred_ko, pred_fate = devograph.in_silico_knockout(predictor, hg, idx)
             pred_mean = np.array(pred_ko).mean(axis=-1)
             obs_mean = np.array(train_expr[i]).mean(axis=-1)
             _, _, auc = compute_roc(pred_mean, obs_mean)
@@ -870,7 +874,7 @@ def analysis_7_perturbation(data, hg, epochs, key):
             if tf not in key_tf_indices:
                 continue
             idx = key_tf_indices[tf]
-            pred_ko, pred_fate = hgx.in_silico_knockout(predictor, hg, idx)
+            pred_ko, pred_fate = devograph.in_silico_knockout(predictor, hg, idx)
             pred_mean = np.array(pred_ko).mean(axis=-1)
             obs_mean = np.array(test_expr[i]).mean(axis=-1)
             corr = float(np.corrcoef(pred_mean, obs_mean)[0, 1])
@@ -880,7 +884,7 @@ def analysis_7_perturbation(data, hg, epochs, key):
         # Perturbation screen across all TFs
         tf_gene_indices = data["tf_gene_indices"]
         tf_indices_arr = jnp.array(list(tf_gene_indices.values()))
-        all_changes, all_fates = hgx.perturbation_screen(predictor, hg, tf_indices_arr)
+        all_changes, all_fates = devograph.perturbation_screen(predictor, hg, tf_indices_arr)
         print(f"  Perturbation screen: {len(tf_gene_indices)} TFs screened")
 
         return {
@@ -937,7 +941,7 @@ def analysis_8_topology(data, hg, seed):
                 print(f"    Subsampled to {max_nodes_persist} nodes for persistence")
             else:
                 hg_sub = hg
-            diagrams_dict["full"] = hgx.compute_persistence(
+            diagrams_dict["full"] = devograph.compute_persistence(
                 hg_sub, filtration="weight", max_dim=1,
             )
             for f_name in FATES:
@@ -949,7 +953,7 @@ def analysis_8_topology(data, hg, seed):
                         active_f = sub_inc_f.sum(axis=0) >= 2
                         sub_inc_f = sub_inc_f[:, active_f]
                         f_hg = hgx.from_incidence(jnp.array(sub_inc_f), node_features=features[sub_idx])
-                    diagrams_dict[f_name] = hgx.compute_persistence(
+                    diagrams_dict[f_name] = devograph.compute_persistence(
                         f_hg, filtration="weight", max_dim=1,
                     )
             for label, dgms in diagrams_dict.items():
@@ -972,7 +976,7 @@ def analysis_8_topology(data, hg, seed):
 
         # Hodge Laplacians
         print("    Computing Hodge Laplacians...")
-        laplacians = hgx.hodge_laplacians(hg)
+        laplacians = devograph.hodge_laplacians(hg)
         L0 = laplacians[0]
         eigvals_L0 = np.array(jnp.linalg.eigvalsh(L0))
         print(f"    L0: {L0.shape}, smallest eigenvalues: {eigvals_L0[:5].round(4)}")
@@ -992,7 +996,7 @@ def analysis_8_topology(data, hg, seed):
             for dim_idx, dim_name in enumerate(["H0", "H1"]):
                 dgm = diagrams_dict[label][dim_idx]
                 if len(dgm) > 0:
-                    landscapes[label][dim_name] = hgx.persistence_landscape(
+                    landscapes[label][dim_name] = devograph.persistence_landscape(
                         dgm, num_landscapes=5, resolution=100,
                     )
                 else:
@@ -1018,7 +1022,7 @@ def analysis_8_topology(data, hg, seed):
                 betti_1[bi] = int(5 * pt ** 1.5 * len(active) / n_edges)
             else:
                 try:
-                    sub_dgm = hgx.compute_persistence(
+                    sub_dgm = devograph.compute_persistence(
                         sub_hg, filtration="weight", max_dim=1,
                     )
                     all_deaths = np.concatenate(
@@ -1044,7 +1048,7 @@ def analysis_8_topology(data, hg, seed):
                 continue
             sub_inc = incidence_np[:, active]
             sub_hg = hgx.from_incidence(jnp.array(sub_inc), node_features=features)
-            sub_laps = hgx.hodge_laplacians(sub_hg)
+            sub_laps = devograph.hodge_laplacians(sub_hg)
             sub_ev = np.array(jnp.linalg.eigvalsh(sub_laps[0]))
             sub_ev = sub_ev[sub_ev > 1e-6]
             window_eigvals[name] = sub_ev if len(sub_ev) > 0 else np.array([0.0])
@@ -1085,9 +1089,9 @@ def analysis_9_ndp(key):
         )
         initial_hg = preallocate(initial_hg, MAX_NODES, MAX_EDGES)
 
-        program = hgx.CellProgram(state_dim=GENE_DIM, hidden_dim=32, key=k_prog)
+        program = devograph.CellProgram(state_dim=GENE_DIM, hidden_dim=32, key=k_prog)
         conv = hgx.UniGCNConv(GENE_DIM, GENE_DIM, key=k_conv)
-        ndp = hgx.HypergraphNDP(program, conv, max_nodes=MAX_NODES, max_edges=MAX_EDGES)
+        ndp = devograph.HypergraphNDP(program, conv, max_nodes=MAX_NODES, max_edges=MAX_EDGES)
 
         final_hg = ndp.develop(initial_hg, num_steps=NUM_STEPS, key=k_dev)
         print(f"  Grew: {INITIAL_NODES} -> {final_hg.num_nodes} nodes, "
@@ -1137,7 +1141,7 @@ def analysis_10_cross_species(data, hg, epochs, key):
         # Load built-in datasets
         hg_lineage = None
         try:
-            hg_lineage = hgx.load_cell_lineage(max_depth=4)
+            hg_lineage = devograph.load_cell_lineage(max_depth=4)
             print(f"  C. elegans lineage: {hg_lineage.num_nodes} nodes, "
                   f"{hg_lineage.num_edges} edges")
         except Exception as exc:
@@ -1147,7 +1151,7 @@ def analysis_10_cross_species(data, hg, epochs, key):
         devo_stages = {"Early (t=10)": 10, "Mid (t=95)": 95, "Late (t=180)": 180}
         for label, t in devo_stages.items():
             try:
-                hg_d = hgx.load_devograph(time_step=t, k_neighbors=5)
+                hg_d = devograph.load_devograph(time_step=t, k_neighbors=5)
                 hg_devo_list.append((label, t, hg_d))
                 print(f"  DevoGraph {label}: {hg_d.num_nodes} cells")
             except Exception as exc:
@@ -1158,12 +1162,12 @@ def analysis_10_cross_species(data, hg, epochs, key):
         if HAS_DIFFRAX and len(hg_devo_list) >= 3:
             try:
                 steps = list(range(10, 60, 5))
-                snapshots = [hgx.load_devograph(time_step=s, k_neighbors=5) for s in steps]
-                temp_hg = hgx.align_topologies(snapshots, times=jnp.array(steps, dtype=float))
+                snapshots = [devograph.load_devograph(time_step=s, k_neighbors=5) for s in steps]
+                temp_hg = devograph.align_topologies(snapshots, times=jnp.array(steps, dtype=float))
                 feat_dim = temp_hg.features.shape[-1]
                 k1, k2 = jax.random.split(k_c)
                 conv = hgx.UniGCNConv(feat_dim, feat_dim, key=k1)
-                ode_model = hgx.fit_neural_ode(temp_hg, conv, key=k2, epochs=epochs, lr=1e-3)
+                ode_model = devograph.fit_neural_ode(temp_hg, conv, key=k2, epochs=epochs, lr=1e-3)
                 print("  DevoGraph Neural ODE trained.")
                 ode_results = {"model": ode_model, "steps": steps, "temp_hg": temp_hg}
             except Exception as exc:
@@ -1173,13 +1177,13 @@ def analysis_10_cross_species(data, hg, epochs, key):
         organoid_diagrams = None
         lineage_diagrams = None
         try:
-            organoid_diagrams = hgx.compute_persistence(hg, filtration="weight", max_dim=1)
+            organoid_diagrams = devograph.compute_persistence(hg, filtration="weight", max_dim=1)
             print(f"  Organoid persistence: {sum(len(d) for d in organoid_diagrams)} pairs")
         except Exception as exc:
             print(f"  Organoid persistence failed: {exc}")
         if hg_lineage is not None:
             try:
-                lineage_diagrams = hgx.compute_persistence(
+                lineage_diagrams = devograph.compute_persistence(
                     hg_lineage, filtration="weight", max_dim=1,
                 )
                 print(f"  C. elegans persistence: {sum(len(d) for d in lineage_diagrams)} pairs")
@@ -1517,7 +1521,7 @@ def plot_figure_05(data, hg, pert_results, fig_dir):
     first_tf = KEY_TFS[0]
     if first_tf in key_tf_indices:
         idx = key_tf_indices[first_tf]
-        pred_ko, _ = hgx.in_silico_knockout(predictor, hg, idx)
+        pred_ko, _ = devograph.in_silico_knockout(predictor, hg, idx)
         pred_mean = np.array(pred_ko).mean(axis=-1)
         obs_mean = np.array(pert_results["train_expr"][0]).mean(axis=-1)
         valid = np.isfinite(pred_mean) & np.isfinite(obs_mean)
@@ -1541,7 +1545,7 @@ def plot_figure_05(data, hg, pert_results, fig_dir):
         pred_vals, obs_vals = [], []
         for i, tf in enumerate(ko_labels):
             if tf in key_tf_indices:
-                _, pf = hgx.in_silico_knockout(predictor, hg, key_tf_indices[tf])
+                _, pf = devograph.in_silico_knockout(predictor, hg, key_tf_indices[tf])
                 pred_vals.append(float(pf[f_idx]))
                 obs_vals.append(float(pert_results["train_fates"][i, f_idx]))
             else:
@@ -1589,7 +1593,7 @@ def plot_figure_05(data, hg, pert_results, fig_dir):
         if tf not in key_tf_indices:
             continue
         idx = key_tf_indices[tf]
-        pred_ko, _ = hgx.in_silico_knockout(predictor, hg, idx)
+        pred_ko, _ = devograph.in_silico_knockout(predictor, hg, idx)
         pred_mean = np.array(pred_ko).mean(axis=-1)
         obs_mean = np.array(pert_results["train_expr"][i]).mean(axis=-1)
         fpr, tpr, auc = compute_roc(pred_mean, obs_mean)
