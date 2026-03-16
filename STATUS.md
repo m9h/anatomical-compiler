@@ -139,3 +139,17 @@ The 720-regulon classification task was a poor benchmark — 258 of 397 classes 
 4. **Poincare analysis**: Failed due to dimension mismatch (needs obs_dim=fd not hardcoded)
 5. **Cross-species**: C. elegans data loaders work on Spark but not Colab
 6. **THNNConv integration**: Root cause diagnosed, fix_thnn.py created, needs integration into hgx core
+
+## Benchmark Progress (2026-03-16)
+
+### Validated
+- **Cora (1-hop, Planetoid)**: UniGCNConv 78.72 +/- 1.06% (published HGNN: 79.39%) — **MATCH**
+- **Organoid GRN (20-class)**: UniGINConv 94.6% — **biological signal confirmed**
+
+### Blockers Identified
+- **Pubmed (19,717 nodes)**: Dense incidence matrix (1.5 GB) causes JIT OOM. Need sparse incidence or chunked computation.
+- **DHG CocitationCora discrepancy**: DHG's cocitation creates 1,274 isolated nodes and overlapping val/test splits — NOT the standard published benchmark. Published papers use 1-hop neighborhood construction with Planetoid splits.
+- **Citeseer**: Result pending (Spark crashed during parallel runs).
+
+### Key Insight
+The "standard" cocitation benchmark is actually the **1-hop neighborhood** construction from the graph, NOT DHG's `CocitationCora()`. This distinction is poorly documented in published papers and caused significant confusion.
