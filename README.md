@@ -2,9 +2,11 @@
 
 Hypergraph deep learning benchmark on cerebral organoid gene regulatory networks. Compares [hgx](https://github.com/m9h/hgx) (JAX) against [DHG](https://github.com/iMoonLab/DeepHypergraph) (PyTorch) using real data from [Fleck et al. 2023](https://doi.org/10.1038/s41586-022-05279-8).
 
-## hgx Matches Published Baselines on Cora
+## hgx Matches Published Baselines
 
-hgx UniGCNConv achieves **79.27%** on the standard Cora cocitation benchmark — matching or exceeding all published hypergraph methods:
+Standard cocitation benchmarks (3-seed evaluation, early stopping, lr=0.01, dropout=0.5):
+
+### Cora (2,708 nodes, 7 classes)
 
 | Model | Accuracy | Source |
 |-------|----------|--------|
@@ -13,9 +15,18 @@ hgx UniGCNConv achieves **79.27%** on the standard Cora cocitation benchmark —
 | UniGCN | 78.95% | Huang & Yang 2021 |
 | AllSet | 78.58% | Chien et al. 2022 |
 | HyperGCN | 78.45% | Yadati et al. 2019 |
-| hgx UniGATConv | 77.27 +/- 1.01% | this work |
 
-> 3-seed evaluation with early stopping (patience=50), lr=0.01, dropout=0.5, 2-layer HGNNStack (1433->64->64->7).
+### Citeseer (3,327 nodes, 6 classes)
+
+| Model | Accuracy | Source |
+|-------|----------|--------|
+| HGNN | 72.01% | Feng et al. 2019 |
+| UniGCN | 71.63% | Huang & Yang 2021 |
+| HyperGCN | 71.22% | Yadati et al. 2019 |
+| AllSet | 70.83% | Chien et al. 2022 |
+| **hgx UniGCNConv** | **65.10 +/- 1.25%** | **this work** |
+
+> Citeseer gap (65% vs 72%) under investigation — DHG's split uses only 120 training nodes (20/class). Published numbers may use different splits or augmentation.
 
 ## Speed: hgx vs DHG
 
