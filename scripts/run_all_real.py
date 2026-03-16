@@ -615,10 +615,10 @@ def analysis_5_poincare(data, epochs, key):
             return None
 
         incidence = jnp.array(data["incidence"])
-        features = jnp.array(data["node_features_pca"])  # (n, 16)
+        features = jnp.array(data["node_features_pca"])  # (n, fd)
         temporal_expr = data["temporal_expression"]  # (T, n)
         T = temporal_expr.shape[0]
-        obs_dim = 16
+        obs_dim = features.shape[1]
         latent_dim = 8
 
         k1, k2, k3 = jax.random.split(key, 3)
@@ -630,7 +630,7 @@ def analysis_5_poincare(data, epochs, key):
             scale = jnp.array(temporal_expr[t]).reshape(-1, 1)  # (n, 1)
             feat_t = features * (1.0 + 0.1 * scale)
             trajs.append(feat_t)
-        trajs = jnp.stack(trajs)  # (T, n, 16)
+        trajs = jnp.stack(trajs)  # (T, n, obs_dim)
 
         num_train = T - 3
         num_pairs = max(num_train - 1, 1)
@@ -838,7 +838,7 @@ def analysis_7_perturbation(data, hg, epochs, key):
 
         k_model, k_train = jax.random.split(key)
 
-        feat_dim = hg.node_features.shape[1]  # 16
+        feat_dim = hg.node_features.shape[1]
         print(f"  Training PerturbationPredictor: 6 train, 2 test, gene_dim={feat_dim}")
         predictor = devograph.PerturbationPredictor(
             gene_dim=feat_dim, hidden_dim=64, num_fates=3,
