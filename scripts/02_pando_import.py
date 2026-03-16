@@ -32,11 +32,12 @@ import optax
 
 try:
     import hgx
+    import devograph
 except ImportError:
     sys.exit(
-        "ERROR: hgx is not installed. Install it with:\n"
-        "  uv pip install -e ../hgx\n"
-        "or add it as a path dependency in pyproject.toml."
+        "ERROR: hgx/devograph is not installed. Install with:\n"
+        "  uv pip install -e ../hgx -e ../devograph\n"
+        "or add them as path dependencies in pyproject.toml."
     )
 
 try:
@@ -93,7 +94,7 @@ def load_grn(data_dir: Path) -> tuple:
     # Build hypergraph
     if modules_path.exists():
         print("  Building hypergraph with load_pando_modules()...")
-        hg = hgx.load_pando_modules(
+        hg = devograph.load_pando_modules(
             coef_csv=str(coefs_path),
             modules_csv=str(modules_path),
             padj_threshold=0.05,

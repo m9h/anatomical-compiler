@@ -131,6 +131,7 @@ def load_pando_grn(
 
     import pandas as pd
     import hgx
+    import devograph
 
     if data_dir is None:
         data_dir = find_data_dir()
@@ -154,7 +155,7 @@ def load_pando_grn(
     )
 
     # Build hypergraph via hgx
-    hg = hgx.load_pando_modules(
+    hg = devograph.load_pando_modules(
         coef_csv=str(coef_path),
         modules_csv=None,
         padj_threshold=padj_threshold,

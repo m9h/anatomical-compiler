@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
 def _safe_import_hgx_data():
     """Import hgx data loaders, handling potential import failures."""
     try:
-        from hgx import load_cell_lineage, load_devograph
+        from devograph import load_cell_lineage, load_devograph
         return load_cell_lineage, load_devograph
     except (ImportError, AttributeError) as exc:
         print(f"Warning: hgx data loaders unavailable: {exc}", file=sys.stderr)
@@ -60,6 +60,7 @@ def _build_organoid_grn() -> "hgx.Hypergraph":
     creates a synthetic small GRN.
     """
     import hgx
+    import devograph
 
     data_dir = Path(__file__).resolve().parent.parent / "data"
 
@@ -69,7 +70,7 @@ def _build_organoid_grn() -> "hgx.Hypergraph":
     modules_file = pando_dir / "modules.tsv"
     if coefs_file.exists():
         try:
-            hg = hgx.load_pando_modules(
+            hg = devograph.load_pando_modules(
                 coef_csv=str(coefs_file),
                 modules_csv=str(modules_file) if modules_file.exists() else None,
                 padj_threshold=0.05,
