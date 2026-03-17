@@ -28,7 +28,19 @@ Standard Cora cocitation benchmark (5-seed evaluation, 1-hop neighborhood constr
 | AllSet | 70.83% | Chien et al. 2022 |
 | **hgx UniGCNConv** | **64.80 +/- 0.82%** | **this work** |
 
-> 7-point gap under investigation. Citeseer has 3,703-dim features (vs Cora 1,433) and sparser connectivity. May need hyperparameter tuning or feature preprocessing for high-dim inputs. Dense incidence OOMs on GPU — ran on CPU.
+> Citeseer 7pt gap is consistent across both symmetric and asymmetric normalization — likely a hypergraph construction difference in published HGNN.
+
+### Pubmed (19,717 nodes, 3 classes)
+
+| Model | Accuracy | Source |
+|-------|----------|--------|
+| HGNN | 86.44% | Feng et al. 2019 |
+| HyperGCN | 82.80% | Yadati et al. 2019 |
+| UniGCN | 79.28% | Huang & Yang 2021 |
+| AllSet | 78.58% | Chien et al. 2022 |
+| **hgx UniGCNConv** | **76.10%** | **this work** |
+
+> 19,717 nodes processed in 15.5s using 6.7 GB RAM. Only 60 training nodes (20/class). Gap may reflect different hypergraph construction in published HGNN or the extreme low-supervision regime.
 
 ## Speed: hgx vs DHG
 
