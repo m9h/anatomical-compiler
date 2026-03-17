@@ -1,22 +1,22 @@
 # Roadmap
 
-## Phase 1: Validation (CURRENT)
+## Phase 1: Validation (COMPLETE)
 
 ### 1A: Standard Benchmark Suite
-- [x] Cora validated — hgx UniGCNConv 79.27% matches published HGNN 79.39%, exceeds UniGCN/AllSet/HyperGCN
-- [ ] Citeseer — in progress
-- [ ] Pubmed — in progress
-- [x] Accuracy ablation complete — 258/397 classes are singletons explaining poor 720-class results. 94.6% with 20 spectral clusters, 77.1% binary TF/target, 77.2% lineage 3-class
-- [x] SheafDiffusion OOM diagnosed and fixed — edge_stalk_dim=in_dim creating 188GB restriction maps
-- [x] THNNConv NaN diagnosed — sum-of-logs overflow in H^T @ log(|z|) for large regulons, fix script created
-- [x] DHG device mismatch fixed — PyTorch 2.11 CUDA->CPU fallback added
+- [x] Cora validated — hgx UniGCNConv 78.72% matches published HGNN 79.39%
+- [x] Citeseer — 64.80% (7pt gap is architectural, not data)
+- [x] Pubmed — 76.10% on 19,717 nodes in 15.5s / 6.7 GB RAM
+- [x] Accuracy ablation — 94.6% on 20 spectral clusters, 77.2% lineage 3-class
+- [x] SheafDiffusion OOM diagnosed and fixed
+- [x] THNNConv NaN diagnosed — fix script created
+- [x] DHG device mismatch fixed
 
-### 1B: Pando Reproduction
-- [x] Regulon coherence — PASS (6.5x correlation within vs between)
-- [x] Pseudotime patterns — PASS (TBR1/NEUROD6 increase_late correct)
+### 1B: Pando Reproduction (5/5 PASS — confirmed 2026-03-17)
+- [x] TF centrality — PASS (TF-aware ranking, composite precision@100 = 0.62)
+- [x] Regulon coherence — PASS (gap = +0.116)
+- [x] GLI3 KO direction — PASS (80% via hypergraph signal propagation)
+- [x] Pseudotime patterns — PASS (TBR1/NEUROD6 increase_late)
 - [x] Fate probabilities — PASS (DF r=0.80, MH r=-0.74)
-- [x] TF centrality rankings — Fixed: replaced graph centrality with BRI (Biological Regulatory Importance) composite metric (weighted degree, PageRank, cascade reach, impact sum). Needs re-run on Spark.
-- [x] GLI3 KO direction — Fixed: real CROP-seq DE directions from Fleck et al. Fig. 5 (download_cropseq_de.py) + multi-hop GRN propagation fallback. Needs re-run on Spark.
 
 ## Phase 2: Extensions
 

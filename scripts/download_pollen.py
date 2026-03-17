@@ -28,40 +28,46 @@ from urllib.request import urlretrieve
 # GEO supplementary file URLs (GSE284197)
 # ---------------------------------------------------------------------------
 
-GEO_BASE = "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE284nnn/GSE284197/suppl"
+GEO_FTP = "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE284nnn/GSE284197/suppl"
+GEO_HTTPS = "https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE284197&format=file&file="
 
 FILES = {
     "screen": {
-        "url": f"{GEO_BASE}/GSE284197_screen.h5ad.gz",
-        "filename": "GSE284197_screen.h5ad.gz",
+        "url_ftp": f"{GEO_FTP}/GSE284197_screen.h5ad",
+        "url_https": f"{GEO_HTTPS}GSE284197_screen.h5ad",
+        "filename": "GSE284197_screen.h5ad",
         "output": "screen.h5ad",
         "size_gb": 4.1,
         "description": "Main CRISPRi screen: 44 TFs in 2D cortical cultures",
     },
     "merged": {
-        "url": f"{GEO_BASE}/GSE284197_merged.h5ad.gz",
-        "filename": "GSE284197_merged.h5ad.gz",
+        "url_ftp": f"{GEO_FTP}/GSE284197_merged.h5ad",
+        "url_https": f"{GEO_HTTPS}GSE284197_merged.h5ad",
+        "filename": "GSE284197_merged.h5ad",
         "output": "merged.h5ad",
         "size_gb": 3.2,
         "description": "Merged dataset (all conditions)",
     },
     "IN": {
-        "url": f"{GEO_BASE}/GSE284197_IN.h5ad.gz",
-        "filename": "GSE284197_IN.h5ad.gz",
+        "url_ftp": f"{GEO_FTP}/GSE284197_IN.h5ad",
+        "url_https": f"{GEO_HTTPS}GSE284197_IN.h5ad",
+        "filename": "GSE284197_IN.h5ad",
         "output": "IN.h5ad",
         "size_gb": 0.7,
         "description": "Interneuron-focused subset",
     },
     "slice": {
-        "url": f"{GEO_BASE}/GSE284197_slice.h5ad.gz",
-        "filename": "GSE284197_slice.h5ad.gz",
+        "url_ftp": f"{GEO_FTP}/GSE284197_slice.h5ad",
+        "url_https": f"{GEO_HTTPS}GSE284197_slice.h5ad",
+        "filename": "GSE284197_slice.h5ad",
         "output": "slice.h5ad",
         "size_gb": 0.5,
         "description": "Slice culture experiments",
     },
     "clones": {
-        "url": f"{GEO_BASE}/GSE284197_clones.h5ad.gz",
-        "filename": "GSE284197_clones.h5ad.gz",
+        "url_ftp": f"{GEO_FTP}/GSE284197_clones.h5ad",
+        "url_https": f"{GEO_HTTPS}GSE284197_clones.h5ad",
+        "filename": "GSE284197_clones.h5ad",
         "output": "clones.h5ad",
         "size_gb": 0.01,
         "description": "Clonal/lineage tracing data",
@@ -155,10 +161,15 @@ def main():
             n_ok += 1
             continue
 
-        gz_path = pollen_dir / info["filename"]
-        if download_file(info["url"], gz_path):
-            if gz_path.suffix == ".gz":
-                decompress_gz(gz_path, out_path)
+        dl_path = pollen_dir / info["filename"]
+        # Try HTTPS first (more firewall-friendly), fall back to FTP
+        ok = download_file(info["url_https"], dl_path)
+        if not ok:
+            print("  Retrying via FTP ...")
+            ok = download_file(info["url_ftp"], dl_path)
+        if ok:
+            if dl_path != out_path:
+                dl_path.rename(out_path)
             n_ok += 1
         else:
             print(f"  FAILED to download {info['output']}")

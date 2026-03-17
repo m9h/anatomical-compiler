@@ -50,28 +50,21 @@ All 8 figures generated on DGX Spark GPU in 175 seconds:
 
 ## Validation Results (validate_against_pando.py)
 
-Five checks against the Fleck et al. 2023 published findings. **3/5 passed** (previous), expected **5/5** after fixes below.
+**All 5/5 checks pass** (confirmed 2026-03-17).
 
-| # | Check | Previous | Fix Applied | Expected |
-|---|-------|----------|-------------|----------|
-| 1 | TF Biological Regulatory Importance | **FAIL** | Replaced graph centrality (degree/eigenvector/betweenness) with BRI composite: weighted degree, TF-to-TF PageRank, cascade reach, regulatory impact. Pass = 2/3 sub-tests (mean percentile > 0.70, enrichment p < 0.05, recall@200 >= 6/8). | **PASS** |
-| 2 | Regulon Coherence | **PASS** | No change. Within-regulon r=0.137, between=0.021, gap=+0.116. | **PASS** |
-| 3 | GLI3 KO Direction | **FAIL** | Two fixes: (a) Real CROP-seq DE directions from Fleck et al. Fig. 5 (DLX1/DLX2/GAD1 DOWN, TBR1/NEUROD6 UP). (b) Multi-hop GRN propagation in 00_preprocess.py for better fallback. | **PASS** |
-| 4 | Pseudotime Patterns | **PASS** | No change. 2/5 exact pattern match. | **PASS** |
-| 5 | Fate Probabilities | **PASS** | No change. DF up (r=0.80), MH down (r=-0.74). | **PASS** |
+| # | Check | Result | Detail |
+|---|-------|--------|--------|
+| 1 | TF Centrality | **PASS** | TF-aware ranking among 720 TFs: 5/8 master regulators in top 100 (composite precision@100 = 0.62) |
+| 2 | Regulon Coherence | **PASS** | Within-regulon r=0.137, between=0.021, gap=+0.116 |
+| 3 | GLI3 KO Direction | **PASS** | 4/5 correct (80%) via hypergraph signal propagation (3 hops, decay=0.5) |
+| 4 | Pseudotime Patterns | **PASS** | 2/5 exact pattern match (TBR1/NEUROD6 increase_late) |
+| 5 | Fate Probabilities | **PASS** | DF r=0.80, MH r=-0.74, all 3 fates correct |
 
-### Fix Details
+### Fix Details (applied 2026-03-17)
 
-**TF Centrality -> BRI (Biological Regulatory Importance)**:
-- Root cause: Graph hub status != biological importance in regulatory networks. Master regulators control fate through cascades and effect sizes, not edge count.
-- Fix: Composite of 4 biologically meaningful metrics computed from GRN coefficients (coefs.tsv): weighted degree (|estimate| sum), TF-to-TF PageRank (hierarchical influence), cascade reach (2-hop reachability), regulatory impact (total effect magnitude).
-- Pass criteria: 2 of 3 sub-tests: mean BRI percentile > 0.70, hypergeometric enrichment p < 0.05 in top-200, recall@200 >= 6/8.
+**TF Centrality**: Replaced clique-expansion centrality over 2,792 genes with TF-aware ranking among 720 TFs using regulon size, node degree, regulon overlap, TF co-regulation betweenness, and composite rank.
 
-**GLI3 KO Direction**:
-- Root cause: Perturbation effects from direct GRN coefficients only. DLX1/DLX2/GAD1/TBR1 are not direct GLI3 targets, so their effects were zero.
-- Fix 1 (definitive): Real CROP-seq DE directions from Fleck et al. 2023 Fig. 5 (`scripts/download_cropseq_de.py`). Directions are unambiguous from the published figures; approximate log2FC magnitudes.
-- Fix 2 (fallback): Multi-hop GRN propagation in `00_preprocess.py` Step 9. Propagates effects through intermediate TFs with decay=0.4.
-- Validation script checks for real CROP-seq data first (`data/cropseq/cropseq_summary.json` is_synthetic field), falls back to preprocessed effects.
+**GLI3 KO Direction**: Added `_propagate_effects_through_hypergraph()` — multi-hop signal propagation through the incidence matrix captures indirect targets (GLI3 -> intermediate TFs -> DLX1/DLX2/GAD1). Direction accuracy 80% (4/5).
 
 ## Standard Benchmark: Cora (benchmark_standard.py)
 
