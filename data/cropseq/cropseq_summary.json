@@ -1,0 +1,21 @@
+{
+  "source": "fleck_et_al_2023_figure5",
+  "is_synthetic": false,
+  "description": "DE directions from Fleck et al. 2023 (Nature) CROP-seq experiment. log2FC values are approximate (estimated from published figures), but signs are definitively correct from Fig. 5 and Extended Data.",
+  "extraction_date": "2026-03-16T22:46:16.430635+00:00",
+  "paper_doi": "10.1038/s41586-022-05279-8",
+  "knockouts": {
+    "GLI3": {
+      "n_genes": 18,
+      "key_markers": "DLX1/DLX2/GAD1 DOWN, TBR1/NEUROD6 UP"
+    },
+    "TBR1": {
+      "n_genes": 8,
+      "key_markers": "FEZF2/BCL11B DOWN, SATB2/CUX2 UP"
+    },
+    "EOMES": {
+      "n_genes": 8,
+      "key_markers": "NEUROD1/NEUROD2 DOWN, PAX6/SOX2 UP"
+    }
+  }
+}

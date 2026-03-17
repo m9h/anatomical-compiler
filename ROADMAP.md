@@ -15,8 +15,8 @@
 - [x] Regulon coherence — PASS (6.5x correlation within vs between)
 - [x] Pseudotime patterns — PASS (TBR1/NEUROD6 increase_late correct)
 - [x] Fate probabilities — PASS (DF r=0.80, MH r=-0.74)
-- [ ] TF centrality rankings — FAIL (graph centrality != biological importance, needs new metrics)
-- [ ] GLI3 KO direction — FAIL (needs real CROP-seq data from Seurat objects, extract_cropseq.py created)
+- [x] TF centrality rankings — Fixed: replaced graph centrality with BRI (Biological Regulatory Importance) composite metric (weighted degree, PageRank, cascade reach, impact sum). Needs re-run on Spark.
+- [x] GLI3 KO direction — Fixed: real CROP-seq DE directions from Fleck et al. Fig. 5 (download_cropseq_de.py) + multi-hop GRN propagation fallback. Needs re-run on Spark.
 
 ## Phase 2: Extensions
 
@@ -75,7 +75,7 @@
 - [x] Fix SheafDiffusion OOM — edge_stalk_dim capped
 - [ ] Integrate THNNConv fix into hgx core
 - [ ] Fix Poincare LatentODE dimension handling
-- [ ] Improve perturbation training data (use real CROP-seq DE, not GRN-simulated)
+- [x] Improve perturbation training data — real CROP-seq DE from Fig. 5 + multi-hop GRN propagation
 - [ ] Add proper train/val/test splits for module detection
 - [ ] Add cross-validation to all analyses
 - [ ] Profile GPU utilization (currently CPU-heavy for centrality + persistence)

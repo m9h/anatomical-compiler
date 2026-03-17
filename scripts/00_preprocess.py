@@ -56,6 +56,44 @@ def _timer(msg: str):
     return _T(msg)
 
 
+def _compute_fate_shift(
+    ki: int,
+    tf_idx: int,
+    mean_expr_per_cell: np.ndarray,
+    cell_fate_mask_arr: np.ndarray,
+    cell_fate_probs: np.ndarray,
+    n_cells: int,
+    perturbation_fates: np.ndarray,
+) -> None:
+    """Compute fate shift for a TF knockout using expression quartile analysis."""
+    tf_expr = mean_expr_per_cell[tf_idx]  # (n_cells,)
+    q25 = np.percentile(tf_expr, 25)
+    q75 = np.percentile(tf_expr, 75)
+    low_mask = tf_expr <= q25
+    high_mask = tf_expr >= q75
+
+    combined_low = low_mask & cell_fate_mask_arr
+    combined_high = high_mask & cell_fate_mask_arr
+
+    if combined_low.sum() > 0 and combined_high.sum() > 0:
+        low_fate_idx = []
+        high_fate_idx = []
+        fate_counter = 0
+        for ci in range(n_cells):
+            if cell_fate_mask_arr[ci]:
+                if low_mask[ci]:
+                    low_fate_idx.append(fate_counter)
+                if high_mask[ci]:
+                    high_fate_idx.append(fate_counter)
+                fate_counter += 1
+
+        mean_low = (cell_fate_probs[low_fate_idx].mean(axis=0)
+                    if low_fate_idx else np.zeros(3, dtype=np.float32))
+        mean_high = (cell_fate_probs[high_fate_idx].mean(axis=0)
+                     if high_fate_idx else np.zeros(3, dtype=np.float32))
+        perturbation_fates[ki] = mean_low - mean_high
+
+
 def _detect_data_dir() -> Path:
     """Auto-detect data directory: prefer /workspace/benchmark/data (DGX Spark
     inside Docker), fall back to ../data relative to this script."""
@@ -396,9 +434,34 @@ def main(data_dir: Path, num_bins: int = 10, feature_dim: int = 16) -> None:
         np.save(out_dir / "module_labels.npy", module_labels)
 
     # ------------------------------------------------------------------
-    # Step 9: Perturbation data from GRN structure
+    # Step 9: Perturbation data from GRN structure (with multi-hop propagation)
     # ------------------------------------------------------------------
-    with _timer("Step 9 — Perturbation data for key TFs"):
+    with _timer("Step 9 — Perturbation data for key TFs (multi-hop)"):
+        # Check for real CROP-seq data first
+        cropseq_path = data_dir / "cropseq" / "cropseq_de.csv"
+        cropseq_summary_path = data_dir / "cropseq" / "cropseq_summary.json"
+        cropseq_df = None
+        cropseq_is_real = False
+
+        if cropseq_path.exists():
+            cropseq_df = pd.read_csv(cropseq_path)
+            if cropseq_summary_path.exists():
+                with open(cropseq_summary_path) as f:
+                    cs_summary = json.load(f)
+                cropseq_is_real = not cs_summary.get("is_synthetic", True)
+            else:
+                # Heuristic: check if key genes exist
+                gli3_genes = set(cropseq_df.loc[
+                    cropseq_df["ko_gene"] == "GLI3", "gene"
+                ])
+                cropseq_is_real = "DLX1" in gli3_genes or "DLX2" in gli3_genes
+
+            if cropseq_is_real:
+                print(f"        Real CROP-seq data found: {cropseq_path}")
+            else:
+                print(f"        Synthetic CROP-seq data found (will use GRN propagation)")
+                cropseq_df = None  # Don't use synthetic data
+
         available_key_tfs = [tf for tf in KEY_TFS if tf in gene_name_to_idx]
         K = len(available_key_tfs)
         print(f"        key TFs available: {K} / {len(KEY_TFS)}")
@@ -407,21 +470,74 @@ def main(data_dir: Path, num_bins: int = 10, feature_dim: int = 16) -> None:
         perturbation_effects = np.zeros((K, n_genes), dtype=np.float32)
         perturbation_fates = np.zeros((K, 3), dtype=np.float32)
 
+        # Precompute per-TF target map for 2-hop propagation
+        tf_to_targets: dict[str, dict[str, float]] = {}
+        for tf in sorted(sig_coefs["tf"].unique()):
+            tf_rows = sig_coefs[sig_coefs["tf"] == tf]
+            tf_to_targets[tf] = {
+                row["target"]: float(row["estimate"])
+                for _, row in tf_rows.iterrows()
+                if row["target"] in gene_name_to_idx
+            }
+
         # Precompute per-gene mean expression (un-scaled) for quartile analysis
         mean_expr_per_cell = log_expr.astype(np.float32)  # (n_genes, n_cells)
+
+        DECAY_2HOP = 0.4  # Decay factor for 2-hop propagation
 
         for ki, tf in enumerate(available_key_tfs):
             tf_idx = gene_name_to_idx[tf]
             perturbation_masks[ki, tf_idx] = True
 
-            # Expression effect from GRN coefficients
-            tf_coefs = sig_coefs[sig_coefs["tf"] == tf].copy()
-            for _, row in tf_coefs.iterrows():
-                target = row["target"]
-                if target in gene_name_to_idx:
-                    tidx = gene_name_to_idx[target]
-                    # Knockout = remove TF -> reverse the estimated effect
-                    perturbation_effects[ki, tidx] = -float(row["estimate"])
+            # ── Check for real CROP-seq data for this TF ──
+            if cropseq_is_real and cropseq_df is not None:
+                tf_de = cropseq_df[cropseq_df["ko_gene"] == tf]
+                if len(tf_de) > 5:
+                    print(f"        {tf}: Using real CROP-seq DE ({len(tf_de)} genes)")
+                    for _, row in tf_de.iterrows():
+                        gene = row["gene"]
+                        if gene in gene_name_to_idx:
+                            gidx = gene_name_to_idx[gene]
+                            perturbation_effects[ki, gidx] = float(row["log2fc"])
+
+                    # Normalize
+                    eff = perturbation_effects[ki]
+                    eff_std = eff.std()
+                    if eff_std > 1e-8:
+                        perturbation_effects[ki] = eff / eff_std
+
+                    # Fate shift (still from expression quartiles)
+                    _compute_fate_shift(
+                        ki, tf_idx, mean_expr_per_cell, cell_fate_mask_arr,
+                        cell_fate_probs, n_cells, perturbation_fates,
+                    )
+                    continue
+
+            # ── 1-hop: Direct GRN coefficients ──
+            direct_targets = tf_to_targets.get(tf, {})
+            for target, estimate in direct_targets.items():
+                tidx = gene_name_to_idx[target]
+                # Knockout = remove TF -> reverse the estimated effect
+                perturbation_effects[ki, tidx] = -estimate
+
+            # ── 2-hop: Propagate through intermediate TFs ──
+            n_2hop = 0
+            for intermediate, coef_tf_inter in direct_targets.items():
+                # Only propagate through intermediate genes that are TFs
+                if intermediate not in tf_to_targets:
+                    continue
+                inter_targets = tf_to_targets[intermediate]
+                for gene2, coef_inter_gene2 in inter_targets.items():
+                    gidx = gene_name_to_idx[gene2]
+                    # Only add 2-hop if 1-hop effect is zero (don't override)
+                    if perturbation_effects[ki, gidx] == 0.0:
+                        # effect = -coef(tf->inter) * coef(inter->gene) * decay
+                        effect_2hop = -coef_tf_inter * coef_inter_gene2 * DECAY_2HOP
+                        perturbation_effects[ki, gidx] = effect_2hop
+                        n_2hop += 1
+
+            n_1hop = len(direct_targets)
+            print(f"        {tf}: {n_1hop} direct + {n_2hop} 2-hop targets")
 
             # Normalize effects to unit variance (if nonzero)
             eff = perturbation_effects[ki]
@@ -429,34 +545,11 @@ def main(data_dir: Path, num_bins: int = 10, feature_dim: int = 16) -> None:
             if eff_std > 1e-8:
                 perturbation_effects[ki] = eff / eff_std
 
-            # Fate shift: compare top vs bottom quartile of TF expression
-            tf_expr = mean_expr_per_cell[tf_idx]  # (n_cells,)
-            q25 = np.percentile(tf_expr, 25)
-            q75 = np.percentile(tf_expr, 75)
-            low_mask = tf_expr <= q25
-            high_mask = tf_expr >= q75
-
-            # Average fates in each quartile (use cells that have fate data)
-            combined_low = low_mask & cell_fate_mask_arr
-            combined_high = high_mask & cell_fate_mask_arr
-
-            if combined_low.sum() > 0 and combined_high.sum() > 0:
-                # Map to cell_fate_probs indices
-                low_fate_idx = []
-                high_fate_idx = []
-                fate_counter = 0
-                for ci in range(n_cells):
-                    if cell_fate_mask_arr[ci]:
-                        if low_mask[ci]:
-                            low_fate_idx.append(fate_counter)
-                        if high_mask[ci]:
-                            high_fate_idx.append(fate_counter)
-                        fate_counter += 1
-
-                mean_low = cell_fate_probs[low_fate_idx].mean(axis=0) if low_fate_idx else np.zeros(3, dtype=np.float32)
-                mean_high = cell_fate_probs[high_fate_idx].mean(axis=0) if high_fate_idx else np.zeros(3, dtype=np.float32)
-                # Knockout removes the TF, so the shift is from high->low
-                perturbation_fates[ki] = mean_low - mean_high
+            # Fate shift
+            _compute_fate_shift(
+                ki, tf_idx, mean_expr_per_cell, cell_fate_mask_arr,
+                cell_fate_probs, n_cells, perturbation_fates,
+            )
 
         print(f"        perturbation_masks: {perturbation_masks.shape}")
         print(f"        perturbation_effects: {perturbation_effects.shape}")
