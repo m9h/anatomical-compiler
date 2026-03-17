@@ -18,6 +18,18 @@ Standard Cora cocitation benchmark (5-seed evaluation, 1-hop neighborhood constr
 
 > 2,708 nodes, 7 classes, 2,708 hyperedges. lr=0.01, dropout=0.5, 2-layer HGNNStack (64 hidden), patience=50.
 
+### Citeseer (3,327 nodes, 6 classes)
+
+| Model | Accuracy | Source |
+|-------|----------|--------|
+| HGNN | 72.01% | Feng et al. 2019 |
+| UniGCN | 71.63% | Huang & Yang 2021 |
+| HyperGCN | 71.22% | Yadati et al. 2019 |
+| AllSet | 70.83% | Chien et al. 2022 |
+| **hgx UniGCNConv** | **64.80 +/- 0.82%** | **this work** |
+
+> 7-point gap under investigation. Citeseer has 3,703-dim features (vs Cora 1,433) and sparser connectivity. May need hyperparameter tuning or feature preprocessing for high-dim inputs. Dense incidence OOMs on GPU — ran on CPU.
+
 ## Speed: hgx vs DHG
 
 hgx delivers **5-120x faster inference** than DHG on the same hardware (NVIDIA GB10 GPU):
