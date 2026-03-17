@@ -374,8 +374,12 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anndata", marker = "extra == 'anndata'" },
     { name = "beartype", marker = "extra == 'tests'" },
+    { name = "diffrax", marker = "extra == 'dynamics'", specifier = ">=0.5.0" },
+    { name = "e3nn-jax", marker = "extra == 'geometry'" },
     { name = "equinox", specifier = ">=0.11.0" },
+    { name = "giotto-tda", marker = "extra == 'topology'" },
     { name = "jax", specifier = ">=0.4.30" },
     { name = "jaxlib", specifier = ">=0.4.30" },
     { name = "jaxtyping", specifier = ">=0.2.24" },
@@ -384,12 +388,14 @@ requires-dist = [
     { name = "mkdocs-material", marker = "extra == 'docs'" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'" },
     { name = "networkx", marker = "extra == 'viz'" },
+    { name = "optax", marker = "extra == 'dynamics'" },
+    { name = "pgmax", marker = "extra == 'pgmax'" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'tests'" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "typing-extensions", specifier = ">=4.5.0" },
 ]
-provides-extras = ["dev", "tests", "viz", "docs"]
+provides-extras = ["dev", "tests", "viz", "docs", "dynamics", "geometry", "topology", "pgmax", "anndata"]
 
 [[package]]
 name = "hopcroftkarp"

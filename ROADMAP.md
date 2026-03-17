@@ -42,17 +42,28 @@
 
 ### 3A: Pollen Lab CRISPRi (Nature 2026)
 
-- [ ] Paper: "Dissecting gene regulatory networks governing human cortical cell fate"
-- 44 TFs screened with CRISPRi in primary human cortical cultures
-- Perturb-seq readout -- perfect for PerturbationPredictor validation
-- Data: bioRxiv 10.1101/2025.09.23.678137, GEO accession TBD
-- Plan in progress
+- Paper: "Dissecting gene regulatory networks governing human cortical cell fate"
+  - Ding, Kim, Ostrowski et al. (Pollen lab, UCSF)
+  - Nature 2026, doi: 10.1038/s41586-025-09997-7
+- **GEO: GSE284197** — 35 samples, h5ad files available
+  - `GSE284197_screen.h5ad` (4.1 GB) — main 44-TF CRISPRi screen (2D cultures)
+  - `GSE284197_merged.h5ad` (3.2 GB) — merged dataset
+  - `GSE284197_IN.h5ad` (683 MB) — interneuron subset
+  - `GSE284197_slice.h5ad` (454 MB) — slice cultures
+  - `GSE284197_clones.h5ad` (7.6 MB) — clonal lineage tracing
+- Code: https://github.com/jding5066/perturbTF
+- Browser: cortical-lineage-perturb-44tf.cells.ucsc.edu
+- Key TFs: ZNF219, NR2E1, ARX, + 41 others active in cortical neurogenesis
+- [ ] Download screen.h5ad (`scripts/download_pollen.py --screen-only`)
+- [ ] Preprocess (`scripts/preprocess_pollen.py`)
+- [ ] Run comparison (`scripts/compare_pollen.py`)
 
 ### 3B: Cross-Dataset Generalization
 
-- Train perturbation predictor on Fleck et al. organoid data
-- Test on Pollen et al. primary tissue data
-- Evaluate transfer learning across culture systems
+- [ ] GRN overlap: how many Fleck regulon TFs are also perturbed in Pollen?
+- [ ] Direction concordance: do shared TFs show same downstream gene directions?
+- [ ] Transfer prediction: train PerturbationPredictor on Fleck, test on Pollen
+- [ ] Within-Pollen LOO baseline (upper bound for comparison)
 
 ## Phase 4: Publication
 
