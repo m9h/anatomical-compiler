@@ -8,7 +8,6 @@ dependencies = [
     "anndata>=0.12.10",
     "diffrax>=0.7.2",
     "hgx",
-    "jax[cuda12]>=0.4.38",
     "matplotlib>=3.10.8",
     "optax>=0.2.5",
     "pandas>=2.3.3",

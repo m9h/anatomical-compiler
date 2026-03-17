@@ -1,0 +1,54 @@
+{
+  "n_genes": 2792,
+  "n_edges": 720,
+  "n_cells": 34088,
+  "n_cells_matched_fates": 34088,
+  "num_bins": 10,
+  "feature_dim": 16,
+  "key_tfs": [
+    "GLI3",
+    "FOXG1",
+    "TBR1",
+    "DLX1",
+    "DLX2",
+    "EMX1",
+    "EOMES",
+    "NEUROD6"
+  ],
+  "key_tfs_available": [
+    "GLI3",
+    "FOXG1",
+    "TBR1",
+    "DLX1",
+    "DLX2",
+    "EMX1",
+    "EOMES",
+    "NEUROD6"
+  ],
+  "lineages": [
+    "telencephalon",
+    "early",
+    "nt"
+  ],
+  "fates": [
+    "DF",
+    "VF",
+    "MH"
+  ],
+  "fate_mapping": {
+    "DF": "cortical",
+    "VF": "GE",
+    "MH": "neural_tube"
+  },
+  "stages": [
+    "iPSC",
+    "nect_nepi",
+    "npc",
+    "neuron"
+  ],
+  "data_dir": "/home/mhough/dev/organoid-hgx-benchmark/data",
+  "grn_genes_total": 2792,
+  "grn_expression_intersection": 2792,
+  "n_tfs_total": 720,
+  "n_tfs_with_sig_targets": 720
+}
