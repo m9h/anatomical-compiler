@@ -16,5 +16,11 @@ dependencies = [
     "scipy>=1.17.1",
 ]
 
+[tool.uv]
+constraint-dependencies = [
+    "llvmlite<0.46",  # no x86_64 macOS wheel for 0.46
+    "numba<0.64",     # match llvmlite constraint
+]
+
 [tool.uv.sources]
 hgx = { path = "../hgx" }

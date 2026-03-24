@@ -2,9 +2,11 @@
 """Citeseer hyperparameter sweep to close the gap vs published HGNN (72.01%)."""
 import numpy as np, time
 from collections import defaultdict
-import jax, jax.numpy as jnp, equinox as eqx, optax, hgx, dhg
-
-data = dhg.data.Citeseer()
+import jax, jax.numpy as jnp, equinox as eqx, optax, hgx
+try:
+    import dhg; data = dhg.data.Citeseer()
+except ImportError:
+    from planetoid_loader import Citeseer; data = Citeseer()
 feats = np.array(data["features"], dtype=np.float32)
 labels = np.array(data["labels"], dtype=np.int32)
 edges = data["edge_list"]; n, fd = feats.shape; nc = data["num_classes"]

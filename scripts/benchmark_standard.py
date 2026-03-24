@@ -115,18 +115,18 @@ def load_dataset(name: str) -> dict[str, Any]:
         incidence : np.ndarray (n, m), float32 -- dense incidence matrix
         train_mask, val_mask, test_mask : np.ndarray (n,), bool
     """
-    import dhg
+    try:
+        import dhg
+        _loaders = {"cora": dhg.data.Cora, "citeseer": dhg.data.Citeseer, "pubmed": dhg.data.Pubmed}
+    except ImportError:
+        from planetoid_loader import Cora, Citeseer, Pubmed
+        _loaders = {"cora": Cora, "citeseer": Citeseer, "pubmed": Pubmed}
 
     print(f"  Loading dataset: {name}")
 
-    if name == "cora":
-        data = dhg.data.Cora()
-    elif name == "citeseer":
-        data = dhg.data.Citeseer()
-    elif name == "pubmed":
-        data = dhg.data.Pubmed()
-    else:
+    if name not in _loaders:
         raise ValueError(f"Unknown dataset: {name}")
+    data = _loaders[name]()
 
     features = np.array(data["features"], dtype=np.float32)
     labels = np.array(data["labels"], dtype=np.int32)
