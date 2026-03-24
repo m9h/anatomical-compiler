@@ -170,6 +170,46 @@ def compute_macro_f1(preds, labels, num_classes):
 
 
 # ---------------------------------------------------------------------------
+# Stratified train / val / test split
+# ---------------------------------------------------------------------------
+
+
+def make_split(
+    n: int,
+    labels: np.ndarray,
+    seed: int,
+    train_frac: float = 0.6,
+    val_frac: float = 0.2,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return boolean masks for train/val/test.
+
+    Uses stratified splitting: for each class, allocate 60/20/20 of its
+    members.  Falls back gracefully for classes with < 3 samples.
+    """
+    rng = np.random.RandomState(seed)
+    train_mask = np.zeros(n, dtype=bool)
+    val_mask = np.zeros(n, dtype=bool)
+    test_mask = np.zeros(n, dtype=bool)
+
+    unique_labels = np.unique(labels)
+    for lab in unique_labels:
+        idx = np.where(labels == lab)[0]
+        rng.shuffle(idx)
+        n_lab = len(idx)
+        n_train = max(1, int(n_lab * train_frac))
+        n_val = max(0, int(n_lab * val_frac))
+        # Ensure at least one test sample when possible
+        if n_lab > 2:
+            n_val = min(n_val, n_lab - n_train - 1)
+            n_val = max(0, n_val)
+        train_mask[idx[:n_train]] = True
+        val_mask[idx[n_train : n_train + n_val]] = True
+        test_mask[idx[n_train + n_val :]] = True
+
+    return train_mask, val_mask, test_mask
+
+
+# ---------------------------------------------------------------------------
 # Model builders
 # ---------------------------------------------------------------------------
 
@@ -226,16 +266,27 @@ def build_hgnn_model(conv_name, incidence, *, key):
 # ---------------------------------------------------------------------------
 
 
-def train_model(model, is_sheaf, hg, labels, epochs, *, key):
-    """Train a model with cross-entropy loss, return losses and final F1."""
+def train_model(model, is_sheaf, hg, labels, epochs, masks, *, key, patience=20):
+    """Train a model with cross-entropy loss on train split.
+
+    Uses val split for early stopping and reports final metrics on test split.
+
+    Parameters
+    ----------
+    masks : tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
+        Boolean arrays (train_mask, val_mask, test_mask).
+    patience : int
+        Number of epochs without val loss improvement before early stopping.
+
+    Returns
+    -------
+    model, losses, val_losses, test_macro_f1, elapsed
+    """
+    train_mask, val_mask, test_mask = masks
     optimizer = optax.adam(3e-3)
 
     if is_sheaf:
         sheaf, readout = model
-        params = (
-            eqx.filter(sheaf, eqx.is_array),
-            eqx.filter(readout, eqx.is_array),
-        )
 
         # Flatten for optax: use the combined model as a single pytree
         class _SheafModel(eqx.Module):
@@ -252,49 +303,92 @@ def train_model(model, is_sheaf, hg, labels, epochs, *, key):
 
     if is_sheaf:
 
-        def loss_fn(m, hg, labels):
+        def loss_fn(m, hg, labels, mask):
             logits = m(hg)
             log_probs = jax.nn.log_softmax(logits, axis=-1)
             one_hot = jax.nn.one_hot(labels, num_classes=NUM_MODULES)
-            return -jnp.mean(jnp.sum(one_hot * log_probs, axis=-1))
+            per_node = -jnp.sum(one_hot * log_probs, axis=-1)
+            return jnp.sum(per_node * mask) / jnp.maximum(jnp.sum(mask), 1.0)
 
     else:
 
-        def loss_fn(m, hg, labels):
+        def loss_fn(m, hg, labels, mask):
             logits = m(hg, inference=True)
             log_probs = jax.nn.log_softmax(logits, axis=-1)
             one_hot = jax.nn.one_hot(labels, num_classes=NUM_MODULES)
-            return -jnp.mean(jnp.sum(one_hot * log_probs, axis=-1))
+            per_node = -jnp.sum(one_hot * log_probs, axis=-1)
+            return jnp.sum(per_node * mask) / jnp.maximum(jnp.sum(mask), 1.0)
 
     @eqx.filter_jit
-    def step(model, opt_state, hg, labels):
-        loss, grads = eqx.filter_value_and_grad(loss_fn)(model, hg, labels)
+    def step(model, opt_state, hg, labels, mask):
+        loss, grads = eqx.filter_value_and_grad(loss_fn)(model, hg, labels, mask)
         updates, new_opt = optimizer.update(grads, opt_state, model)
         return eqx.apply_updates(model, updates), new_opt, loss
 
+    @eqx.filter_jit
+    def eval_loss(model, hg, labels, mask):
+        return loss_fn(model, hg, labels, mask)
+
+    jnp_train = jnp.array(train_mask, dtype=jnp.float32)
+    jnp_val = jnp.array(val_mask, dtype=jnp.float32)
+
     losses = []
+    val_losses = []
+    best_val_loss = float("inf")
+    best_model = model
+    epochs_no_improve = 0
+
     t_start = time.time()
     for epoch in range(epochs):
-        model, opt_state, loss = step(model, opt_state, hg, labels)
+        model, opt_state, loss = step(model, opt_state, hg, labels, jnp_train)
         losses.append(float(loss))
+
+        # Evaluate on validation set
+        v_loss = float(eval_loss(model, hg, labels, jnp_val))
+        val_losses.append(v_loss)
+
+        # Early stopping / model selection on val loss
+        if v_loss < best_val_loss:
+            best_val_loss = v_loss
+            best_model = model
+            epochs_no_improve = 0
+        else:
+            epochs_no_improve += 1
+
         if (epoch + 1) % max(1, epochs // 5) == 0:
             if is_sheaf:
                 preds = jnp.argmax(model(hg), axis=-1)
             else:
                 preds = jnp.argmax(model(hg, inference=True), axis=-1)
-            acc = float(jnp.mean(preds == labels))
-            print(f"    Epoch {epoch+1:4d}  loss={loss:.4f}  acc={acc:.1%}")
+            train_acc = float(
+                jnp.sum((preds == labels) * jnp_train) / jnp.maximum(jnp.sum(jnp_train), 1.0)
+            )
+            val_acc = float(
+                jnp.sum((preds == labels) * jnp_val) / jnp.maximum(jnp.sum(jnp_val), 1.0)
+            )
+            print(
+                f"    Epoch {epoch+1:4d}  train_loss={loss:.4f}"
+                f"  val_loss={v_loss:.4f}  train_acc={train_acc:.1%}"
+                f"  val_acc={val_acc:.1%}"
+            )
+
+        if epochs_no_improve >= patience:
+            print(f"    Early stopping at epoch {epoch+1} (patience={patience})")
+            break
 
     elapsed = time.time() - t_start
 
-    # Final predictions and F1
+    # Final predictions on best model, evaluated on test set
     if is_sheaf:
-        preds = jnp.argmax(model(hg), axis=-1)
+        preds = jnp.argmax(best_model(hg), axis=-1)
     else:
-        preds = jnp.argmax(model(hg, inference=True), axis=-1)
-    macro_f1 = compute_macro_f1(preds, labels, NUM_MODULES)
+        preds = jnp.argmax(best_model(hg, inference=True), axis=-1)
 
-    return model, losses, macro_f1, elapsed
+    test_preds = preds[test_mask]
+    test_labels = labels[test_mask]
+    test_macro_f1 = compute_macro_f1(test_preds, test_labels, NUM_MODULES)
+
+    return best_model, losses, val_losses, test_macro_f1, elapsed
 
 
 # ---------------------------------------------------------------------------
@@ -399,6 +493,16 @@ def main():
     print(f"  Incidence shape: {incidence.shape}")
     print(f"  Feature shape:   {features.shape}")
 
+    # --- Stratified train / val / test split ---
+    n_nodes = int(features.shape[0])
+    labels_np = np.array(module_labels)
+    train_mask, val_mask, test_mask = make_split(n_nodes, labels_np, args.seed)
+    masks = (train_mask, val_mask, test_mask)
+    print(
+        f"  Split: {train_mask.sum()} train, {val_mask.sum()} val, "
+        f"{test_mask.sum()} test"
+    )
+
     # --- Train each convolution model ---
     results = {}
     for conv_name in CONV_NAMES:
@@ -408,11 +512,16 @@ def main():
 
         k_model, key = jax.random.split(key)
         model, is_sheaf = build_hgnn_model(conv_name, incidence, key=k_model)
-        _, losses, macro_f1, elapsed = train_model(
-            model, is_sheaf, hg, module_labels, args.epochs, key=k_model
+        _, losses, val_losses, macro_f1, elapsed = train_model(
+            model, is_sheaf, hg, module_labels, args.epochs, masks, key=k_model
         )
-        results[conv_name] = {"losses": losses, "macro_f1": macro_f1, "time": elapsed}
-        print(f"  Macro F1: {macro_f1:.3f}  |  Time: {elapsed:.1f}s")
+        results[conv_name] = {
+            "losses": losses,
+            "val_losses": val_losses,
+            "macro_f1": macro_f1,
+            "time": elapsed,
+        }
+        print(f"  Test Macro F1: {macro_f1:.3f}  |  Time: {elapsed:.1f}s")
 
     # --- Quantify higher-order benefit ---
     baseline_f1 = results["UniGCNConv"]["macro_f1"]
@@ -420,18 +529,18 @@ def main():
     ho_gap = thnn_f1 - baseline_f1
 
     print("\n" + "=" * 64)
-    print("  Summary")
+    print("  Summary  (test-set metrics)")
     print("=" * 64)
     for name in CONV_NAMES:
         r = results[name]
         gap = r["macro_f1"] - baseline_f1
         marker = " ***" if name == "THNNConv" else ""
         print(
-            f"  {name:20s}  F1={r['macro_f1']:.3f}"
+            f"  {name:20s}  Test F1={r['macro_f1']:.3f}"
             f"  (delta={gap:+.3f})  {r['time']:.1f}s{marker}"
         )
 
-    print(f"\n  Higher-order benefit (THNNConv - UniGCNConv): {ho_gap:+.3f} F1")
+    print(f"\n  Higher-order benefit (THNNConv - UniGCNConv): {ho_gap:+.3f} test F1")
 
     # --- Figure 2C: Bar chart of macro F1 per convolution ---
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
@@ -443,7 +552,7 @@ def main():
     bars = ax.bar(x_pos, f1_vals, color=colors, edgecolor="black", linewidth=0.8)
     ax.set_xticks(x_pos)
     ax.set_xticklabels([CONV_DISPLAY[n] for n in CONV_NAMES], fontsize=9)
-    ax.set_ylabel("Macro F1", fontsize=12)
+    ax.set_ylabel("Test Macro F1", fontsize=12)
     ax.set_title("C. Module Detection: Convolution Comparison", fontsize=13)
     ax.set_ylim(0, 1.05)
     ax.grid(True, alpha=0.3, axis="y")
@@ -472,23 +581,32 @@ def main():
             arrowprops=dict(arrowstyle="->", color="firebrick", lw=1.5),
         )
 
-    # --- Figure 2D: Training loss curves ---
+    # --- Figure 2D: Training & validation loss curves ---
     ax = axes[1]
     linestyles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1))]
     for i, conv_name in enumerate(CONV_NAMES):
         losses = results[conv_name]["losses"]
+        val_losses = results[conv_name]["val_losses"]
         ax.plot(
             losses,
-            label=conv_name,
+            label=f"{conv_name} (train)",
             color=CONV_COLORS[conv_name],
             linestyle=linestyles[i],
             linewidth=1.8,
         )
+        ax.plot(
+            val_losses,
+            label=f"{conv_name} (val)",
+            color=CONV_COLORS[conv_name],
+            linestyle=linestyles[i],
+            linewidth=1.0,
+            alpha=0.5,
+        )
     ax.set_yscale("log")
     ax.set_xlabel("Epoch", fontsize=12)
     ax.set_ylabel("Cross-Entropy Loss (log scale)", fontsize=12)
-    ax.set_title("D. Training Convergence", fontsize=13)
-    ax.legend(fontsize=9, loc="upper right")
+    ax.set_title("D. Training & Validation Convergence", fontsize=13)
+    ax.legend(fontsize=7, loc="upper right", ncol=2)
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
