@@ -140,7 +140,7 @@ The 720-regulon classification task was a poor benchmark — 258 of 397 classes 
 1. **Standard benchmarks (Citeseer/Pubmed)**: Cora validated (79.27%), Citeseer and Pubmed runs in progress
 2. **Re-run validation on DGX Spark**: BRI metrics and real CROP-seq data integrated in scripts but need re-run with preprocessed data (requires Spark or local data/processed/)
 3. **Second dataset**: Nature 2026 paper (Pollen lab CRISPRi Perturb-seq) — plan in progress, not yet started
-4. **Poincare analysis**: Failed due to dimension mismatch (needs obs_dim=fd not hardcoded)
+4. **Poincare analysis**: Dimension mismatch fixed (obs_dim=fd not hardcoded) in commit cac6cba
 5. **Cross-species**: C. elegans data loaders work on Spark but not Colab
 6. **THNNConv integration**: Root cause diagnosed, fix_thnn.py created, needs integration into hgx core
 

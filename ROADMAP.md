@@ -34,7 +34,7 @@
 
 ### 2C: Poincare Embeddings
 
-- Fix dimension mismatch in LatentHypergraphODE
+- [x] Fix dimension mismatch in LatentHypergraphODE (fixed in cac6cba)
 - Compare Gromov delta: Poincare vs Euclidean on real lineage tree
 - Validate tree-like structure of cell fate decisions
 
@@ -85,7 +85,7 @@
 - [x] Fix THNNConv NaN stability — root cause: sum-of-logs overflow, not gradient clipping. fix_thnn.py created
 - [x] Fix SheafDiffusion OOM — edge_stalk_dim capped
 - [ ] Integrate THNNConv fix into hgx core
-- [ ] Fix Poincare LatentODE dimension handling
+- [x] Fix Poincare LatentODE dimension handling (fixed in cac6cba)
 - [x] Improve perturbation training data — real CROP-seq DE from Fig. 5 + multi-hop GRN propagation
 - [ ] Add proper train/val/test splits for module detection
 - [ ] Add cross-validation to all analyses
