@@ -21,6 +21,7 @@ Usage:
     uv run python scripts/accuracy_ablation.py
     uv run python scripts/accuracy_ablation.py --data-dir data/processed --epochs 300
     uv run python scripts/accuracy_ablation.py --seed 0
+    uv run python scripts/accuracy_ablation.py --cv-folds 5
 """
 
 from __future__ import annotations
@@ -149,6 +150,49 @@ def make_split(
         test_mask[idx[n_train + n_val :]] = True
 
     return train_mask, val_mask, test_mask
+
+
+def make_kfold_splits(
+    n: int,
+    labels: np.ndarray,
+    k: int,
+    seed: int,
+) -> list[tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    """Return K sets of (train, val, test) boolean masks via stratified K-fold.
+
+    Each fold uses one partition as the test set.  The remaining K-1 partitions
+    are further split 75/25 (stratified) into train/val.
+    """
+    rng = np.random.RandomState(seed)
+
+    # Assign each sample to a fold, stratified by label
+    fold_ids = np.full(n, -1, dtype=int)
+    for lab in np.unique(labels):
+        idx = np.where(labels == lab)[0]
+        rng.shuffle(idx)
+        folds_for_lab = np.array_split(idx, min(k, len(idx)))
+        for fi, chunk in enumerate(folds_for_lab):
+            fold_ids[chunk] = fi % k
+
+    splits = []
+    for test_fold in range(k):
+        test_mask = fold_ids == test_fold
+        remaining = ~test_mask
+        remaining_idx = np.where(remaining)[0]
+        remaining_labels = labels[remaining_idx]
+
+        # Split remaining into train (75%) / val (25%), stratified
+        train_mask = np.zeros(n, dtype=bool)
+        val_mask = np.zeros(n, dtype=bool)
+        for lab in np.unique(remaining_labels):
+            idx_in_rem = remaining_idx[remaining_labels == lab]
+            rng.shuffle(idx_in_rem)
+            n_train = max(1, int(len(idx_in_rem) * 0.75))
+            train_mask[idx_in_rem[:n_train]] = True
+            val_mask[idx_in_rem[n_train:]] = True
+
+        splits.append((train_mask, val_mask, test_mask))
+    return splits
 
 
 # ---------------------------------------------------------------------------
@@ -798,6 +842,144 @@ def run_task_comparison(
 
 
 # ---------------------------------------------------------------------------
+# Part 3-4 (CV): K-fold cross-validated task x convolution comparison
+# ---------------------------------------------------------------------------
+
+def run_task_comparison_cv(
+    data: dict, seed: int, epochs: int, k: int,
+) -> list[dict]:
+    """Run K-fold CV for all tasks x all convolutions.
+
+    Returns a list of per-task/conv dicts with mean/std metrics across folds.
+    """
+    print("\n" + "=" * 72)
+    print(f"  PART 3-4: TASK x CONVOLUTION COMPARISON ({k}-fold CV)")
+    print("=" * 72)
+
+    features = data["node_features_pca"]
+    incidence_np = data["incidence"]
+
+    if features is None or incidence_np is None:
+        print("  SKIPPED: data not available.")
+        return []
+
+    in_dim = features.shape[1]
+    n_nodes = features.shape[0]
+
+    incidence_jnp = jnp.array(incidence_np)
+    features_jnp = jnp.array(features)
+    hg = hgx.from_incidence(incidence_jnp, node_features=features_jnp)
+
+    tasks = build_task_labels(data, seed)
+    print(f"\n  Tasks: {list(tasks.keys())}")
+    for tname, (labels, nc, desc) in tasks.items():
+        print(f"    {tname}: {desc}")
+
+    conv_names = ["UniGCNConv", "UniGATConv", "UniGINConv"]
+    base_key = jax.random.PRNGKey(seed)
+
+    lr = 1e-3
+    hidden = 128
+    n_layers = 2
+    dropout = 0.1
+
+    results = []
+
+    for task_name, (labels_np, num_classes, desc) in tasks.items():
+        print(f"\n  === Task: {task_name} ({num_classes} classes, {k}-fold CV) ===")
+
+        labels_jnp = jnp.array(labels_np)
+        fold_splits = make_kfold_splits(n_nodes, labels_np, k, seed)
+
+        random_acc = 1.0 / num_classes
+        print(f"    Random baseline: {random_acc:.4f}")
+
+        for conv_name in conv_names:
+            fold_metrics = []
+            for fi, (tr_np, va_np, te_np) in enumerate(fold_splits):
+                key = jax.random.fold_in(
+                    base_key,
+                    abs(hash((task_name, conv_name, fi))) % (2**31),
+                )
+                model = build_model(
+                    conv_name, in_dim, hidden, n_layers, num_classes,
+                    dropout, key,
+                )
+                metrics = train_and_evaluate(
+                    model, hg, labels_jnp,
+                    jnp.array(tr_np), jnp.array(va_np), jnp.array(te_np),
+                    num_classes, lr, epochs, verbose=False,
+                )
+                fold_metrics.append(metrics)
+
+            # Aggregate across folds
+            test_accs = [m["test_acc"] for m in fold_metrics]
+            val_accs = [m["val_acc"] for m in fold_metrics]
+            train_accs = [m["train_acc"] for m in fold_metrics]
+            times = [m["train_time"] for m in fold_metrics]
+            row = {
+                "task": task_name,
+                "num_classes": num_classes,
+                "conv": conv_name,
+                "lr": lr,
+                "hidden": hidden,
+                "layers": n_layers,
+                "dropout": dropout,
+                "test_acc": float(np.mean(test_accs)),
+                "test_acc_std": float(np.std(test_accs)),
+                "val_acc": float(np.mean(val_accs)),
+                "val_acc_std": float(np.std(val_accs)),
+                "train_acc": float(np.mean(train_accs)),
+                "train_time": float(np.sum(times)),
+                "cv_folds": k,
+            }
+            results.append(row)
+            print(
+                f"    {conv_name:14s}  "
+                f"test={row['test_acc']:.4f}\u00b1{row['test_acc_std']:.4f}  "
+                f"val={row['val_acc']:.4f}\u00b1{row['val_acc_std']:.4f}  "
+                f"train={row['train_acc']:.4f}  "
+                f"time={row['train_time']:.1f}s"
+            )
+
+    return results
+
+
+def print_results_table_cv(task_results: list[dict]) -> None:
+    """Print formatted results table for K-fold CV runs."""
+    if not task_results:
+        return
+    k = task_results[0].get("cv_folds", "?")
+    print(f"\n  --- Task x Convolution Comparison ({k}-fold CV) ---")
+    header = (
+        f"  {'Task':<20s} {'Classes':>8s} {'Conv':>14s} "
+        f"{'Test':>14s} {'Val':>14s} {'Train':>8s} {'Time':>7s}"
+    )
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+    for r in task_results:
+        test_str = f"{r['test_acc']:.4f}\u00b1{r.get('test_acc_std', 0):.4f}"
+        val_str = f"{r['val_acc']:.4f}\u00b1{r.get('val_acc_std', 0):.4f}"
+        print(
+            f"  {r['task']:<20s} {r['num_classes']:>8d} "
+            f"{r['conv']:>14s} {test_str:>14s} "
+            f"{val_str:>14s} {r['train_acc']:>8.4f} "
+            f"{r['train_time']:>6.1f}s"
+        )
+
+    print("\n  Best per task:")
+    task_names = sorted(set(r["task"] for r in task_results))
+    for tname in task_names:
+        task_rows = [r for r in task_results if r["task"] == tname]
+        best = max(task_rows, key=lambda r: r["test_acc"])
+        print(
+            f"    {tname:<20s}  {best['conv']:>14s}  "
+            f"test_acc={best['test_acc']:.4f}"
+            f"\u00b1{best.get('test_acc_std', 0):.4f}"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Part 5: Output table and figure
 # ---------------------------------------------------------------------------
 
@@ -1063,6 +1245,12 @@ def main():
         default=42,
         help="Random seed (default: 42)",
     )
+    parser.add_argument(
+        "--cv-folds",
+        type=int,
+        default=0,
+        help="K-fold cross-validation folds (default: 0 = disabled, single split)",
+    )
     args = parser.parse_args()
 
     data_dir = args.data_dir if args.data_dir is not None else detect_data_dir()
@@ -1073,6 +1261,7 @@ def main():
     print(f"  Data dir:  {data_dir}")
     print(f"  Epochs:    {args.epochs}")
     print(f"  Seed:      {args.seed}")
+    print(f"  CV folds:  {args.cv_folds if args.cv_folds > 1 else 'disabled'}")
     print(f"  JAX:       {jax.__version__} (devices: {jax.devices()})")
     print()
 
@@ -1087,12 +1276,22 @@ def main():
     ablation_results = run_ablation(data, seed=args.seed, epochs=args.epochs)
 
     # --- Part 3-4: Task x Convolution comparison ---
-    task_results = run_task_comparison(
-        data, seed=args.seed, epochs=args.epochs
-    )
+    if args.cv_folds > 1:
+        task_results = run_task_comparison_cv(
+            data, seed=args.seed, epochs=args.epochs, k=args.cv_folds,
+        )
+    else:
+        task_results = run_task_comparison(
+            data, seed=args.seed, epochs=args.epochs
+        )
 
     # --- Part 5: Output ---
-    print_results_table(ablation_results, task_results)
+    if args.cv_folds > 1:
+        # Ablation table (not CV'd) + CV task table
+        print_results_table(ablation_results, [])
+        print_results_table_cv(task_results)
+    else:
+        print_results_table(ablation_results, task_results)
     fig_path = FIG_DIR / "accuracy_ablation.png"
     save_figure(ablation_results, task_results, fig_path)
 
