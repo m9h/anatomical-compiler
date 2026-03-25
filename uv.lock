@@ -860,7 +860,7 @@ wheels = [
 [[package]]
 name = "organoid-hgx-benchmark"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "anndata" },
     { name = "diffrax" },
