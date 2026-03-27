@@ -1,0 +1,334 @@
+{
+  "fleck_n_tfs": 720,
+  "known_datasets": [
+    {
+      "name": "Pollen/Ding 2D Screen",
+      "paper": "Ding, Pollen et al. Nature 2026",
+      "system": "Primary cortex, 2D CRISPRi",
+      "cells": 137317,
+      "n_perturbed_genes": 44,
+      "accession": "GSE284197 (screen.h5ad)",
+      "status": "PROCESSED",
+      "perturbed_genes": "ARX, ASCL1, ATF7, BHLHE22, CTCF, DEAF1, E2F1, EMX1, FOS, JUN, KAT7, KLF10, KLF11, KLF3, MEF2C, MEIS2, NEUROD2, NEUROD6, NFIA, NFIB, NR2E1, NR4A2, PHF21A, POU2F1, POU3F1, POU3F2, RFX2, SATB2, SOX2, SOX5, SOX6, SOX9, TBR1, TCF12, TCF3, TCF7L1, TFAP2C, VEZF1, ZBTB18, ZBTB20, ZNF148, ZNF219, ZNF281, ZNF441"
+    },
+    {
+      "name": "Pollen/Ding Slice",
+      "paper": "Ding, Pollen et al. Nature 2026",
+      "system": "Primary cortex, 3D slice CRISPRi",
+      "cells": 18082,
+      "n_perturbed_genes": 5,
+      "accession": "GSE284197 (slice.h5ad)",
+      "status": "PROCESSED",
+      "perturbed_genes": "ARX, NEUROD2, NR2E1, SOX2, ZNF219"
+    },
+    {
+      "name": "Pollen/Ding IN",
+      "paper": "Ding, Pollen et al. Nature 2026",
+      "system": "Interneurons, CRISPRi",
+      "cells": 31584,
+      "n_perturbed_genes": 5,
+      "accession": "GSE284197 (IN.h5ad)",
+      "status": "PROCESSED",
+      "perturbed_genes": "ARX, NEUROD2, NR2E1, SOX2, ZNF219"
+    },
+    {
+      "name": "Sharf/Li CHOOSE",
+      "paper": "Li, Sharf et al. Nature 2023",
+      "system": "Telencephalic organoid, CRISPR KO",
+      "cells": 12128,
+      "n_perturbed_genes": 36,
+      "accession": "Zenodo 7083558",
+      "status": "PROCESSED",
+      "perturbed_genes": "ADNP, ARID1B, ASH1L, ASXL3, BAZ2B, BCL11A, CHD2, CHD8, CIC, DDX3X, DEAF1, FOXP1, ILF2, IRF2BPL, KAT2B, KDM5B, KDM6A, KDM6B, KMT2A, KMT2C, KMT5B, LEO1, MECP2, MED13, MED13L, MYT1L, PHF3, POGZ, SETD5, SMARCC2, SRCAP, SRSF11, TBL1XR1, TBR1, TCF20, WAC"
+    },
+    {
+      "name": "Paulsen Assembloid",
+      "paper": "Paulsen et al. Nature 2023",
+      "system": "Forebrain assembloid, CRISPR (guide enrichment)",
+      "cells": "~1000 assembloids (pooled screen)",
+      "n_perturbed_genes": 425,
+      "accession": "Unknown \u2014 check paper",
+      "status": "NOT PROCESSED \u2014 readout may be guide enrichment, not scRNA-seq per perturbation",
+      "perturbed_genes": "425 NDD genes (CSDE1, SMAD4, LNPK, + 422 others)",
+      "note": "Largest neural CRISPR screen but readout is FACS-based guide enrichment, not full transcriptomes per perturbation"
+    },
+    {
+      "name": "Fleck organoid GRN",
+      "paper": "Fleck et al. Nature 2023",
+      "system": "Cerebral organoid, Pando multiome GRN",
+      "cells": 49718,
+      "n_perturbed_genes": 8,
+      "accession": "Zenodo 5242913",
+      "status": "PROCESSED (reference GRN)",
+      "perturbed_genes": "GLI3, FOXG1, TBR1, DLX1, DLX2, EMX1, EOMES, NEUROD6 (simulated KO)"
+    },
+    {
+      "name": "Zenk/Fleck EpiScape",
+      "paper": "Zenk, Fleck et al. Nat Neurosci 2024",
+      "system": "Brain organoid, scCUT&Tag + scRNA-seq",
+      "cells": 150000,
+      "n_perturbed_genes": 0,
+      "accession": "episcape.ethz.ch (browser only)",
+      "status": "NOT PROCESSED \u2014 no downloadable GRN, Pando GRN not exported",
+      "perturbed_genes": "EED inhibitor (global epigenomic, not TF-specific)",
+      "note": "Valuable for epigenomic validation of GRN edges but requires PI contact for data"
+    }
+  ],
+  "overlap_summary": [
+    {
+      "name": "Pollen/Ding 2D Screen",
+      "n_overlap": 34,
+      "overlap_genes": [
+        "ARX",
+        "ASCL1",
+        "BHLHE22",
+        "CTCF",
+        "E2F1",
+        "EMX1",
+        "FOS",
+        "JUN",
+        "KLF10",
+        "KLF11",
+        "KLF3",
+        "MEF2C",
+        "MEIS2",
+        "NEUROD2",
+        "NEUROD6",
+        "NFIA",
+        "NFIB",
+        "NR2E1",
+        "NR4A2",
+        "POU2F1",
+        "POU3F1",
+        "POU3F2",
+        "RFX2",
+        "SOX2",
+        "SOX5",
+        "SOX6",
+        "SOX9",
+        "TBR1",
+        "TCF12",
+        "TCF7L1",
+        "TFAP2C",
+        "ZBTB18",
+        "ZBTB20",
+        "ZNF441"
+      ]
+    },
+    {
+      "name": "Pollen/Ding Slice",
+      "n_overlap": 4,
+      "overlap_genes": [
+        "ARX",
+        "NEUROD2",
+        "NR2E1",
+        "SOX2"
+      ]
+    },
+    {
+      "name": "Pollen/Ding IN",
+      "n_overlap": 4,
+      "overlap_genes": [
+        "ARX",
+        "NEUROD2",
+        "NR2E1",
+        "SOX2"
+      ]
+    },
+    {
+      "name": "Sharf/Li CHOOSE",
+      "n_overlap": 4,
+      "overlap_genes": [
+        "BCL11A",
+        "FOXP1",
+        "MYT1L",
+        "TBR1"
+      ]
+    },
+    {
+      "name": "Paulsen Assembloid",
+      "n_overlap": 0,
+      "overlap_genes": []
+    },
+    {
+      "name": "Fleck organoid GRN",
+      "n_overlap": 7,
+      "overlap_genes": [
+        "DLX1",
+        "DLX2",
+        "EMX1",
+        "EOMES",
+        "FOXG1",
+        "GLI3",
+        "TBR1"
+      ]
+    },
+    {
+      "name": "Zenk/Fleck EpiScape",
+      "n_overlap": 0,
+      "overlap_genes": []
+    }
+  ],
+  "geo_results": [
+    {
+      "uid": "200325956",
+      "accession": "GSE325956",
+      "title": "Thalamic NRXN1-Mediated Input to Human Cortical Progenitors Drives Excitatory Neurogenesis",
+      "n_samples": 43,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "According to the protocortex hypothesis, extrinsic thalamic signaling is necessary for refining cortical areas and cell types, but the mechanism by which these inputs shape human cortex development re"
+    },
+    {
+      "uid": "200325515",
+      "accession": "GSE325515",
+      "title": "H2AC19 acts as a novel regulator of angiogenesis to promote the progression of lung adenocarcinoma",
+      "n_samples": 6,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Background: Angiogenesis is a significant character of lung adenocarcinoma (LUAD) and is an important reason leading to high mortality rates of LUAD patients. Identification of potential therapeutic t"
+    },
+    {
+      "uid": "200311503",
+      "accession": "GSE311503",
+      "title": "Mismatch tolerance of a gRNA for CRISPR-based gene activation confers broad activity critical for cell reprogramming [perturb-seq]",
+      "n_samples": 4,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "CRISPR activation and interference systems (CRISPRa/i) are widely used for programmable transcriptional control without introducing DNA edits. Although these technologies are capable of highly specifi"
+    },
+    {
+      "uid": "200311365",
+      "accession": "GSE311365",
+      "title": "Mismatch tolerance of a gRNA for CRISPR-based gene activation confers broad activity critical for cell reprogramming [FOXO4_gRNAs_RNAseq]",
+      "n_samples": 15,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "CRISPR activation and interference systems (CRISPRa/i) are widely used for programmable transcriptional control without introducing DNA edits. Although these technologies are capable of highly specifi"
+    },
+    {
+      "uid": "200311364",
+      "accession": "GSE311364",
+      "title": "Mismatch tolerance of a gRNA for CRISPR-based gene activation confers broad activity critical for cell reprogramming [RNA-Seq]",
+      "n_samples": 6,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "CRISPR activation and interference systems (CRISPRa/i) are widely used for programmable transcriptional control without introducing DNA edits. Although these technologies are capable of highly specifi"
+    },
+    {
+      "uid": "200294290",
+      "accession": "GSE294290",
+      "title": "The deubiquitinase OTULIN regulates tau expression in neurons [sAD2.1_WTC11_iPSNs]",
+      "n_samples": 6,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Degradation of aggregation-prone tau is regulated by the ubiquitin-proteasome system (UPS) and autophagy, which are impaired in Alzheimer\u2019s disease (AD) and related tauopathies causing tau aggregation"
+    },
+    {
+      "uid": "200324430",
+      "accession": "GSE324430",
+      "title": "Promoter mutagenesis and a massively parallel reporter screen of the MAPT locus identifies cis-regulatory elements and genetic variation effects [RNA-seq]",
+      "n_samples": 88,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Tau neurofibrillary tangles are a hallmark of several neurodegenerative diseases called tauopathies, including frontotemporal dementia and Alzheimer's Disease. Ongoing clinical trials for tauopathies "
+    },
+    {
+      "uid": "200305070",
+      "accession": "GSE305070",
+      "title": "Single-nucleus multiome ATAC-seq and RNA-seq analysis of GCM1 knockout in rotational human tropholast organoids",
+      "n_samples": 4,
+      "type": "Expression profiling by high throughput sequencing; Genome binding/occupancy profiling by high throughput sequencing",
+      "summary": "Single nuclei were isolated from organoids to investigate the effects of GCM1 knockout and AAVS1 knockout (as control) on chromatin accessibility and gene expression profiles. Approximately 10,000 nuc"
+    },
+    {
+      "uid": "200282771",
+      "accession": "GSE282771",
+      "title": "CD47 activates ROBO2 signaling to regulate glioblastoma cell plasticity and metabolism",
+      "n_samples": 6,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "CD47 inhibits phagocytosis by myeloid cells, contributing to immune evasion by cancer cells. Although CD47-blocking antibodies have shown promise in treating various malignancies, their efficacy in gl"
+    },
+    {
+      "uid": "200270074",
+      "accession": "GSE270074",
+      "title": "Autophagy controls neuronal differentiation by regulating the WNT/DVL signal pathway",
+      "n_samples": 6,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Development of human embryonic stem cells (hESCs) technology provides a powerful tool to understand the mechanism of various diseases, as well as a model for human developmental study in vitro. In thi"
+    },
+    {
+      "uid": "200322519",
+      "accession": "GSE322519",
+      "title": "Cancerformer: A CRISPR Screen-benchmarked Multimodal AI Platform for Predication of Cancer Dependencies in Patient-derived Organoids",
+      "n_samples": 3,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Dissection of cancer dependencies is the central topic of cancer research. Recent advance in artificial intelligence (AI) has provided the opportunies of rapid predication of cancer essential genes. H"
+    },
+    {
+      "uid": "200322198",
+      "accession": "GSE322198",
+      "title": "Female iPSC X-chromosome inactivation (XCI) erosion and its transcriptomic effects during CRISPR gene editing and neural differentiation",
+      "n_samples": 228,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Human induced pluripotent stem cells (hiPSC) and iPSC-differentiated neural cells, in combination with CRISPR editing, are commonly used for studying neurodevelopmental and other brain disorders. Fema"
+    },
+    {
+      "uid": "200319096",
+      "accession": "GSE319096",
+      "title": "A CRISPR screen in human iPSC-derived neurons reveals convergent transcriptomic effects of neurodevelopmental disorder genes",
+      "n_samples": 32,
+      "type": "Expression profiling by high throughput sequencing; Other",
+      "summary": "Diverse risk genes have been identified for neurodevelopmental disorders (NDDs), but how these genes converge on similar biological pathways in neurons, and thus give rise to similar phenotypes, is un"
+    },
+    {
+      "uid": "200292425",
+      "accession": "GSE292425",
+      "title": "Metabolic Atlas of Early Human Cortex Identifies Regulators of Cell Fate Transitions",
+      "n_samples": 27,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Characterization of cell type emergence during human cortical development, which enables unique human cognition, has focused primarily on anatomical and transcriptional characterizations. Metabolic pr"
+    },
+    {
+      "uid": "200290306",
+      "accession": "GSE290306",
+      "title": "ZBTB7B Inhibits Glioma Tumorigenicity by Upregulating GPR17 and CXCL10",
+      "n_samples": 4,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Background: We utilized a CRISPR-Cas9 screening library to examine the functions of tumor-related genes. Among these, we identified the transcription factor ZBTB7B, which overexpressed in breast cance"
+    },
+    {
+      "uid": "200293576",
+      "accession": "GSE293576",
+      "title": "Partial truncation of the C-terminal domain of PTCH1 in cancer promotes tumorigenesis by non-canonical activation of GLI transcriptional activity.",
+      "n_samples": 9,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Loss of function mutations of the Hedgehog receptor PTCH1 are oncogenic drivers in some skin and brain cancers. We recently reported mutations in exons encoding the C-terminal tail of PTCH1 in colon c"
+    },
+    {
+      "uid": "200320162",
+      "accession": "GSE320162",
+      "title": "Minimizing far-extending chromatin perturbation in genome editing  preserves stem cell identity [RNA-Seq]",
+      "n_samples": 347,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "While CRISPR/Cas9 holds therapeutic promise, broader application demands understanding complications in vast non-coding regions. We found that CRISPR/Cas9 can cause premature differentiation of neural"
+    },
+    {
+      "uid": "200243065",
+      "accession": "GSE243065",
+      "title": "Minimizing far-extending chromatin perturbation in genome editing preserves stem cell identity",
+      "n_samples": 783,
+      "type": "Genome binding/occupancy profiling by high throughput sequencing; Other; Expression profiling by high throughput sequencing",
+      "summary": "Advancing CRISPR/Cas9 genome editing demands a thorough understanding of its associated risks.Yet, most of risk assessments have focused on the mutagenic effects stemming from off-target cleavage in g"
+    },
+    {
+      "uid": "200304354",
+      "accession": "GSE304354",
+      "title": "A human-specific enhancer modulates chromosomal interactions to promote neurogenesis [human scRNA-seq]",
+      "n_samples": 8,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Changes to the human genome have driven the evolution of human features including a larger neocortex and enhanced cognition. Human Accelerated Regions (HARs) are highly-conserved loci containing human"
+    },
+    {
+      "uid": "200314031",
+      "accession": "GSE314031",
+      "title": "miR126-mediated alteration of vascular integrity in Rett syndrome",
+      "n_samples": 4,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Rett syndrome (RTT) is a neurodevelopmental disorder caused by mutations in methyl-CpG binding protein 2 (MeCP2). MeCP2 is a non-cell type-specific DNA binding protein, and its mutation influences not"
+    }
+  ]
+}

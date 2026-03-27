@@ -13,3 +13,17 @@ wheels/
 data/zenodo/
 data/expression/
 data/processed_old/
+
+# Large h5ad/rds files (download via scripts)
+data/pollen/*.h5ad
+data/choose/*.rds
+data/choose/processed/data.mtx
+data/choose/processed/cells.txt
+
+# Claude memory (private)
+.claude/
+
+# Misc
+adapter.py
+autoresearch/
+results_log.jsonl
