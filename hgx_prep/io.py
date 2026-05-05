@@ -124,6 +124,50 @@ def write_processed(
     return out_dir
 
 
+def to_anndata(processed_dir: Path) -> "ad.AnnData":
+    """Convert a processed directory to an AnnData object for CellFlow.
+
+    Creates an AnnData where:
+      - X: node_features_pca (genes x features)
+      - obs: gene metadata (module_labels, etc.)
+      - uns['grn']: the incidence matrix and TF names
+      - uns['perturbations']: the perturbation masks and effects
+    """
+    import anndata as ad
+
+    processed_dir = Path(processed_dir)
+    features = np.load(processed_dir / "node_features_pca.npy")
+    incidence = np.load(processed_dir / "incidence.npy")
+
+    with open(processed_dir / "gene_names.json") as f:
+        gene_names = json.load(f)
+    with open(processed_dir / "tf_names.json") as f:
+        tf_names = json.load(f)
+
+    adata = ad.AnnData(features)
+    adata.var_names = [f"PC{i+1}" for i in range(features.shape[1])]
+    adata.obs_names = gene_names
+
+    # Add module labels if available
+    if (processed_dir / "module_labels.npy").exists():
+        adata.obs["module"] = np.load(processed_dir / "module_labels.npy")
+
+    # Add GRN to uns
+    adata.uns["grn"] = {
+        "incidence": incidence,
+        "tf_names": tf_names,
+    }
+
+    # Add perturbations
+    if (processed_dir / "perturbation_masks.npy").exists():
+        adata.uns["perturbations"] = {
+            "masks": np.load(processed_dir / "perturbation_masks.npy"),
+            "effects": np.load(processed_dir / "perturbation_effects.npy"),
+        }
+
+    return adata
+
+
 def validate_processed(processed_dir: Path) -> tuple[bool, list[str]]:
     """Check that a processed directory has the required minimum files.
 

@@ -45,6 +45,28 @@ FLECK_2023 = DatasetConfig(
     notes="Pando GRN from pando/coefs.tsv; fate probs from RNA_all_velo.h5ad",
 )
 
+AZBUKINA_2025 = DatasetConfig(
+    name="Azbukina et al. 2025 — Posterior Brain Atlas",
+    doi="10.1101/2025.03.20.644368",
+    zenodo_doi="10.5281/zenodo.14901345",
+    geo="GSE297445",
+    expression_format="h5ad",
+    grn_default="de",
+    has_pseudotime=True,
+    lineage_column="cell_type",
+    notes="Multi-omic atlas of midbrain and hindbrain human neural organoids",
+)
+
+WAHLE_2023 = DatasetConfig(
+    name="Wahle et al. 2023 — Human Retinal Organoid",
+    doi="10.1038/s41587-023-01747-2",
+    expression_format="h5ad",
+    grn_default="de",
+    has_pseudotime=True,
+    has_fates=False,
+    notes="Multimodal spatiotemporal phenotyping of retinal development; CROP-seq available",
+)
+
 POLLEN_2026 = DatasetConfig(
     name="Ding/Pollen et al. 2026 — CRISPRi Perturb-seq",
     doi="10.1038/s41586-025-09997-7",
@@ -75,6 +97,8 @@ def _register(config: DatasetConfig) -> None:
         _REGISTRY[config.geo] = config
 
 _register(FLECK_2023)
+_register(AZBUKINA_2025)
+_register(WAHLE_2023)
 _register(POLLEN_2026)
 
 

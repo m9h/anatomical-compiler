@@ -65,6 +65,18 @@
 - [ ] Transfer prediction: train PerturbationPredictor on Fleck, test on Pollen
 - [ ] Within-Pollen LOO baseline (upper bound for comparison)
 
+### 3C: New Regulome Atlas Extensions
+
+- [ ] **Posterior Brain (Azbukina et al., 2025)**: Midbrain/hindbrain regulomes (snRNA/ATAC)
+  - DOI: 10.1101/2025.03.20.644368 | Zenodo: 10.5281/zenodo.14901345
+  - Target: Identify TF networks for dopaminergic and glycinergic neurons
+- [ ] **Retinal Regulomes (Wahle et al., 2023)**: Spatiotemporal retinal organoid atlas
+  - DOI: 10.1038/s41587-023-01747-2 | ArrayExpress: E-MTAB-12714
+  - Target: Validate hgx on non-brain developmental GRNs (e.g., OTX2 regulon)
+- [ ] **Simulation-Based Inference (SBI)**:
+  - Invert hgx models to estimate GRN posteriors from Pollen/Wahle CRISPRi data
+  - Compare hgx-SBI against standard Pando/GRN-VAE methods
+
 ## Phase 4: Publication
 
 - Comprehensive comparison table: Pando (R, pairwise) vs hgx (JAX, higher-order)
