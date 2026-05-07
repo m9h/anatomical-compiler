@@ -79,6 +79,16 @@ The 720-regulon classification has 258 singleton classes — unlearnable by any 
 | Pseudotime patterns | **PASS** | TBR1, NEUROD6 correctly show late-stage increase |
 | Fate probabilities | **PASS** | DF increases (r=0.80), MH decreases (r=-0.74) along pseudotime |
 
+## Simulation-Based Inference (SBI) & CellFlow
+
+We integrate [CellFlow](https://github.com/m9h/cellflow) (Flow Matching) to perform inverse modeling of CRISPRi perturbation data.
+
+- **Forward modeling**: hgx Hypergraph Neural ODEs simulate TF knockouts.
+- **Inverse modeling**: CellFlow learns velocity fields from real CRISPRi distributions.
+- **SBI Attribution**: Jacobian analysis ($dV/dX$) of the learned flow identifies regulatory drivers and compares them against the biological GRN.
+
+See [SBI_INTEGRATION.md](SBI_INTEGRATION.md) for details.
+
 ## Data
 
 Real processed data from [Zenodo](https://doi.org/10.5281/zenodo.5242913):

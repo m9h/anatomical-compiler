@@ -150,19 +150,26 @@ def analyze_direction_concordance(fleck: dict, pollen: dict) -> dict:
     fleck_gene_idx = {g: i for i, g in enumerate(fleck_genes)}
     pollen_gene_idx = {g: i for i, g in enumerate(pollen_genes)}
 
-    shared_tfs = set(fleck_tfs) & set(pollen_tfs)
-    shared_genes = sorted(set(fleck_genes) & set(pollen_genes))
-
-    if not shared_tfs:
-        print("  No shared TFs — skipping concordance analysis")
-        return {"concordance": None, "reason": "no_shared_tfs"}
-
     fleck_eff = fleck.get("perturbation_effects")
     pollen_eff = pollen.get("perturbation_effects")
 
     if fleck_eff is None or pollen_eff is None:
         print("  Missing perturbation effects arrays")
         return {"concordance": None, "reason": "missing_effects"}
+
+    # Use the explicit key TFs for Fleck if perturbation_effects has only 8 rows
+    fleck_pert_tfs = ["GLI3", "FOXG1", "TBR1", "DLX1", "DLX2", "EMX1", "EOMES", "NEUROD6"]
+    if fleck_eff.shape[0] == len(fleck_pert_tfs):
+        fleck_tfs_for_pert = fleck_pert_tfs
+    else:
+        fleck_tfs_for_pert = fleck_tfs
+
+    shared_tfs_with_pert = sorted(set(fleck_tfs_for_pert) & set(pollen_tfs))
+    shared_genes = sorted(set(fleck_genes) & set(pollen_genes))
+
+    if not shared_tfs_with_pert:
+        print("  No shared TFs with perturbation data — skipping concordance analysis")
+        return {"concordance": None, "reason": "no_shared_tfs"}
 
     results = {}
     all_concordances = []
@@ -171,12 +178,10 @@ def analyze_direction_concordance(fleck: dict, pollen: dict) -> dict:
     print(f"\n  {'TF':<12} {'Shared':>7} {'Concord':>8} {'Pearson_r':>10} {'p-val':>10}")
     print("  " + "-" * 50)
 
-    for tf in sorted(shared_tfs):
+    for tf in shared_tfs_with_pert:
         # Find TF index in each dataset
-        fi = fleck_tfs.index(tf) if tf in fleck_tfs else None
-        pi = pollen_tfs.index(tf) if tf in pollen_tfs else None
-        if fi is None or pi is None:
-            continue
+        fi = fleck_tfs_for_pert.index(tf)
+        pi = pollen_tfs.index(tf)
 
         # Extract effects for shared genes
         f_vals = []

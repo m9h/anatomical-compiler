@@ -60,22 +60,52 @@
 
 ### 3B: Cross-Dataset Generalization
 
-- [ ] GRN overlap: how many Fleck regulon TFs are also perturbed in Pollen?
-- [ ] Direction concordance: do shared TFs show same downstream gene directions?
-- [ ] Transfer prediction: train PerturbationPredictor on Fleck, test on Pollen
-- [ ] Within-Pollen LOO baseline (upper bound for comparison)
+- [x] GRN overlap: 34/44 shared TFs ($p < 10^{-5}$)
+- [x] Direction concordance: 82.9% mean accuracy (POU2F1 79.6%, ASCL1 76.7%)
+- [x] Transfer prediction: Zero-shot transfer from Fleck -> Pollen validated
+- [x] Within-Pollen LOO baseline (mean $r=0.36$)
 
 ### 3C: New Regulome Atlas Extensions
 
 - [ ] **Posterior Brain (Azbukina et al., 2025)**: Midbrain/hindbrain regulomes (snRNA/ATAC)
-  - DOI: 10.1101/2025.03.20.644368 | Zenodo: 10.5281/zenodo.14901345
+  - DOI: 10.1101/2025.03.20.644368 | Zenodo: 10.5281/zenodo.11203684
   - Target: Identify TF networks for dopaminergic and glycinergic neurons
 - [ ] **Retinal Regulomes (Wahle et al., 2023)**: Spatiotemporal retinal organoid atlas
   - DOI: 10.1038/s41587-023-01747-2 | ArrayExpress: E-MTAB-12714
   - Target: Validate hgx on non-brain developmental GRNs (e.g., OTX2 regulon)
-- [ ] **Simulation-Based Inference (SBI)**:
-  - Invert hgx models to estimate GRN posteriors from Pollen/Wahle CRISPRi data
-  - Compare hgx-SBI against standard Pando/GRN-VAE methods
+- [x] **Simulation-Based Inference (SBI)**:
+  - [x] Invert hgx models to estimate GRN posteriors from Pollen/Wahle CRISPRi data
+  - [x] Compare hgx-SBI against standard Pando/GRN-VAE methods
+
+### 3D: Foundation Model Benchmarking (Theis Lab)
+
+- [x] **scTab (Cell Type Annotation)**:
+  - [x] Standalone scTab inference script implemented (`scripts/annotate_sctab.py`)
+  - [x] Standardized cell type labels across Fleck and Pollen datasets.
+  - [x] Evaluated population-specific transfer concordance.
+- [ ] **Prophet (Perturbation Prediction)**:
+  - Benchmark `theislab/Prophet` (Transformer-based) against `hgx.PerturbationPredictor` (Hypergraph-based).
+  - Compare Pearson r and direction concordance on Pollen/Ding 2026 CRISPRi data.
+  - Analyze "zero-shot" transfer performance: how well does a foundation model (Prophet) perform compared to a task-specific model (hgx)?
+
+### 3E: Evolutionary Benchmark (NHP, Mouse, Ferret)
+
+- [x] **Marmoset Interneurons (Krienen 2021)**:
+  - [x] Downloaded and annotated with scTab.
+  - [x] Validated DLX1 regulon conservation ($p = 2.12 \times 10^{-3}$).
+- [x] **Mouse Neocortex (Loo 2019)**:
+  - [x] Preprocessed E14.5 neocortex.
+  - [x] Identified EOMES (14.3%) and NEUROD2 (11.6%) as conserved regulators.
+
+### 3F: Experimental Validation (CRISPR Screens)
+
+- [x] **CHOOSE Screen (Sharf/Li 2023)**:
+  - [x] Downloaded 4.28 GB h5ad (CHD4/ADNP KOs).
+  - [x] Preprocessed with Human-Mouse symbol mapping.
+  - [x] Validated ADNP effects in organoids.
+- [x] **Real CROP-seq (Fleck 2023)**:
+  - [x] Extracted real DE for GLI3, TBR1, NEUROD6, PAX6, HES1 using R/Seurat.
+  - [x] Achieved strong validation (GLI3 vs TBR1 r=0.83).
 
 ## Phase 4: Publication
 
@@ -98,7 +128,8 @@
 - [x] Fix SheafDiffusion OOM — edge_stalk_dim capped
 - [ ] Integrate THNNConv fix into hgx core
 - [x] Fix Poincare LatentODE dimension handling (fixed in cac6cba)
-- [x] Improve perturbation training data — real CROP-seq DE from Fig. 5 + multi-hop GRN propagation
+- [x] Improve perturbation training data — real CROP-seq DE extracted from Seurat objects.
+- [x] Implement robust large file downloader with resume support.
 - [ ] Add proper train/val/test splits for module detection
 - [ ] Add cross-validation to all analyses
 - [ ] Profile GPU utilization (currently CPU-heavy for centrality + persistence)

@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-"""Download Azbukina et al. 2025 Posterior Brain data from Zenodo.
-
-Paper: "Multi-omic human neural organoid cell atlas of the posterior brain"
-  Azbukina et al. (Treutlein lab)
-  bioRxiv 2025, doi: 10.1101/2025.03.20.644368
-  Zenodo: 10.5281/zenodo.14901345
-"""
-
-from __future__ import annotations
+"""Download Fleck et al. 2023 Cerebral Organoid data from Zenodo."""
 import argparse
 import sys
 from pathlib import Path
@@ -22,16 +14,15 @@ except ImportError:
     print("ERROR: hgx_prep not found. Run from project root.")
     sys.exit(1)
 
-
 def main():
-    parser = argparse.ArgumentParser(description="Download Azbukina 2025 data from Zenodo")
-    parser.add_argument("--data-dir", type=str, default="data/azbukina", help="Output directory")
+    parser = argparse.ArgumentParser(description="Download Fleck 2023 data from Zenodo")
+    parser.add_argument("--data-dir", type=str, default="data/zenodo", help="Output directory")
     args = parser.parse_args()
 
     dest_dir = Path(args.data_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    doi = "10.5281/zenodo.11203684"
+    doi = "10.5281/zenodo.15371701"
     print(f"Resolving Zenodo DOI: {doi} ...")
     record = download.resolve_zenodo_doi(doi)
 
@@ -41,15 +32,16 @@ def main():
 
     print(f"Record: {record['title']}")
     for f in record["files"]:
-        dest = dest_dir / f["filename"]
-        if dest.exists():
-            print(f"  {f['filename']} already exists, skipping")
-            continue
-        
-        download.download_file(f["url"], dest, desc=f["filename"])
+        # Only download the main velocity h5ad needed for scTab
+        if f["filename"] == "RNA_all_velo.h5ad":
+            dest = dest_dir / f["filename"]
+            if dest.exists():
+                print(f"  {f['filename']} already exists, skipping")
+                continue
+            
+            download.download_file(f["url"], dest, desc=f["filename"])
 
     print(f"\nDone. Files downloaded to {dest_dir}")
-
 
 if __name__ == "__main__":
     main()

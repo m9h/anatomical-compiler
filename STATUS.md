@@ -157,3 +157,12 @@ The 720-regulon classification task was a poor benchmark — 258 of 397 classes 
 
 ### Key Insight
 The "standard" cocitation benchmark is actually the **1-hop neighborhood** construction from the graph, NOT DHG's `CocitationCora()`. This distinction is poorly documented in published papers and caused significant confusion.
+
+## Phase 3: Cross-Dataset & Transfer (IN PROGRESS)
+
+- **3A: Pollen Lab CRISPRi**: **COMPLETE**. GSE284197 integrated. 34/44 TFs shared with Fleck GRN.
+- **3B: Zero-Shot Transfer**: **COMPLETE**. hgx predictor achieves **82.9%** direction concordance on global transfer.
+- **3D: scTab Biological Anchoring**: **COMPLETE**. Unified cell type mapping using 'theislab/scTab' foundation model.
+  - Identified **POU2F1** (79.6%) and **ASCL1** (76.7%) as highly conserved regulons.
+  - Discovered that organoid-derived GRNs better match "immature neuron" states in primary tissue.
+

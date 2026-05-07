@@ -809,13 +809,13 @@
   },
   "concordance": {
     "mean_concordance": 0.5956802722846036,
-    "mean_pearson_r": 0.0051890618464487505
+    "mean_pearson_r": 0.0051890618464487635
   },
   "transfer": {
-    "mean_pearson_r": 0.1265015357221147,
-    "mean_direction_accuracy": 0.8289106217864676
+    "mean_pearson_r": 0.1263279285954673,
+    "mean_direction_accuracy": 0.8292556238733813
   },
   "baseline": {
-    "mean_pearson_r": 0.36388541385531425
+    "mean_pearson_r": 0.3638848625123501
   }
 }

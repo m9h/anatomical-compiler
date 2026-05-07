@@ -171,164 +171,164 @@
   ],
   "geo_results": [
     {
+      "uid": "200324874",
+      "accession": "GSE324874",
+      "title": "Elongin B orchestrates chromatin and transcriptional programs in H3K27M\u2011mutant diffuse midline glioma [XIII_ELOBKO_RNAseq]",
+      "n_samples": 12,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Recurrent driver mutations in genes encoding histone H3 (H3.3K27M and H3.1K27M) are observed in ~80% of diffuse midline gliomas (DMG), which lead to aberrant gene regulation, yet the specific RNA poly"
+    },
+    {
+      "uid": "200295687",
+      "accession": "GSE295687",
+      "title": "ATF2 phosphorylation is a core transcriptional driver of neuron apoptosis",
+      "n_samples": 61,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Apoptotic neuron death is a common feature of many neurodegenerative diseases. Perhaps surprisingly, the exact mechanisms by which neurons undergo apoptosis have yet to be elucidated. We conducted an "
+    },
+    {
+      "uid": "200272460",
+      "accession": "GSE272460",
+      "title": "Transcriptome analysis of pancreatic progenitor organoids  (POs) carrying PDAC related mutations, treated with ERK inhibitors and depleted of AP-1 factors",
+      "n_samples": 40,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "We established a human pluripotent stem cell (hPSC)-derived pancreatic progenitor organoid (PO) culture that provides the cellular plasticity for PDAC modeling and supports robust gene editing. Throug"
+    },
+    {
+      "uid": "200299978",
+      "accession": "GSE299978",
+      "title": "Accelerated Reprogramming of hiPSCs into Functional Brain Endothelial Cells with Multiplexed CRISPR Activation",
+      "n_samples": 11,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "The blood-brain barrier (BBB) is comprised of brain endothelial cells, which are utilized in vitro to model the BBB under normal and disease conditions. Despite physiological shortcomings, in vitro BB"
+    },
+    {
+      "uid": "200303993",
+      "accession": "GSE303993",
+      "title": "Developing Midbrain-like Organoid of Gaucher Disease as A Platform for Drug Assessment",
+      "n_samples": 6,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Gaucher disease (GD) is a lysosomal storage disorder caused by GBA1 mutations, leading to defective acid \u03b2-glucosidase (GCase) and accumulation of glucosylsphingolipids, causing inflammation and neuro"
+    },
+    {
+      "uid": "200316615",
+      "accession": "GSE316615",
+      "title": "Neurogenin-2 Reprograms Human Microglial Lineage Cells into Neurons In Vitro and in Chimeric Brains",
+      "n_samples": 4,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Progressive neuronal loss is a hallmark of many neurological disorders, yet the adult human brain has a limited capacity for endogenous neuronal replacement. Direct neuronal reprogramming represents a"
+    },
+    {
+      "uid": "200327767",
+      "accession": "GSE327767",
+      "title": "Reconstructing signaling histories of single cells via perturbation screens and transfer learning [scRNA]",
+      "n_samples": 2,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Manipulating the signaling environment is an effective approach to alter cellular states for broad-ranging applications, from engineering tissues to treating diseases. Such manipulation requires knowi"
+    },
+    {
+      "uid": "200319209",
+      "accession": "GSE319209",
+      "title": "Functional Genomic Profiling of Schizophrenia-Associated Genes Reveals Key Microglial Regulators",
+      "n_samples": 1,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Microglia are increasingly recognized as key regulators of neural circuit development and putative contributors to the pathophysiology of neuropsychiatric disorders such as schizophrenia (SCZ). Howeve"
+    },
+    {
+      "uid": "200289836",
+      "accession": "GSE289836",
+      "title": "Reconstructing signaling histories of single cells via perturbation screens and transfer learning",
+      "n_samples": 2,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Manipulating the signaling environment is an effective approach to alter cellular states for broad-ranging applications, from engineering tissues to treating diseases. Such manipulation requires knowi"
+    },
+    {
+      "uid": "200327684",
+      "accession": "GSE327684",
+      "title": "RNAseq validation of Neurodevelopmental disorder associated genes knockout efficiency [RNAseq]",
+      "n_samples": 19,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Associated with dataset \"A CRISPR screen in human iPSC-derived neurons reveals convergent transcriptomic effects of neurodevelopmental disorder genes\""
+    },
+    {
+      "uid": "200302307",
+      "accession": "GSE302307",
+      "title": "PP2A Regulates Senescence and Immunogenicity in Medulloblastoma",
+      "n_samples": 24,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Medulloblastoma (MB) is the most common malignant pediatric brain tumor. Current treatments carry significant morbidity, and prognosis remains poor in subgroups with TP53 mutations or relapse, undersc"
+    },
+    {
+      "uid": "200327711",
+      "accession": "GSE327711",
+      "title": "GPR34 regulation of disease-associated microglial states in iMGL",
+      "n_samples": 60,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "GPR34 is a microglia-enriched GPCR whose expression is downregulated under several disease conditions, including Alzheimer\u2019s disease (AD) and multiple sclerosis (MS). Despite this, its function is poo"
+    },
+    {
+      "uid": "200327685",
+      "accession": "GSE327685",
+      "title": "Neurodevelopmental disorder genes",
+      "n_samples": 60,
+      "type": "Expression profiling by high throughput sequencing; Other",
+      "summary": "This SuperSeries is composed of the SubSeries listed below."
+    },
+    {
+      "uid": "200282981",
+      "accession": "GSE282981",
+      "title": "A human model of histiocyte associated neurodegeneration",
+      "n_samples": 21,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Neurodegenerative diseases are increasingly recognized as having an innate immune component to both disease onset and progression, but the extent and mechanisms are incompletely understood. Langerhans"
+    },
+    {
+      "uid": "200324449",
+      "accession": "GSE324449",
+      "title": "Single-cell transcriptomic profiling of SPAST exon 17 deletion\u2013induced neurodegeneration in human cortical organoids",
+      "n_samples": 2,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "Alu-mediated structural variants are enriched in the human genome but their contribution to neurodegeneration remains poorly defined. We generated CRISPR/Cas9-edited human pluripotent stem cells harbo"
+    },
+    {
+      "uid": "200224414",
+      "accession": "GSE224414",
+      "title": "Effect of depletion of SPAST exon17 on gene expression in human embryonic stem cells (hESC) and cortical organoids (COs)",
+      "n_samples": 12,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "To investigate neurodegenerative disease, we established SPAST exon17 knock-out in hESCs in which target gen have been knocked down by CRISPR/Cas9, differentiated into COs."
+    },
+    {
+      "uid": "200325931",
+      "accession": "GSE325931",
+      "title": "Microglial dynamics and ferroptosis induction in human iPSC-derived neuron-astrocyte-microglia tri-cultures",
+      "n_samples": 17,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "The dynamics of microglial activity within neuron-astrocyte-microglia tri-cultures derived from human induced pluripotent stem cells (iPSCs) present a complex interplay and offer an opportunity to obt"
+    },
+    {
+      "uid": "200325993",
+      "accession": "GSE325993",
+      "title": "Single-cell CRISPRi perturbation of POU5F1 in human and cynomolgus macaque iPSCs",
+      "n_samples": 20,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "To understand phenotypic evolution, it is essential to investigate the underlying gene regulatory networks (GRNs). However, most comparative GRN analyses remain descriptive due to the low signal-to-no"
+    },
+    {
+      "uid": "200292789",
+      "accession": "GSE292789",
+      "title": "Role of CARM1 in Glioblastoma",
+      "n_samples": 11,
+      "type": "Expression profiling by high throughput sequencing",
+      "summary": "One driving factor of Glioblastoma (GBM) heterogeneity and therapy resistance is the capacity of glioma stem-like cells (GSCs) to hijack developmental signaling programs. However, it remains unclear h"
+    },
+    {
       "uid": "200325956",
       "accession": "GSE325956",
       "title": "Thalamic NRXN1-Mediated Input to Human Cortical Progenitors Drives Excitatory Neurogenesis",
       "n_samples": 43,
       "type": "Expression profiling by high throughput sequencing",
       "summary": "According to the protocortex hypothesis, extrinsic thalamic signaling is necessary for refining cortical areas and cell types, but the mechanism by which these inputs shape human cortex development re"
-    },
-    {
-      "uid": "200325515",
-      "accession": "GSE325515",
-      "title": "H2AC19 acts as a novel regulator of angiogenesis to promote the progression of lung adenocarcinoma",
-      "n_samples": 6,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Background: Angiogenesis is a significant character of lung adenocarcinoma (LUAD) and is an important reason leading to high mortality rates of LUAD patients. Identification of potential therapeutic t"
-    },
-    {
-      "uid": "200311503",
-      "accession": "GSE311503",
-      "title": "Mismatch tolerance of a gRNA for CRISPR-based gene activation confers broad activity critical for cell reprogramming [perturb-seq]",
-      "n_samples": 4,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "CRISPR activation and interference systems (CRISPRa/i) are widely used for programmable transcriptional control without introducing DNA edits. Although these technologies are capable of highly specifi"
-    },
-    {
-      "uid": "200311365",
-      "accession": "GSE311365",
-      "title": "Mismatch tolerance of a gRNA for CRISPR-based gene activation confers broad activity critical for cell reprogramming [FOXO4_gRNAs_RNAseq]",
-      "n_samples": 15,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "CRISPR activation and interference systems (CRISPRa/i) are widely used for programmable transcriptional control without introducing DNA edits. Although these technologies are capable of highly specifi"
-    },
-    {
-      "uid": "200311364",
-      "accession": "GSE311364",
-      "title": "Mismatch tolerance of a gRNA for CRISPR-based gene activation confers broad activity critical for cell reprogramming [RNA-Seq]",
-      "n_samples": 6,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "CRISPR activation and interference systems (CRISPRa/i) are widely used for programmable transcriptional control without introducing DNA edits. Although these technologies are capable of highly specifi"
-    },
-    {
-      "uid": "200294290",
-      "accession": "GSE294290",
-      "title": "The deubiquitinase OTULIN regulates tau expression in neurons [sAD2.1_WTC11_iPSNs]",
-      "n_samples": 6,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Degradation of aggregation-prone tau is regulated by the ubiquitin-proteasome system (UPS) and autophagy, which are impaired in Alzheimer\u2019s disease (AD) and related tauopathies causing tau aggregation"
-    },
-    {
-      "uid": "200324430",
-      "accession": "GSE324430",
-      "title": "Promoter mutagenesis and a massively parallel reporter screen of the MAPT locus identifies cis-regulatory elements and genetic variation effects [RNA-seq]",
-      "n_samples": 88,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Tau neurofibrillary tangles are a hallmark of several neurodegenerative diseases called tauopathies, including frontotemporal dementia and Alzheimer's Disease. Ongoing clinical trials for tauopathies "
-    },
-    {
-      "uid": "200305070",
-      "accession": "GSE305070",
-      "title": "Single-nucleus multiome ATAC-seq and RNA-seq analysis of GCM1 knockout in rotational human tropholast organoids",
-      "n_samples": 4,
-      "type": "Expression profiling by high throughput sequencing; Genome binding/occupancy profiling by high throughput sequencing",
-      "summary": "Single nuclei were isolated from organoids to investigate the effects of GCM1 knockout and AAVS1 knockout (as control) on chromatin accessibility and gene expression profiles. Approximately 10,000 nuc"
-    },
-    {
-      "uid": "200282771",
-      "accession": "GSE282771",
-      "title": "CD47 activates ROBO2 signaling to regulate glioblastoma cell plasticity and metabolism",
-      "n_samples": 6,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "CD47 inhibits phagocytosis by myeloid cells, contributing to immune evasion by cancer cells. Although CD47-blocking antibodies have shown promise in treating various malignancies, their efficacy in gl"
-    },
-    {
-      "uid": "200270074",
-      "accession": "GSE270074",
-      "title": "Autophagy controls neuronal differentiation by regulating the WNT/DVL signal pathway",
-      "n_samples": 6,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Development of human embryonic stem cells (hESCs) technology provides a powerful tool to understand the mechanism of various diseases, as well as a model for human developmental study in vitro. In thi"
-    },
-    {
-      "uid": "200322519",
-      "accession": "GSE322519",
-      "title": "Cancerformer: A CRISPR Screen-benchmarked Multimodal AI Platform for Predication of Cancer Dependencies in Patient-derived Organoids",
-      "n_samples": 3,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Dissection of cancer dependencies is the central topic of cancer research. Recent advance in artificial intelligence (AI) has provided the opportunies of rapid predication of cancer essential genes. H"
-    },
-    {
-      "uid": "200322198",
-      "accession": "GSE322198",
-      "title": "Female iPSC X-chromosome inactivation (XCI) erosion and its transcriptomic effects during CRISPR gene editing and neural differentiation",
-      "n_samples": 228,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Human induced pluripotent stem cells (hiPSC) and iPSC-differentiated neural cells, in combination with CRISPR editing, are commonly used for studying neurodevelopmental and other brain disorders. Fema"
-    },
-    {
-      "uid": "200319096",
-      "accession": "GSE319096",
-      "title": "A CRISPR screen in human iPSC-derived neurons reveals convergent transcriptomic effects of neurodevelopmental disorder genes",
-      "n_samples": 32,
-      "type": "Expression profiling by high throughput sequencing; Other",
-      "summary": "Diverse risk genes have been identified for neurodevelopmental disorders (NDDs), but how these genes converge on similar biological pathways in neurons, and thus give rise to similar phenotypes, is un"
-    },
-    {
-      "uid": "200292425",
-      "accession": "GSE292425",
-      "title": "Metabolic Atlas of Early Human Cortex Identifies Regulators of Cell Fate Transitions",
-      "n_samples": 27,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Characterization of cell type emergence during human cortical development, which enables unique human cognition, has focused primarily on anatomical and transcriptional characterizations. Metabolic pr"
-    },
-    {
-      "uid": "200290306",
-      "accession": "GSE290306",
-      "title": "ZBTB7B Inhibits Glioma Tumorigenicity by Upregulating GPR17 and CXCL10",
-      "n_samples": 4,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Background: We utilized a CRISPR-Cas9 screening library to examine the functions of tumor-related genes. Among these, we identified the transcription factor ZBTB7B, which overexpressed in breast cance"
-    },
-    {
-      "uid": "200293576",
-      "accession": "GSE293576",
-      "title": "Partial truncation of the C-terminal domain of PTCH1 in cancer promotes tumorigenesis by non-canonical activation of GLI transcriptional activity.",
-      "n_samples": 9,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Loss of function mutations of the Hedgehog receptor PTCH1 are oncogenic drivers in some skin and brain cancers. We recently reported mutations in exons encoding the C-terminal tail of PTCH1 in colon c"
-    },
-    {
-      "uid": "200320162",
-      "accession": "GSE320162",
-      "title": "Minimizing far-extending chromatin perturbation in genome editing  preserves stem cell identity [RNA-Seq]",
-      "n_samples": 347,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "While CRISPR/Cas9 holds therapeutic promise, broader application demands understanding complications in vast non-coding regions. We found that CRISPR/Cas9 can cause premature differentiation of neural"
-    },
-    {
-      "uid": "200243065",
-      "accession": "GSE243065",
-      "title": "Minimizing far-extending chromatin perturbation in genome editing preserves stem cell identity",
-      "n_samples": 783,
-      "type": "Genome binding/occupancy profiling by high throughput sequencing; Other; Expression profiling by high throughput sequencing",
-      "summary": "Advancing CRISPR/Cas9 genome editing demands a thorough understanding of its associated risks.Yet, most of risk assessments have focused on the mutagenic effects stemming from off-target cleavage in g"
-    },
-    {
-      "uid": "200304354",
-      "accession": "GSE304354",
-      "title": "A human-specific enhancer modulates chromosomal interactions to promote neurogenesis [human scRNA-seq]",
-      "n_samples": 8,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Changes to the human genome have driven the evolution of human features including a larger neocortex and enhanced cognition. Human Accelerated Regions (HARs) are highly-conserved loci containing human"
-    },
-    {
-      "uid": "200314031",
-      "accession": "GSE314031",
-      "title": "miR126-mediated alteration of vascular integrity in Rett syndrome",
-      "n_samples": 4,
-      "type": "Expression profiling by high throughput sequencing",
-      "summary": "Rett syndrome (RTT) is a neurodevelopmental disorder caused by mutations in methyl-CpG binding protein 2 (MeCP2). MeCP2 is a non-cell type-specific DNA binding protein, and its mutation influences not"
     }
   ]
 }

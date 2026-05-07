@@ -48,7 +48,10 @@ log = logging.getLogger(__name__)
 
 # ── Target knockouts ─────────────────────────────────────────────────────
 
-KO_TARGETS = ["GLI3", "TBR1", "EOMES"]
+KO_TARGETS = [
+    "GLI3", "TBR1", "EOMES", "ASCL1", "NEUROD6", 
+    "PAX6", "SOX2", "EMX1", "DLX1", "DLX2", "HES1"
+]
 
 # Expected downstream effects based on Fleck et al. 2023 biology:
 #   GLI3 KO  -> ventral shift, DLX1/DLX2/GAD1 down in dorsal context
@@ -70,6 +73,37 @@ KO_BIOLOGY = {
         "expected_up": ["PAX6", "SOX2", "HES1", "NOTCH1"],
         "description": "EOMES KO: Intermediate progenitor loss, reduced neurogenesis",
     },
+    "ASCL1": {
+        "expected_down": ["DLX1", "DLX2", "GAD1"],
+        "expected_up": ["PAX6"],
+        "description": "ASCL1 KO: Primal proneuronal factor in interneuron/ventral lineage",
+    },
+    "NEUROD6": {
+        "expected_down": ["TBR1", "SLC17A7"],
+        "expected_up": ["PAX6"],
+        "description": "NEUROD6 KO: Excitatory neuron differentiation",
+    },
+    "PAX6": {
+        "expected_down": ["EOMES", "TBR1"],
+        "expected_up": ["SOX2", "HES1"],
+        "description": "PAX6 KO: Radial glia maintenance / neurogenesis initiation",
+    },
+    "SOX2": {
+        "expected_down": ["PAX6", "EOMES"],
+        "expected_up": ["GFAP"],
+        "description": "SOX2 KO: Multipotency loss in neural progenitors",
+    },
+    "EMX1": {
+        "expected_down": ["TBR1", "NEUROD6"],
+        "expected_up": ["DLX1"],
+        "description": "EMX1 KO: Dorsal telencephalon specification",
+    },
+}
+# Default biology for any missing TFs
+DEFAULT_BIOLOGY = {
+    "expected_down": [],
+    "expected_up": [],
+    "description": "Generic TF knockout",
 }
 
 
@@ -251,10 +285,31 @@ def try_rpy2(extract_dir: Path) -> dict[str, pd.DataFrame] | None:
             # Check for CROP-seq-related assays
             has_guide = "guide_assignments" in assays
             has_perturb = "perturb" in assays
+            has_target = "target_genes_cons" in assays
             log.info("    guide_assignments assay: %s", has_guide)
             log.info("    perturb assay: %s", has_perturb)
+            log.info("    target_genes_cons assay: %s", has_target)
 
-            if not has_guide and not has_perturb:
+            # Metadata check for specific KOs (e.g. GLI3_KO column)
+            for ko in KO_TARGETS:
+                ko_col = f"{ko}_KO"
+                if ko_col in meta_cols:
+                    log.info("    Found metadata column for %s KO", ko)
+                    ro.r(f"""
+                        # Join layers if Seurat v5 (MUST be on the object, not the assay)
+                        if (as.numeric(substr(packageVersion('Seurat'), 1, 1)) >= 5) {{
+                            obj <- JoinLayers(obj)
+                        }}
+                        obj$cropseq_ident <- ifelse(obj[['{ko_col}']] == TRUE, 'KO', 'CTRL')
+                        Idents(obj) <- 'cropseq_ident'
+                        de_results <- FindMarkers(obj, ident.1 = 'KO', ident.2 = 'CTRL', verbose = FALSE)
+                        de_results$gene <- rownames(de_results)
+                    """)
+                    with localconverter(ro.default_converter + pandas2ri.converter):
+                        de_df = ro.r("as.data.frame(de_results)")
+                    results[ko] = _normalize_de_df(de_df, ko)
+
+            if not has_guide and not has_perturb and not has_target:
                 # Check misc slot for pre-computed DE results
                 log.info("    No CROP-seq assays found. Checking misc slot ...")
                 misc_names = list(ro.r("names(obj@misc)"))
@@ -275,49 +330,45 @@ def try_rpy2(extract_dir: Path) -> dict[str, pd.DataFrame] | None:
                 continue
 
             # Extract DE for each KO target using FindMarkers
-            # First, identify the guide/KO identity column
-            guide_assay = "perturb" if has_perturb else "guide_assignments"
+            # Identify the guide/KO identity column
+            guide_assay = "target_genes_cons" if has_target else ("perturb" if has_perturb else "guide_assignments")
 
             # Get guide names
             guide_names = list(ro.r(f'rownames(GetAssayData(obj, assay="{guide_assay}"))'))
-            log.info("    Guide features (%d): %s", len(guide_names), guide_names[:15])
+            log.info("    Guide/Target features (%d): %s", len(guide_names), guide_names[:15])
 
-            # Map guides to target genes (guides are named TARGET-1, TARGET-2, etc.)
             for ko in KO_TARGETS:
-                ko_guides = [g for g in guide_names if g.startswith(ko)]
+                if ko in results: continue # Already found in metadata
+                
+                ko_guides = [g for g in guide_names if g == ko or g.startswith(f"{ko}-")]
                 if not ko_guides:
-                    # Also try with underscores (ko_inference.R replaces - with _)
-                    ko_guides = [g for g in guide_names if g.startswith(ko.replace("-", "_"))]
-
-                if not ko_guides:
-                    log.info("    No guides found for %s", ko)
                     continue
 
-                log.info("    Extracting DE for %s KO (guides: %s) ...", ko, ko_guides)
+                log.info("    Extracting DE for %s KO (targets: %s) ...", ko, ko_guides)
 
                 try:
-                    # Identify KO cells (cells with guide assignment > 0)
-                    # and non-targeting control cells
                     guides_r = "c(" + ",".join(f'"{g}"' for g in ko_guides) + ")"
                     ro.r(f"""
                         guide_data <- GetAssayData(obj, assay='{guide_assay}')
-                        ko_scores <- colSums(guide_data[{guides_r}, , drop=FALSE])
-                        ko_cells <- names(ko_scores[ko_scores > 0])
-
-                        # Find non-targeting controls
-                        nt_guides <- grep('(NT|CTRL|DUMMY|non.targeting|scramble)',
-                                         rownames(guide_data), value=TRUE, ignore.case=TRUE)
-                        if (length(nt_guides) > 0) {{
-                            nt_scores <- colSums(guide_data[nt_guides, , drop=FALSE])
-                            ctrl_cells <- names(nt_scores[nt_scores > 0])
+                        if ('{guide_assay}' == 'target_genes_cons') {{
+                            ko_scores <- colSums(guide_data[{guides_r}, , drop=FALSE])
+                            ko_cells <- names(ko_scores[ko_scores > 0])
+                            # Controls are cells with NO target gene assignments
+                            total_targets <- colSums(guide_data)
+                            ctrl_cells <- names(total_targets[total_targets == 0])
                         }} else {{
-                            # Fallback: use cells with no guide assignment
-                            total_guides <- colSums(guide_data)
-                            ctrl_cells <- names(total_guides[total_guides == 0])
+                            ko_scores <- colSums(guide_data[{guides_r}, , drop=FALSE])
+                            ko_cells <- names(ko_scores[ko_scores > 0])
+                            nt_guides <- grep('(NT|CTRL|DUMMY|non.targeting|scramble)',
+                                             rownames(guide_data), value=TRUE, ignore.case=TRUE)
+                            if (length(nt_guides) > 0) {{
+                                nt_scores <- colSums(guide_data[nt_guides, , drop=FALSE])
+                                ctrl_cells <- names(nt_scores[nt_scores > 0])
+                            }} else {{
+                                total_guides <- colSums(guide_data)
+                                ctrl_cells <- names(total_guides[total_guides == 0])
+                            }}
                         }}
-
-                        cat(sprintf("    KO cells: %d, Control cells: %d\\n",
-                                    length(ko_cells), length(ctrl_cells)))
                     """)
 
                     n_ko = int(ro.r("length(ko_cells)")[0])
@@ -488,7 +539,7 @@ def _generate_ko_de(
     rng: np.random.Generator,
 ) -> pd.DataFrame:
     """Generate synthetic DE for a single KO, informed by GRN + known biology."""
-    biology = KO_BIOLOGY[ko_gene]
+    biology = KO_BIOLOGY.get(ko_gene, DEFAULT_BIOLOGY)
     genes = []
     log2fcs = []
     pvals = []
