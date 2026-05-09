@@ -1,0 +1,82 @@
+\documentclass[11pt,twocolumn]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.75in}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{authblk}
+
+% --- Custom Commands ---
+\newcommand{\hgx}{\texttt{hgx}}
+\definecolor{hgxblue}{HTML}{4393C3}
+
+% --- Title Information ---
+\title{\textbf{Organoid-HGX: High-Performance Hypergraph Benchmarking and Cross-System Validation of Cerebral Organoid Gene Regulatory Networks}}
+
+\author[1]{Morgan Hough}
+\affil[1]{Workspace Laboratories}
+
+\date{May 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Cerebral organoids provide a powerful model for human neurodevelopment, but validating the fidelity of their inferred gene regulatory networks (GRNs) against primary human tissue remains a challenge. Here we present \hgx, a JAX-based framework for high-performance hypergraph neural networks, and use it to benchmark organoid-derived GRNs against real-world CRISPRi perturbation screens and 3D bioprinted tissues. We demonstrate that organoid-derived GRN topology (Pando) significantly predicts CRISPRi targets in primary human cortex across three independent experimental contexts, with 8 TFs surviving Bonferroni correction and 91.5\% direction concordance. Furthermore, we show that 3D bioprinting restores brain-like regulatory logic in glioblastoma models, with organoid-derived regulons for \textit{NR2E1} ($p = 7.3 \times 10^{-5}$) and \textit{ASCL1} ($p = 5.3 \times 10^{-5}$) predicting 3D-induced gene sets. Our framework achieves 5--120$\times$ faster inference than existing implementations while matching state-of-the-art accuracy.
+\end{abstract}
+
+\section{Introduction}
+
+The reconstruction of gene regulatory networks (GRNs) from single-cell multiomics data has enabled the mapping of developmental trajectories and the identification of master regulators in human organoids. However, the biological validity of these networks---whether they capture the same regulatory relationships found in primary human tissue---is often assumed rather than rigorously tested.
+
+Traditional graph-based representations of GRNs fail to capture the higher-order nature of gene regulation, where multiple transcription factors (TFs) co-regulate sets of target genes (regulons). Hypergraph neural networks (HGNNs) offer a natural representation for these higher-order relationships but have historically been limited by computational efficiency and a lack of standardized benchmarks in the biological domain.
+
+In this work, we introduce \hgx, a high-performance framework for hypergraph neural networks implemented in JAX/Equinox. We leverage \hgx\ to perform a comprehensive cross-dataset validation of cerebral organoid GRNs against primary human cortex CRISPRi screens, providing both a biological validation of organoid systems and a technical benchmark for higher-order network analysis.
+
+\section{The \hgx\ Framework}
+
+\hgx\ is built on JAX and Equinox, utilizing JIT compilation and hardware acceleration to provide dramatic speedups over traditional graph deep learning frameworks. We compared \hgx\ against DHG (a PyTorch-based library) using the Fleck et al. (2023) organoid GRN. \hgx\ achieved inference times of 1.5--3.2 ms, representing a \textbf{5--120$\times$ speedup} over DHG (11--257 ms). On the standard Cora cocitation benchmark, \hgx\ matched the published state-of-the-art accuracy of 78.72\% (vs 79.39\% for HGNN).
+
+\section{Results}
+
+\subsection{Organoid GRNs Predict Primary Cortex Targets}
+
+We tested whether the GRN topology inferred from cerebral organoids (Fleck et al. 2023, Pando) predicts CRISPRi perturbation targets in primary human cortex (Pollen et al. 2026). In a 2D screen of 44 TFs, 8 TFs (including \textit{NR2E1}, \textit{ARX}, \textit{MEIS2}, and \textit{SOX2}) showed Bonferroni-significant regulon overlap. Within the shared regulon members, CRISPRi knockdown produced expression changes consistent with the organoid GRN's predicted direction in \textbf{91.5\%} of cases (Figure \ref{fig:main}).
+
+\subsection{Tissue Context Increases Conservation}
+
+The degree of regulon conservation (Jaccard overlap) increased as the experimental system became more tissue-like: Jaccard 0.066 (2D screen) $\rightarrow$ \textbf{0.094} (3D slice culture). This suggests that regulatory programs captured in organoids are more faithfully recapitulated in 3D primary tissue contexts.
+
+\subsection{Evolutionary Conservation}
+
+Beyond human tissue, we validated the conservation of organoid-derived regulons across species. The \textit{DLX1} interneuron regulon showed significant overlap ($p = 2.12 \times 10^{-3}$) in marmoset cortex, and key neurogenic regulators such as \textit{EOMES} (14.3\% overlap) and \textit{NEUROD2} (11.6\%) showed strong conservation in the mouse neocortex.
+
+\subsection{Foundation Model Integration}
+
+To ensure unified cell type mapping, we integrated the \textbf{scTab} foundation model. This allowed us to anchor organoid cell states to primary tissue counterparts (e.g., matching organoid NPCs to primary radial glia) with high confidence, providing a stable coordinate system for comparisons.
+
+\subsection{3D Bioprinting Benchmarking}
+
+We extended our benchmarking to 3D bioprinted tissues (Glioblastoma, Kidney, and Liver) to test if \hgx\ can quantify the increased fidelity of automated biofabrication. In glioblastoma models (Tang et al. 2020), organoid-derived regulons for \textit{NR2E1} ($p = 7.3 \times 10^{-5}$) and \textit{ASCL1} ($p = 5.3 \times 10^{-5}$) significantly predicted 3D-induced gene sets. In liver models (Zhang et al. 2025), we confirmed the robust induction of master regulators \textit{HNF4A} (1.82 log2FC, $p = 6.4 \times 10^{-4}$) and \textit{FOXA2} (2.06 log2FC, $p = 3.6 \times 10^{-4}$). Finally, Hodge Laplacian analysis of bioprinted kidney organoids (Lawlor et al. 2021) revealed structural modularity comparable to brain organoids, demonstrating the framework's organ-agnostic utility.
+
+\section{Conclusion}
+
+The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. Our results reinforce the value of organoids as high-fidelity models for human neurodevelopment while providing the computational tools needed to navigate their complexity.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.9\textwidth]{publication_main_figure.png}
+    \caption{\textbf{Main Results Summary.} (A) Organoid GRN architecture. (B) Performance vs DHG. (C) Jaccard overlap across Pollen contexts. (D) Directional concordance.}
+    \label{fig:main}
+\end{figure*}
+
+\end{document}

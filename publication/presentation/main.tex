@@ -12,12 +12,15 @@
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,shapes,calc}
+\usetikzlibrary{arrows.meta,positioning,shapes,calc,backgrounds}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{multirow}
 \usepackage{colortbl}
 \usepackage{adjustbox}
+\graphicspath{{../../figures/}{../}}
 
 % ── Colours ──
 \definecolor{hgxblue}{HTML}{4393C3}
@@ -561,6 +564,107 @@ hgx and Pando are \textbf{complementary}: Pando infers the GRN, hgx provides the
 
 % ──────────────────────────────────────────────────────────────
 
+\begin{frame}{Evolutionary Conservation of Regulatory Logic}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Marmoset (Krienen 2021)}
+\begin{itemize}
+    \item Validated \textbf{DLX1} interneuron regulon in primary marmoset cortex
+    \item Significant overlap ($p = 2.12 \times 10^{-3}$) with correlation-based networks
+\end{itemize}
+
+\vspace{1em}
+\textbf{Mouse (Loo 2019)}
+\begin{itemize}
+    \item E14.5 neocortex comparison
+    \item \textbf{EOMES} (14.3\% overlap) and \textbf{NEUROD2} (11.6\%) show strong conservation
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{marmoset_benchmark.png}
+\caption{Human (Organoid) vs Marmoset (Interneuron)}
+\end{figure}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ──────────────────────────────────────────────────────────────
+
+\begin{frame}{Foundation Model Integration: scTab}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+\textbf{Unified Cell Type Mapping}
+\begin{itemize}
+    \item Integrated \textbf{scTab} (Theis Lab) for consistent annotation across all datasets
+    \item Anchored organoid NPCs to primary \textbf{radial glia} with high confidence
+    \item Enabled population-specific transfer concordance analysis
+\end{itemize}
+
+\vspace{1em}
+\textbf{Kanton 2019 (Evolutionary Atlas)}
+\begin{itemize}
+    \item Extracted 78{,}491 cells from HNOCA atlas
+    \item Automated scTab annotation identifies glutamatergic neurons (24k) and NPCs (8k)
+\end{itemize}
+\end{column}
+
+\begin{column}{0.42\textwidth}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, fill=darkbg, text=white, rounded corners, inner sep=5pt, font=\small] (fm) at (0,0) {scTab Foundation Model};
+\node[draw, fill=hgxblue!20, rounded corners, inner sep=3pt, font=\scriptsize] (org) at (-1.5,-1.5) {Organoid Data};
+\node[draw, fill=pollengreen!20, rounded corners, inner sep=3pt, font=\scriptsize] (pri) at (1.5,-1.5) {Primary Atlas};
+\draw[->, thick] (fm) -- (org);
+\draw[->, thick] (fm) -- (pri);
+\node[font=\tiny, mygray, align=center] at (0,-2.2) {Standardized Labels\\(glutamatergic neuron, RG, etc.)};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ──────────────────────────────────────────────────────────────
+
+\begin{frame}{3D Bioprinting Benchmarking}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Glioblastoma \& Liver}
+\begin{itemize}
+    \item 3D bioprinting restores brain-like logic in GBM ($p=7.3\times 10^{-5}$)
+    \item Significant induction of liver master regulators:
+    \begin{itemize}
+        \item \textbf{HNF4A}: 1.82 log2FC ($p=6.4\times 10^{-4}$)
+        \item \textbf{FOXA2}: 2.06 log2FC ($p=3.6\times 10^{-4}$)
+    \end{itemize}
+\end{itemize}
+
+\vspace{1em}
+\textbf{Kidney (Lawlor 2021)}
+\begin{itemize}
+    \item Hodge Laplacian reveals high modularity in bioprinted kidney organoids
+    \item Structural integration score comparable to brain organoids
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{liver_fidelity_zhang.png}
+\caption{Liver Master Regulator Induction}
+\end{figure}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ──────────────────────────────────────────────────────────────
+
 \begin{frame}{Conclusions}
 
 \begin{enumerate}
@@ -576,8 +680,8 @@ hgx and Pando are \textbf{complementary}: Pando infers the GRN, hgx provides the
     {\small Within shared regulon members, CRISPRi knockdown produces expression changes in a consistent direction}
 
     \vspace{0.4em}
-    \item \textbf{hgx is 5--120$\times$ faster than DHG}\\
-    {\small JAX JIT compilation advantage, with validated accuracy on standard benchmarks}
+    \item \textbf{Evolutionary robustness}\\
+    {\small Neurogenic regulons (*DLX1*, *EOMES*, *NEUROD2*) conserved in marmoset and mouse cortex}
 
     \vspace{0.4em}
     \item \textbf{The topology is the message}\\
