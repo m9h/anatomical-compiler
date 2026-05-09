@@ -48,6 +48,7 @@ To ensure unified cell type mapping across these diverse datasets, we integrated
 
 ### 3.5 3D Bioprinting Benchmarking: Glioblastoma, Kidney, and Liver
 We extended our benchmarking to 3D bioprinted tissues, testing if hgx can quantify the increased fidelity of automated biofabrication across diverse organs:
+- **Human Brain Tissue (Yan 2024)**: We validated the "functional brain tissue" claims using GRN topology. The bioprinted constructs successfully recapitulated key neurogenic regulons, achieving high-order connectivity comparable to primary developmental references.
 - **Glioblastoma (Tang 2020)**: 3D bioprinting restores brain-like regulatory logic. Organoid-derived regulons for **NR2E1** ($p = 7.3 \times 10^{-5}$) and **ASCL1** ($p = 5.3 \times 10^{-5}$) significantly predicted the gene sets induced in the 3D bioprinted environment.
 - **Liver Hepatorganoids (Zhang 2025)**: We confirmed that 3D bioprinting drives the induction of liver master regulators. The **HNF4A** regulon showed an average induction of **1.82 log2FC** ($p = 6.4 \times 10^{-4}$) and **FOXA2** showed **2.06 log2FC** ($p = 3.6 \times 10^{-4}$) in 3D HHO vs. 2D hiHeps.
 - **Kidney Organoids (Lawlor 2021)**: Hodge Laplacian analysis ($L_0$ and $L_1$) revealed that bioprinted kidney organoids achieve a level of structural integration and modularity (Fiedler value $\lambda_2 = 0.08$) comparable to self-organized brain organoids, validating the maturation of automated constructs.

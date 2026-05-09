@@ -99,6 +99,37 @@ def preprocess_zhang(input_path, output_path):
     adata.write(output_path)
     print(f"  Saved to {output_path}")
 
+def preprocess_yan(input_dir, output_path):
+    print(f"Preprocessing Yan et al. (2024) from {input_dir}")
+    # Files:
+    # GSE234774_rnaseq_filtered_scRNA.mtx.gz
+    # GSE234774_rnaseq_features.txt.gz
+    # GSE234774_rnaseq_barcodes.txt.gz
+    # GSE234774_rnaseq_meta.txt.gz
+    
+    mtx_path = input_dir / "GSE234774_rnaseq_filtered_scRNA.mtx.gz"
+    if not mtx_path.exists():
+        print(f"  MTX file not found: {mtx_path}")
+        return
+
+    print("  Reading MTX (this may take a while)...")
+    adata = sc.read_mtx(mtx_path).T
+    
+    genes = pd.read_csv(input_dir / "GSE234774_rnaseq_features.txt.gz", sep="\t", header=None)
+    barcodes = pd.read_csv(input_dir / "GSE234774_rnaseq_barcodes.txt.gz", sep="\t", header=None)
+    meta = pd.read_csv(input_dir / "GSE234774_rnaseq_meta.txt.gz", sep="\t", index_col=0)
+    
+    adata.var_names = genes[0].values
+    adata.obs_names = barcodes[0].values
+    adata.obs = meta
+    
+    adata.var_names_make_unique()
+    
+    print(f"  Shape: {adata.shape}")
+    print("  Saving H5AD...")
+    adata.write(output_path)
+    print(f"  Saved to {output_path}")
+
 def main():
     parser = argparse.ArgumentParser(description="Preprocess bioprinting datasets into AnnData")
     parser.add_argument("--data-dir", type=str, default="data/bioprinting", help="Input data directory")
@@ -120,6 +151,11 @@ def main():
     zhang_in = data_dir / "zhang_2025/GSE298708_All.DEG_final.txt.gz"
     if zhang_in.exists():
         preprocess_zhang(zhang_in, data_dir / "zhang_2025_processed.h5ad")
+
+    # 4. Yan
+    yan_dir = data_dir / "yan_2024"
+    if yan_dir.exists():
+        preprocess_yan(yan_dir, data_dir / "yan_2024_processed.h5ad")
 
 if __name__ == "__main__":
     main()
