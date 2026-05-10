@@ -76,8 +76,9 @@ def compute_hodge_scores(adata, n_hvg=500):
     }
 
 def main():
+    data_dir = Path("data/bioprinting")
     print("Loading Kidney Bioprinting data...")
-    kidney = sc.read_h5ad("data/bioprinting/lawlor_2021_processed.h5ad")
+    kidney = sc.read_h5ad(data_dir / "lawlor_2021_processed.h5ad")
     
     # Basic QC
     sc.pp.filter_cells(kidney, min_genes=200)
@@ -102,6 +103,19 @@ def main():
         print("  Fleck RNA not found, skipping comparison.")
         b_scores = None
 
+    # 3. Reference: Human Fetal Kidney
+    print("Loading Human Fetal Kidney reference for comparison...")
+    k_ref_path = data_dir / "kidney_ref_processed.h5ad"
+    if k_ref_path.exists():
+        k_ref = sc.read_h5ad(k_ref_path)
+        # Taking subset for speed
+        k_ref_sub = k_ref[:1000].to_memory()
+        sc.pp.log1p(k_ref_sub)
+        r_scores = compute_hodge_scores(k_ref_sub, n_hvg=100)
+    else:
+        print("  Kidney reference not found.")
+        r_scores = None
+
     # 5. Plot
     plt.figure(figsize=(12, 5))
     
@@ -110,6 +124,8 @@ def main():
     plt.plot(k_scores["ev0"][:100], 'o-', label="Bioprinted Kidney", color="teal")
     if b_scores:
         plt.plot(b_scores["ev0"][:100], 's-', label="Brain Organoid", color="firebrick")
+    if r_scores:
+        plt.plot(r_scores["ev0"][:100], 'd-', label="Fetal Kidney (Ref)", color="forestgreen")
     plt.ylabel("$L_0$ Eigenvalue")
     plt.xlabel("Index")
     plt.title("Hodge $L_0$ Spectrum (Modularity)")
@@ -124,6 +140,10 @@ def main():
         labels.append("Brain (Organoid)")
         vals.append(b_scores["fiedler"])
         colors.append("firebrick")
+    if r_scores:
+        labels.append("Kidney (Fetal)")
+        vals.append(r_scores["fiedler"])
+        colors.append("forestgreen")
         
     plt.bar(labels, vals, color=colors)
     plt.ylabel("Algebraic Connectivity (Fiedler)")
@@ -143,7 +163,8 @@ def main():
 
     results = {
         "kidney": {k: _sanitize(v) for k, v in k_scores.items()},
-        "brain": {k: _sanitize(v) for k, v in b_scores.items()} if b_scores else None
+        "brain": {k: _sanitize(v) for k, v in b_scores.items()} if b_scores else None,
+        "kidney_ref": {k: _sanitize(v) for k, v in r_scores.items()} if r_scores else None
     }
     with open("figures/kidney_modularity_results.json", "w") as f:
         json.dump(results, f, indent=2)

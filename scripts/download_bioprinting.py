@@ -32,12 +32,26 @@ YAN_URLS = {
     "meta": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE234nnn/GSE234774/suppl/GSE234774_rnaseq_meta.txt.gz"
 }
 
+# Study: Gumuskaya et al. (2023) - Anthrobots (Human Biobots)
+# GEO: GSE249581
+ANTHRO_URLS = {
+    "raw_tar": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE249nnn/GSE249581/suppl/GSE249581_RAW.tar"
+}
+
+# Reference: Human Fetal Kidney (Combes et al. 2019 / GSE102596)
+# Used as blueprint for RIFLE and Lawlor kidney benchmarks
+KIDNEY_REF_URLS = {
+    "processed_counts": "https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM2741nnn/GSM2741551/suppl/GSM2741551_count-table-human16w.tsv.gz"
+}
+
 def main():
     parser = argparse.ArgumentParser(description="Download bioprinting datasets for GRN analysis")
     parser.add_argument("--tang", action="store_true", help="Download Tang et al. (2020) Glioblastoma dataset")
     parser.add_argument("--lawlor", action="store_true", help="Download Lawlor et al. (2021) Kidney dataset")
     parser.add_argument("--zhang", action="store_true", help="Download Zhang et al. (2025) Liver dataset")
     parser.add_argument("--yan", action="store_true", help="Download Yan et al. (2024) Human Brain dataset")
+    parser.add_argument("--anthro", action="store_true", help="Download Anthrobots (2023) dataset")
+    parser.add_argument("--kidney-ref", action="store_true", help="Download Human Fetal Kidney reference (GSE102596)")
     parser.add_argument("--out-dir", type=str, default="data/bioprinting", help="Output directory")
     args = parser.parse_args()
 
@@ -70,7 +84,17 @@ def main():
             fname = url.split("/")[-1]
             download_file(url, dest / fname)
 
-    if not any([args.tang, args.lawlor, args.zhang, args.yan]):
+    if args.anthro:
+        print("\n--- Downloading Anthrobots (2023) ---")
+        dest = out_dir / "anthro_2023"
+        download_file(ANTHRO_URLS["raw_tar"], dest / "GSE249581_RAW.tar")
+
+    if args.kidney_ref:
+        print("\n--- Downloading Human Fetal Kidney reference (GSE102596) ---")
+        dest = out_dir / "kidney_ref"
+        download_file(KIDNEY_REF_URLS["processed_counts"], dest / "GSE102596_all_cell_counts.txt.gz")
+
+    if not any([args.tang, args.lawlor, args.zhang, args.yan, args.anthro, args.kidney_ref]):
         parser.print_help()
 
 if __name__ == "__main__":
