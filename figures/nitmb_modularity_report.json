@@ -1,0 +1,14 @@
+[
+  {
+    "system": "Bioprinted Kidney",
+    "identifiability_score": 0.3525600344707141
+  },
+  {
+    "system": "Brain Organoid",
+    "identifiability_score": 0.38116015993520197
+  },
+  {
+    "system": "Fetal Kidney (Ref)",
+    "identifiability_score": 0.3666957374362698
+  }
+]

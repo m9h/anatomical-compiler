@@ -764,6 +764,38 @@ hgx and Pando are \textbf{complementary}: Pando infers the GRN, hgx provides the
 
 % ──────────────────────────────────────────────────────────────
 
+\begin{frame}{Quantifying Modularity: NITMB Framework}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{The Identifiability Challenge}
+\begin{itemize}
+    \item NITMB highlights the need to distinguish discrete "control units" (modules)
+    \item We implemented a \textbf{Module Identifiability Index} based on the Hodge $L_0$ spectral gap
+\end{itemize}
+
+\vspace{1em}
+\textbf{Cross-System Benchmark}
+\begin{itemize}
+    \item \textbf{Organoid}: 0.38 (High distinctness)
+    \item \textbf{Fetal Kidney}: 0.37 (Primary baseline)
+    \item \textbf{Bioprinted}: 0.35 (Nearing primary-like modularity)
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{nitmb_modularity_test.png}
+\caption{Module Identifiability Scores}
+\end{figure}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ──────────────────────────────────────────────────────────────
+
 \begin{frame}{Conclusions}
 
 \begin{enumerate}
