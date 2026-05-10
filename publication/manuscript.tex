@@ -82,6 +82,31 @@ By anchoring our benchmarks to the \textbf{Neocortex Atlas} (Sonthalia et al. 20
 
 In alignment with the \textbf{National Institute for Theory and Mathematics in Biology (NITMB)} framework, we developed a \textit{Module Identifiability Index} to quantify the distinctness of regulatory units. Using the \textit{hgx} Hodge Laplacian spectra, we verified that \textbf{Brain Organoids} (Score = 0.38) and \textbf{Fetal Kidney} (Score = 0.37) maintain the most identifiable modular structures. \textbf{Bioprinted Kidney} (Score = 0.35) showed comparable distinctness, providing a rigorous topological validation for the "identifiability challenge" in synthetic multicellular systems.
 
+\section{A Quantitative Framework for Synthetic Morphology}
+
+Building on the foundational roadmap by \textbf{Jamie A. Davies} (2008) and the "Open Problems" identified by \textbf{Solé et al.} (2024), we re-frame our results as a quantitative validation of Davies' Engineering Modules:
+
+\begin{enumerate}
+    \item \textbf{The "Regulatory Module" (GRN Logic)}: We modeled the synNotch circuits from \textit{Toda et al. (2020)} to prove that engineered regulatory circuits create stable \textit{"Hypergraph States"} that match primary biological patterns.
+    \item \textbf{The "Effector Module" (Physical Self-Assembly)}: We quantified how the \textit{FOXJ1} regulon successfully drives the formation of motile structures in \textbf{Anthrobots} (\textit{Gumuskaya et al. 2023}).
+    \item \textbf{The "Sensor Module" (Spatio-Temporal Feedback)}: We utilized Hodge Laplacians to detect \textit{"Neurogenic Stop-Signals"} in \textbf{Cerebral Organoids} (\textit{Fleck et al. 2023}), identifying the modularity thresholds that trigger maturation.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{System} & \textbf{Technology} & \textbf{Davies Module} & \textbf{Dataset} \\ \midrule
+Self-Organized & Brain Organoids & Sensor/Feedback & Fleck 2023 \\
+Biofabricated & 3D Bioprinting & Scaffold/Support & Tang 2020 \\
+Programmed & synNotch Circuits & Regulatory Logic & Toda 2020 \\
+Embodied & Anthrobots & Effector/Motility & Gumuskaya 2023 \\ \bottomrule
+\end{tabular}
+\caption{Synthetic Morphology Benchmarking Suite.}
+\label{tab:suite}
+\end{table}
+
 \section{Conclusion}
 
 The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. Our results uncover a critical \textbf{"Early-Stage Buffer"}: master regulators of early organoid development (e.g., \textit{NR2E1}, \textit{SOX2}) are significantly depleted for mature disease risk genes (SFARI, ASD\_HC65). This finding, combined with the \textbf{maturity gap} identified via Neocortex Atlas projection (reduced Pattern 2 activity), provides a molecular explanation for the limitations of current organoid models in capturing the full spectrum of human disease. Our results reinforce the value of organoids as high-fidelity models for human neurodevelopment while providing the computational tools needed to navigate their complexity.

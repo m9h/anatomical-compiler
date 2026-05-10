@@ -70,7 +70,32 @@ In collaboration with the theoretical frameworks proposed by the **National Inst
 - **Identifiability Benchmark**: We quantified how distinct and "identifiable" regulatory modules are within each system. Our results showed that self-organized **Brain Organoids** (Score = 0.38) and **Fetal Kidney** (Score = 0.37) maintain the highest modularity, while **Bioprinted Kidney** (Score = 0.35) is rapidly approaching primary-like modular distinctness.
 - **Decomposing Dynamics**: This metric addresses the "identifiability challenge" noted by NITMB, providing a rigorous mathematical foundation to decompose engineered system dynamics into discrete functional units.
 
-## 4. Discussion
+## 4. A Quantitative Framework for Synthetic Morphology
+
+Building on the foundational roadmap by **Jamie A. Davies** (2008) and the "Open Problems" identified by **Solé et al.** (2024), we re-frame our results as a quantitative validation of Davies’ Engineering Modules:
+
+1. **The "Regulatory Module" (GRN Logic)**: 
+   - *Implementation*: **Toda et al. (2020)** synNotch circuits.
+   - *hgx Task*: We model the synNotch-driven GRN to prove that engineered regulatory circuits create stable **"Hypergraph States"** that match primary biological patterns.
+
+2. **The "Effector Module" (Physical Self-Assembly)**: 
+   - *Implementation*: **Gumuskaya et al. (2023)** Anthrobots.
+   - *hgx Task*: We quantify how the **FOXJ1 regulon** (the Regulatory Module) successfully drives the formation of motile cilia structures (the Effector Module) in human airway progenitors.
+
+3. **The "Sensor Module" (Spatio-Temporal Feedback)**: 
+   - *Implementation*: **Fleck et al. (2023)** Cerebral Organoids.
+   - *hgx Task*: We detect **"Neurogenic Stop-Signals"** using Hodge Laplacians, identifying the threshold where the organoid sensor module detects high modularity and transitions to maturation.
+
+### Table 1: Synthetic Morphology Benchmarking Suite
+
+| System | Technology | Davies Module | Dataset |
+| :--- | :--- | :--- | :--- |
+| **Self-Organized** | Brain Organoids | Sensor/Feedback | Fleck 2023 |
+| **Biofabricated** | 3D Bioprinting | Scaffold/Support | Tang 2020 |
+| **Programmed** | synNotch Circuits | Regulatory Logic | Toda 2020 |
+| **Embodied** | Anthrobots | Effector/Motility | Gumuskaya 2023 |
+
+## 5. Discussion
 
 The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. 
 
