@@ -1,0 +1,10 @@
+{
+  "n_cells": 90083,
+  "n_genes": 61860,
+  "motility_mean": -0.021380710256206494,
+  "n_modules": 236,
+  "samples": [
+    "S1",
+    "S2"
+  ]
+}
