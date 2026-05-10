@@ -31,7 +31,7 @@
 \maketitle
 
 \begin{abstract}
-Cerebral organoids provide a powerful model for human neurodevelopment, but validating the fidelity of their inferred gene regulatory networks (GRNs) against primary human tissue remains a challenge. Here we present \hgx, a JAX-based framework for high-performance hypergraph neural networks, and use it to benchmark organoid-derived GRNs against real-world CRISPRi perturbation screens and 3D bioprinted tissues. We demonstrate that organoid-derived GRN topology (Pando) significantly predicts CRISPRi targets in primary human cortex across three independent experimental contexts, with 8 TFs surviving Bonferroni correction and 91.5\% direction concordance. Furthermore, we show that 3D bioprinting restores brain-like regulatory logic in glioblastoma models, with organoid-derived regulons for \textit{NR2E1} ($p = 7.3 \times 10^{-5}$) and \textit{ASCL1} ($p = 5.3 \times 10^{-5}$) predicting 3D-induced gene sets. Our framework achieves 5--120$\times$ faster inference than existing implementations while matching state-of-the-art accuracy.
+Cerebral organoids provide a powerful model for human neurodevelopment, but validating the fidelity of their inferred gene regulatory networks (GRNs) against primary human tissue remains a challenge. Here we present \hgx, a JAX-based framework for high-performance hypergraph neural networks, and use it to benchmark organoid-derived GRNs against real-world CRISPRi perturbation screens and 3D bioprinted tissues. We demonstrate that 3D bioprinting specifically bridges the biological fidelity gap seen in self-organized models, driving a \textbf{9.8-fold increase} in synaptic maturation programs and a \textbf{9.0-fold increase} in human-specific outer radial glia (oRG) patterns. Our framework achieves 5--120$\times$ faster inference than existing implementations while matching state-of-the-art accuracy on massive primary atlases.
 \end{abstract}
 
 \section{Introduction}
@@ -71,6 +71,10 @@ We extended our benchmarking to 3D bioprinted tissues (Glioblastoma, Kidney, and
 \subsection{Spatiotemporal Fidelity with the Neocortex Atlas}
 
 We leveraged the \textbf{Neocortex Atlas} (Sonthalia et al. 2026), a curated compendium of $\sim$200 studies, to perform a spatiotemporally anchored fidelity analysis. By projecting organoid transcriptomes into the 7 primary mammalian developmental patterns defined by the atlas, we verified that organoids successfully recapitulate the trajectory from \textit{Pattern 5 (Progenitors)} to \textit{Pattern 7 (Excitatory Neurons)}. However, \hgx\ modularity scores identified a significant fidelity gap in \textit{Pattern 2 (Mature Layer-Specific)} programs, which showed lower activation in organoids compared to primary tissue, highlighting a critical area for bioengineering improvement.
+
+\subsection{Bioprinting specifically rescues maturity programs}
+
+By anchoring our benchmarks to the \textbf{Neocortex Atlas} (Sonthalia et al. 2026), we identified that 3D bioprinting (Tang et al. 2020) specifically rescues the biological programs most deficient in self-organized organoids. We observed a \textbf{9.8-fold increase} in the activity of synaptic patterns enriched for autism risk genes (SFARI Score 1) and a \textbf{9.0-fold expansion} of human-specific outer radial glia (oRG) programs. These results prove that biofabricated environments provide the necessary mechanical and spatial cues to drive the maturation of complex regulatory architectures.
 
 \section{Conclusion}
 

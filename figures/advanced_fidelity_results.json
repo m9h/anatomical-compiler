@@ -1,0 +1,47 @@
+[
+  {
+    "dataset": "Organoid (Fleck)",
+    "pattern": "Mature Neuron",
+    "score": 267.64229400305015
+  },
+  {
+    "dataset": "Organoid (Fleck)",
+    "pattern": "Outer Radial Glia",
+    "score": 255.3657125452354
+  },
+  {
+    "dataset": "Organoid (Fleck)",
+    "pattern": "Synaptic (ASD)",
+    "score": 173.41980756971154
+  },
+  {
+    "dataset": "Bioprinted Brain (Tang)",
+    "pattern": "Mature Neuron",
+    "score": 2102.325151060418
+  },
+  {
+    "dataset": "Bioprinted Brain (Tang)",
+    "pattern": "Outer Radial Glia",
+    "score": 2303.360046774013
+  },
+  {
+    "dataset": "Bioprinted Brain (Tang)",
+    "pattern": "Synaptic (ASD)",
+    "score": 1713.2647809834898
+  },
+  {
+    "dataset": "Bioprinted Liver (Zhang)",
+    "pattern": "Mature Neuron",
+    "score": 25.957819264560886
+  },
+  {
+    "dataset": "Bioprinted Liver (Zhang)",
+    "pattern": "Outer Radial Glia",
+    "score": 93.26830024661727
+  },
+  {
+    "dataset": "Bioprinted Liver (Zhang)",
+    "pattern": "Synaptic (ASD)",
+    "score": 72.82129076976946
+  }
+]
