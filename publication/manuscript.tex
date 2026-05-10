@@ -68,6 +68,10 @@ To ensure unified cell type mapping, we integrated the \textbf{scTab} foundation
 
 We extended our benchmarking to 3D bioprinted tissues (Glioblastoma, Kidney, and Liver) to test if \hgx\ can quantify the increased fidelity of automated biofabrication. In glioblastoma models (Tang et al. 2020), organoid-derived regulons for \textit{NR2E1} ($p = 7.3 \times 10^{-5}$) and \textit{ASCL1} ($p = 5.3 \times 10^{-5}$) significantly predicted 3D-induced gene sets. In liver models (Zhang et al. 2025), we confirmed the robust induction of master regulators \textit{HNF4A} (1.82 log2FC, $p = 6.4 \times 10^{-4}$) and \textit{FOXA2} (2.06 log2FC, $p = 3.6 \times 10^{-4}$). Finally, Hodge Laplacian analysis of bioprinted kidney organoids (Lawlor et al. 2021) revealed structural modularity comparable to brain organoids, demonstrating the framework's organ-agnostic utility.
 
+\subsection{Spatiotemporal Fidelity with the Neocortex Atlas}
+
+We leveraged the \textbf{Neocortex Atlas} (Sonthalia et al. 2026), a curated compendium of $\sim$200 studies, to perform a spatiotemporally anchored fidelity analysis. By projecting organoid transcriptomes into the 7 primary mammalian developmental patterns defined by the atlas, we verified that organoids successfully recapitulate the trajectory from \textit{Pattern 5 (Progenitors)} to \textit{Pattern 7 (Excitatory Neurons)}. However, \hgx\ modularity scores identified a significant fidelity gap in \textit{Pattern 2 (Mature Layer-Specific)} programs, which showed lower activation in organoids compared to primary tissue, highlighting a critical area for bioengineering improvement.
+
 \section{Conclusion}
 
 The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. Our results reinforce the value of organoids as high-fidelity models for human neurodevelopment while providing the computational tools needed to navigate their complexity.

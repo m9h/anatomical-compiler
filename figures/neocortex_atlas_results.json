@@ -1,0 +1,21 @@
+{
+  "shared_genes": 15412,
+  "patterns": [
+    "p1.Shared.Mammal_subcomp.1",
+    "p2.Shared.Mammal_subcomp.2",
+    "p3.Shared.Mammal_subcomp.3",
+    "p4.Shared.Mammal_subcomp.4",
+    "p5.Shared.Mammal_subcomp.5",
+    "p6.Shared.Mammal_subcomp.6",
+    "p7.Shared.Mammal_subcomp.7"
+  ],
+  "mean_scores": {
+    "p1": 229.0977151736727,
+    "p2": 188.4576856781243,
+    "p3": 246.9690879679312,
+    "p4": 217.42557087167754,
+    "p5": 277.0119709399408,
+    "p6": 219.85277435049042,
+    "p7": 199.19925350954534
+  }
+}

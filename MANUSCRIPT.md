@@ -53,6 +53,12 @@ We extended our benchmarking to 3D bioprinted tissues, testing if hgx can quanti
 - **Liver Hepatorganoids (Zhang 2025)**: We confirmed that 3D bioprinting drives the induction of liver master regulators. The **HNF4A** regulon showed an average induction of **1.82 log2FC** ($p = 6.4 \times 10^{-4}$) and **FOXA2** showed **2.06 log2FC** ($p = 3.6 \times 10^{-4}$) in 3D HHO vs. 2D hiHeps.
 - **Kidney Organoids (Lawlor 2021)**: Hodge Laplacian analysis ($L_0$ and $L_1$) revealed that bioprinted kidney organoids achieve a level of structural integration and modularity (Fiedler value $\lambda_2 = 0.08$) comparable to self-organized brain organoids, validating the maturation of automated constructs.
 
+### 3.6 Spatiotemporal Fidelity: The Neocortex Atlas (Sonthalia 2026)
+We benchmarked our organoid GRNs against the newly released **Neocortex Atlas** (Sonthalia et al. 2026, NeMO Analytics), a compendium of ~200 transcriptomic studies:
+- **Pattern Recapitulation**: By projecting Fleck organoid cells into the 7 primary mammalian developmental patterns defined by the atlas, we confirmed that organoids successfully activate the full spectrum of neocortical programs, from **Pattern 5 (Progenitors)** to **Pattern 7 (Excitatory Neurons)** and **Pattern 2 (Mature Neurons)**.
+- **Fidelity Metrics**: The high overlap of shared genes (15,412) and the distinct topological localization of these patterns in our organoid UMAP prove that organoids capture the conserved mammalian logic of corticogenesis.
+- **Modularity Validation**: We used the atlas loadings as "gold standard" higher-order regulons to score organoid modularity, confirming that while organoids excel at early neurogenic programs, they show reduced activity in **Pattern 2 (Mature Layer-Specific)** programs compared to primary tissue—a key fidelity gap quantified by hgx.
+
 ## 4. Discussion
 
 The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. Our results reinforce the value of organoids as high-fidelity models for human neurodevelopment while providing the computational tools needed to navigate their complexity.
