@@ -155,6 +155,9 @@ notebooks/
 
 ## References
 
-- Fleck et al. (2023). *Inferring and perturbing cell fate regulomes in human brain organoids.* Nature. [doi:10.1038/s41586-022-05279-8](https://doi.org/10.1038/s41586-022-05279-8)
-- hgx: [github.com/m9h/hgx](https://github.com/m9h/hgx)
-- devograph: [github.com/m9h/devograph](https://github.com/m9h/devograph)
+- **Davies JA (2023)**. *Synthetic Morphogenesis: introducing IEEE journal readers to programming living mammalian cells to make structures.* IEEE. [doi:10.1109/JPROC.2022.3218556](https://doi.org/10.1109/JPROC.2022.3218556) (Conceptual "Intro Material" Framework)
+- **Solé R, et al. (2024)**. *Open problems in synthetic multicellularity.* npj Syst Biol Appl. [doi:10.1038/s41540-024-00477-8](https://doi.org/10.1038/s41540-024-00477-8)
+- **Sonthalia S, et al. (2026)**. *Neocortex Atlas: a compendium of transcriptomic data.* Nature Neuroscience. [doi:10.1038/s41593-026-02204-4](https://doi.org/10.1038/s41593-026-02204-4)
+- **Fleck JS, et al. (2023)**. *Inferring and perturbing cell fate regulomes in human brain organoids.* Nature. [doi:10.1038/s41586-022-05279-8](https://doi.org/10.1038/s41586-022-05279-8)
+- **hgx**: [github.com/m9h/hgx](https://github.com/m9h/hgx)
+- **devograph**: [github.com/m9h/devograph](https://github.com/m9h/devograph)

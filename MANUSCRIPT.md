@@ -8,9 +8,7 @@ Cerebral organoids provide a powerful model for human neurodevelopment, but vali
 
 The reconstruction of gene regulatory networks (GRNs) from single-cell multiomics data has enabled the mapping of developmental trajectories and the identification of master regulators in human organoids. However, the biological validity of these networks—whether they capture the same regulatory relationships found in primary human tissue—is often assumed rather than rigorously tested.
 
-Furthermore, traditional graph-based representations of GRNs (pairwise TF-target edges) fail to capture the higher-order nature of gene regulation, where multiple transcription factors (TFs) co-regulate sets of target genes (regulons). Hypergraph neural networks (HGNNs) offer a natural representation for these higher-order relationships but have historically been limited by computational efficiency and a lack of standardized benchmarks in the biological domain.
-
-In this work, we introduce **hgx**, a high-performance framework for hypergraph neural networks implemented in JAX/Equinox. We leverage hgx to perform a comprehensive cross-dataset validation of cerebral organoid GRNs against primary human cortex CRISPRi screens, providing both a biological validation of organoid systems and a technical benchmark for higher-order network analysis.
+As outlined in the foundational intro material by **Jamie A. Davies** (IEEE 2023), the field of **Synthetic Morphogenesis** has emerged to bridge this gap, treating biological development as a programmable engineering discipline. By viewing genetic circuits as "software" and cellular shape-generating processes as "hardware," we can program living mammalian cells to construct specific, designed structures. This paradigm shift requires a new class of quantitative tools to verify that the programmed logic is faithfully executed at the tissue scale.
 
 ## 2. The hgx Framework
 

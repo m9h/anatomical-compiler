@@ -31,6 +31,9 @@
 \definecolor{bonfsig}{HTML}{E41A1C}
 \definecolor{darkbg}{HTML}{2C3E50}
 
+% ── Custom Commands ──
+\newcommand{\hgx}{\texttt{hgx}}
+
 % ── Meta ──
 \title{Organoid Gene Regulatory Networks\\Predict Primary Cortex Perturbation Targets}
 \subtitle{Cross-System Validation via Hypergraph Analysis}
@@ -59,6 +62,37 @@
 % ════════════════════════════════════════════════════════════════
 \section{Introduction \& Motivation}
 % ════════════════════════════════════════════════════════════════
+
+\begin{frame}{Conceptual Foundation: Synthetic Morphogenesis}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{The IEEE 2023 Intro Material}
+\begin{itemize}
+    \item \textbf{Jamie A. Davies}: "Programming living mammalian cells to make structures"
+    \item \textbf{Biology as Software}: Genetic circuits program the logic
+    \item \textbf{Biology as Hardware}: Cellular shape-generating processes (adhesion, motility)
+\end{itemize}
+
+\vspace{1em}
+\textbf{The Quantitative Challenge}
+\begin{itemize}
+    \item How do we verify that the programmed logic matches primary tissue?
+    \item Need metrics for \textbf{Fidelity}, \textbf{Modularity}, and \textbf{Topology}.
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{tikzpicture}[scale=0.9]
+\node[draw, fill=darkbg, text=white, rounded corners, inner sep=5pt] (soft) at (0,1.5) {Software (GRN Logic)};
+\node[draw, fill=hgxblue!20, rounded corners, inner sep=5pt] (hard) at (0,-1.5) {Hardware (Morphogenesis)};
+\draw[<->, ultra thick, dashed, mygray] (soft) -- (hard);
+\node[font=\scriptsize, align=center] at (1.8,0) {This Work:\\Quantifying the\\Link with \hgx};
+\end{tikzpicture}
+\end{column}
+\end{columns}
+
+\end{frame}
 
 \begin{frame}{The Problem: Validating Organoid Biology}
 
