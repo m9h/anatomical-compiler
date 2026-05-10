@@ -1,0 +1,506 @@
+[
+  {
+    "tf": "NR2E1",
+    "category": "SFARI_Score1",
+    "n_both": 10,
+    "n_reg": 284,
+    "n_dis": 207,
+    "p_val": 0.9986912284011741,
+    "genes": [
+      "ARID1B",
+      "FOXG1",
+      "GABRB3",
+      "GRIN2B",
+      "KMT2C",
+      "MEIS2",
+      "PCDH19",
+      "SETBP1",
+      "SOX5",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "NR2E1",
+    "category": "ASD_HC65",
+    "n_both": 5,
+    "n_reg": 284,
+    "n_dis": 65,
+    "p_val": 0.8066327645466864,
+    "genes": [
+      "ARID1B",
+      "GABRB3",
+      "GRIN2B",
+      "KMT2C",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "NR2E1",
+    "category": "DD",
+    "n_both": 7,
+    "n_reg": 284,
+    "n_dis": 93,
+    "p_val": 0.8505519710640728,
+    "genes": [
+      "ARID1B",
+      "CNKSR2",
+      "FOXG1",
+      "GABRB3",
+      "GNAO1",
+      "GRIN2B",
+      "SET"
+    ]
+  },
+  {
+    "tf": "NR2E1",
+    "category": "Microcephlaly",
+    "n_both": 1,
+    "n_reg": 284,
+    "n_dis": 73,
+    "p_val": 0.9996436060586086,
+    "genes": [
+      "NIN"
+    ]
+  },
+  {
+    "tf": "ARX",
+    "category": "SFARI_Score1",
+    "n_both": 20,
+    "n_reg": 366,
+    "n_dis": 207,
+    "p_val": 0.9533927098958658,
+    "genes": [
+      "AFF2",
+      "ANK2",
+      "ARX",
+      "BCL11A",
+      "CELF4",
+      "CHD3",
+      "DSCAM",
+      "FOXP2",
+      "GRIA2",
+      "GRIN2B",
+      "LRRC4C",
+      "MEF2C",
+      "MYT1L",
+      "NCOA1",
+      "NRXN3",
+      "SCN2A",
+      "SLC6A1",
+      "TCF7L2",
+      "ZNF292",
+      "ZNF462"
+    ]
+  },
+  {
+    "tf": "ARX",
+    "category": "ASD_HC65",
+    "n_both": 8,
+    "n_reg": 366,
+    "n_dis": 65,
+    "p_val": 0.6332683977922939,
+    "genes": [
+      "ANK2",
+      "BCL11A",
+      "DSCAM",
+      "GRIN2B",
+      "MYT1L",
+      "SCN2A",
+      "SLC6A1",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "ARX",
+    "category": "DD",
+    "n_both": 7,
+    "n_reg": 366,
+    "n_dis": 93,
+    "p_val": 0.9701165843596576,
+    "genes": [
+      "BCL11A",
+      "GNAO1",
+      "GRIN2B",
+      "MEF2C",
+      "MYT1L",
+      "SCN2A",
+      "SLC6A1"
+    ]
+  },
+  {
+    "tf": "ARX",
+    "category": "Microcephlaly",
+    "n_both": 2,
+    "n_reg": 366,
+    "n_dis": 73,
+    "p_val": 0.9996250036116652,
+    "genes": [
+      "CENPE",
+      "CEP152"
+    ]
+  },
+  {
+    "tf": "MEIS2",
+    "category": "SFARI_Score1",
+    "n_both": 24,
+    "n_reg": 435,
+    "n_dis": 207,
+    "p_val": 0.9632442272795735,
+    "genes": [
+      "ACTB",
+      "AFF2",
+      "ANK2",
+      "BAZ2B",
+      "BCL11A",
+      "CELF4",
+      "CHD3",
+      "DSCAM",
+      "ELAVL3",
+      "FOXP1",
+      "FOXP2",
+      "GRIA2",
+      "GRIN2B",
+      "LRRC4C",
+      "MEF2C",
+      "MEIS2",
+      "MYT1L",
+      "NRXN3",
+      "PCDH19",
+      "RELN",
+      "RORB",
+      "TCF7L2",
+      "ZBTB20",
+      "ZNF462"
+    ]
+  },
+  {
+    "tf": "MEIS2",
+    "category": "ASD_HC65",
+    "n_both": 7,
+    "n_reg": 435,
+    "n_dis": 65,
+    "p_val": 0.9004623886287297,
+    "genes": [
+      "ANK2",
+      "BCL11A",
+      "DSCAM",
+      "FOXP1",
+      "GRIN2B",
+      "MYT1L",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "MEIS2",
+    "category": "DD",
+    "n_both": 7,
+    "n_reg": 435,
+    "n_dis": 93,
+    "p_val": 0.9940693934418168,
+    "genes": [
+      "BCL11A",
+      "CNKSR2",
+      "FOXP1",
+      "GNAO1",
+      "GRIN2B",
+      "MEF2C",
+      "MYT1L"
+    ]
+  },
+  {
+    "tf": "MEIS2",
+    "category": "Microcephlaly",
+    "n_both": 1,
+    "n_reg": 435,
+    "n_dis": 73,
+    "p_val": 0.9999964229685574,
+    "genes": [
+      "KIF14"
+    ]
+  },
+  {
+    "tf": "SOX2",
+    "category": "SFARI_Score1",
+    "n_both": 15,
+    "n_reg": 323,
+    "n_dis": 207,
+    "p_val": 0.9875681340418057,
+    "genes": [
+      "ACTB",
+      "ANK2",
+      "ARID1B",
+      "BCL11A",
+      "CHD3",
+      "CHD7",
+      "EBF3",
+      "ELAVL3",
+      "KMT2C",
+      "MEF2C",
+      "MEIS2",
+      "NRXN1",
+      "TBR1",
+      "TCF7L2",
+      "ZBTB20"
+    ]
+  },
+  {
+    "tf": "SOX2",
+    "category": "ASD_HC65",
+    "n_both": 7,
+    "n_reg": 323,
+    "n_dis": 65,
+    "p_val": 0.6397463838060287,
+    "genes": [
+      "ANK2",
+      "ARID1B",
+      "BCL11A",
+      "KMT2C",
+      "NRXN1",
+      "TBR1",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "SOX2",
+    "category": "DD",
+    "n_both": 6,
+    "n_reg": 323,
+    "n_dis": 93,
+    "p_val": 0.967269654612075,
+    "genes": [
+      "ARID1B",
+      "BCL11A",
+      "EEF1A2",
+      "KIF1A",
+      "MEF2C",
+      "PDHA1"
+    ]
+  },
+  {
+    "tf": "SOX2",
+    "category": "Microcephlaly",
+    "n_both": 2,
+    "n_reg": 323,
+    "n_dis": 73,
+    "p_val": 0.9987904238021443,
+    "genes": [
+      "PAX6",
+      "REST"
+    ]
+  },
+  {
+    "tf": "ASCL1",
+    "category": "SFARI_Score1",
+    "n_both": 14,
+    "n_reg": 373,
+    "n_dis": 207,
+    "p_val": 0.999411927685474,
+    "genes": [
+      "AFF2",
+      "ARX",
+      "BCL11A",
+      "FOXG1",
+      "KMT2C",
+      "MAP1A",
+      "MEIS2",
+      "MYT1L",
+      "NRXN3",
+      "RFX3",
+      "SLC6A1",
+      "SMARCA2",
+      "TCF4",
+      "USP9X"
+    ]
+  },
+  {
+    "tf": "ASCL1",
+    "category": "ASD_HC65",
+    "n_both": 4,
+    "n_reg": 373,
+    "n_dis": 65,
+    "p_val": 0.9812657825996204,
+    "genes": [
+      "BCL11A",
+      "KMT2C",
+      "MYT1L",
+      "SLC6A1"
+    ]
+  },
+  {
+    "tf": "ASCL1",
+    "category": "DD",
+    "n_both": 11,
+    "n_reg": 373,
+    "n_dis": 93,
+    "p_val": 0.7166288697980647,
+    "genes": [
+      "BCL11A",
+      "CNKSR2",
+      "EEF1A2",
+      "FOXG1",
+      "MYT1L",
+      "SLC6A1",
+      "SMARCA2",
+      "SMC1A",
+      "TCF4",
+      "USP9X",
+      "ZBTB18"
+    ]
+  },
+  {
+    "tf": "ASCL1",
+    "category": "Microcephlaly",
+    "n_both": 2,
+    "n_reg": 373,
+    "n_dis": 73,
+    "p_val": 0.9996911226567861,
+    "genes": [
+      "CCND2",
+      "NIN"
+    ]
+  },
+  {
+    "tf": "FOXG1",
+    "category": "SFARI_Score1",
+    "n_both": 5,
+    "n_reg": 236,
+    "n_dis": 207,
+    "p_val": 0.9999505985088295,
+    "genes": [
+      "AFF2",
+      "CASK",
+      "FOXG1",
+      "GRIA2",
+      "NRXN3"
+    ]
+  },
+  {
+    "tf": "FOXG1",
+    "category": "ASD_HC65",
+    "n_both": 0,
+    "n_reg": 236,
+    "n_dis": 65,
+    "p_val": 1.0,
+    "genes": []
+  },
+  {
+    "tf": "FOXG1",
+    "category": "DD",
+    "n_both": 3,
+    "n_reg": 236,
+    "n_dis": 93,
+    "p_val": 0.98851691297425,
+    "genes": [
+      "CASK",
+      "FOXG1",
+      "KIF1A"
+    ]
+  },
+  {
+    "tf": "FOXG1",
+    "category": "Microcephlaly",
+    "n_both": 3,
+    "n_reg": 236,
+    "n_dis": 73,
+    "p_val": 0.9542240652363578,
+    "genes": [
+      "ASPM",
+      "CASK",
+      "CIT"
+    ]
+  },
+  {
+    "tf": "TBR1",
+    "category": "SFARI_Score1",
+    "n_both": 8,
+    "n_reg": 148,
+    "n_dis": 207,
+    "p_val": 0.8717160477205993,
+    "genes": [
+      "CACNA1A",
+      "DSCAM",
+      "GABRB2",
+      "MEF2C",
+      "NRXN1",
+      "RELN",
+      "TBR1",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "TBR1",
+    "category": "ASD_HC65",
+    "n_both": 4,
+    "n_reg": 148,
+    "n_dis": 65,
+    "p_val": 0.4552312816321487,
+    "genes": [
+      "DSCAM",
+      "NRXN1",
+      "TBR1",
+      "TCF7L2"
+    ]
+  },
+  {
+    "tf": "TBR1",
+    "category": "DD",
+    "n_both": 1,
+    "n_reg": 148,
+    "n_dis": 93,
+    "p_val": 0.9942181757920997,
+    "genes": [
+      "MEF2C"
+    ]
+  },
+  {
+    "tf": "TBR1",
+    "category": "Microcephlaly",
+    "n_both": 0,
+    "n_reg": 148,
+    "n_dis": 73,
+    "p_val": 1.0,
+    "genes": []
+  },
+  {
+    "tf": "EMX1",
+    "category": "SFARI_Score1",
+    "n_both": 1,
+    "n_reg": 34,
+    "n_dis": 207,
+    "p_val": 0.9283051373392772,
+    "genes": [
+      "NRXN1"
+    ]
+  },
+  {
+    "tf": "EMX1",
+    "category": "ASD_HC65",
+    "n_both": 1,
+    "n_reg": 34,
+    "n_dis": 65,
+    "p_val": 0.5532406598819173,
+    "genes": [
+      "NRXN1"
+    ]
+  },
+  {
+    "tf": "EMX1",
+    "category": "DD",
+    "n_both": 1,
+    "n_reg": 34,
+    "n_dis": 93,
+    "p_val": 0.6861353116582415,
+    "genes": [
+      "EEF1A2"
+    ]
+  },
+  {
+    "tf": "EMX1",
+    "category": "Microcephlaly",
+    "n_both": 0,
+    "n_reg": 34,
+    "n_dis": 73,
+    "p_val": 1.0,
+    "genes": []
+  }
+]

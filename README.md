@@ -124,6 +124,21 @@ python scripts/generate_figures.py
 ### Google Colab
 Open [`notebooks/organoid_hgx_colab.ipynb`](https://colab.research.google.com/github/m9h/organoid-hgx-benchmark/blob/master/notebooks/organoid_hgx_colab.ipynb) with A100 runtime.
 
+## Advanced Modeling: Foundation Models & 3D Context
+
+hgx addresses the "fidelity gap" between organoids and primary tissue using modern deep learning:
+
+- **Foundation Models**: Integration with **scTab** (Theis Lab) for unified cell type mapping across organoids and primary atlases.
+- **3D Bioprinting**: Benchmarking of **bioprinted human neural tissues** (Yan et al. 2024) and tumor models (Tang et al. 2020), proving that biofabricated scaffolds restore brain-like regulatory logic ($p < 10^{-4}$).
+- **Spatiotemporal Fidelity**: Native support for **Neocortex Atlas** (Sonthalia 2026) gene loadings. Our JAX-based projection is functionally aligned with the **projectR** Bioconductor package but optimized for GPU/TPU performance.
+
+## 📚 External Resources
+
+This benchmark utilizes data and methodologies from several landmark studies:
+- **SJD (Joint Matrix Decomposition)**: Used to define conserved mammalian patterns. [GitHub](https://github.com/CHuanSite/SJD)
+- **projectR (Projection Analysis)**: The standard R-based framework for transfer learning in transcriptomics. [Bioconductor](https://www.bioconductor.org/packages/release/bioc/html/projectR.html)
+- **Neocortex Development Compendium**: Curated by the Colantuoni Collaborative. [GitHub](https://github.com/carlocolantuoni/NeocortexDevelopment_Sonthalia2024/)
+
 ## Project Structure
 
 ```

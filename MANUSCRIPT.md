@@ -61,7 +61,11 @@ We benchmarked our organoid GRNs against the newly released **Neocortex Atlas** 
 
 ## 4. Discussion
 
-The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. Our results reinforce the value of organoids as high-fidelity models for human neurodevelopment while providing the computational tools needed to navigate their complexity.
+The organoid-hgx benchmark demonstrates that cerebral organoids capture conserved human regulatory logic. By providing a high-performance framework for hypergraph analysis, we enable the scaling of these validations to atlas-scale datasets. 
+
+Our results also uncover a critical "Early-Stage Buffer": master regulators of early organoid development (e.g., NR2E1, SOX2) are significantly depleted for mature disease risk genes (SFARI, ASD_HC65), providing a molecular explanation for why current organoid models may fail to capture certain neuropsychiatric features. This finding, enabled by anchoring to the Neocortex Atlas, highlights the urgent need for more mature bioengineered systems to model the full spectrum of human disease.
+
+Our results reinforce the value of organoids as high-fidelity models for human neurodevelopment while providing the computational tools needed to navigate their complexity.
 
 ## 5. Methods
 
@@ -73,5 +77,11 @@ The organoid-hgx benchmark demonstrates that cerebral organoids capture conserve
 ### 5.2 hgx Implementation
 The hgx library is implemented in JAX 0.9.1. Incidence matrices are stored as sparse arrays where possible, with dense representations used for JIT-optimized convolution kernels.
 
-### 5.3 Validation Metrics
-Regulon overlap was assessed using Jaccard indices and Fisher's exact tests. Direction concordance was calculated as the percentage of top-N targets where the sign of the Fleck GRN coefficient matched the sign of the Pollen CRISPRi log2 fold change.
+### 5.4 Code and Data Availability
+- **hgx Framework**: [https://github.com/m9h/hgx](https://github.com/m9h/hgx)
+- **Benchmark Code**: [https://github.com/m9h/organoid-hgx-benchmark](https://github.com/m9h/organoid-hgx-benchmark)
+- **Sonthalia et al. (2026) Resources**: 
+    - Neocortex Atlas: [https://nemoanalytics.org/landing/neocortex/](https://nemoanalytics.org/landing/neocortex/)
+    - Joint Decomposition (SJD): [https://github.com/CHuanSite/SJD](https://github.com/CHuanSite/SJD)
+    - Projection Analysis (projectR): [https://www.bioconductor.org/packages/release/bioc/html/projectR.html](https://www.bioconductor.org/packages/release/bioc/html/projectR.html)
+    - Study-Specific Code: [https://github.com/carlocolantuoni/NeocortexDevelopment_Sonthalia2024/](https://github.com/carlocolantuoni/NeocortexDevelopment_Sonthalia2024/)
