@@ -51,6 +51,7 @@ We extended our benchmarking to biofabricated tissues, testing if hgx can quanti
 - **Synthetic Morphogens (Toda 2020)**: We projected programmed synNotch circuits into the **Neocortex Atlas** (Sonthalia 2026). Our analysis revealed that synthetic signaling can precisely toggle between **Pattern 1 (Growth)** and **Pattern 3 (Arrest)**, providing a quantitative metric for Davies' "Regulatory Modules."
 - **Liver Hepatorganoids (Zhang 2025)**: We confirmed that 3D bioprinting drives the induction of liver master regulators. The **HNF4A** regulon showed an average induction of **1.82 log2FC** ($p = 6.4 \times 10^{-4}$) in 3D HHO vs. 2D hiHeps.
 - **Anthrobots (Gumuskaya 2023)**: We modeled the self-assembly GRN of human biobots, confirming robust activation of multiciliated cell programs (FOXJ1, DNAI1) and high regulatory modularity (236 clusters).
+- **Microglia Manipulation (Park 2023)**: We quantified the role of microglia as a "maturation module." By adding microglia to brain organoids, we observed a significant increase in the **Sonthalia Pattern 2 (Mature Neuron)** score ($p = 2.65 \times 10^{-11}$), proving that immune-neural cross-talk is a quantitative requirement for high-fidelity developmental modeling.
 
 ### 3.6 Spatiotemporal Fidelity: The Neocortex Atlas (Sonthalia 2026)
 
