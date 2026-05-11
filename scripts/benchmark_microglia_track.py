@@ -60,36 +60,50 @@ def benchmark_favuzzi_pruning(micro_dir, fig_dir):
     adata = sc.read_h5ad(adata_path)
     sc.pp.log1p(adata)
     
-    # GABA receptors: GABBR1, GABBR2
-    gaba_genes = ["GABBR1", "GABBR2", "GAD1", "GAD2"]
-    present = [g for g in gaba_genes if g in adata.var_names]
+    # 1. Map to Pruning Regulon
+    # Genes involved in microglial pruning and GABA sensing
+    pruning_genes = ["GABBR1", "GABBR2", "TREM2", "TYROBP", "C1QA", "C3"]
+    present = [g for g in pruning_genes if g in adata.var_names]
+    
+    sc.tl.score_genes(adata, present, score_name="pruning_score")
     
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=adata.obs, x="condition", y=adata[:, "GABBR1"].X.mean(axis=0).tolist()[0] if "GABBR1" in adata.var_names else 0)
-    plt.title("Favuzzi 2021: GABA-R KO Validation")
-    plt.savefig(fig_dir / "microglia_favuzzi_validation.png", dpi=200)
+    sns.violinplot(data=adata.obs, x="condition", y="pruning_score", palette="coolwarm")
+    plt.title("Favuzzi 2021: Pruning Regulome in GABAB-R KO Microglia")
+    plt.savefig(fig_dir / "microglia_favuzzi_pruning.png", dpi=200)
     
-    return {"favuzzi_n_cells": adata.shape[0]}
+    # Compare KO vs WT
+    ctrl = adata.obs[adata.obs['condition'] == 'WT']['pruning_score']
+    test = adata.obs[adata.obs['condition'] == 'KO']['pruning_score']
+    t_stat, p_val = stats.ttest_ind(test, ctrl)
+    
+    print(f"  Pruning Shift: {test.mean() - ctrl.mean():.4f}, p={p_val:.2e}")
+    
+    return {"favuzzi_pruning_shift": float(test.mean() - ctrl.mean()), "favuzzi_p": float(p_val)}
 
-def benchmark_popova_inflammation(micro_dir, fig_dir):
-    print("\n--- Benchmarking Popova 2021 (LPS Activation) ---")
-    # This is small, we can load it directly
+def benchmark_popova_modularity(micro_dir, fig_dir):
+    print("\n--- Benchmarking Popova 2021 (Chimeric Modularity) ---")
     adata_path = micro_dir / "popova_2021_processed.h5ad"
     if not adata_path.exists(): return None
     
     adata = sc.read_h5ad(adata_path)
     sc.pp.log1p(adata)
     
-    # Inflammatory markers: TNF, IL1B, CCL2
-    markers = ["TNF", "IL1B", "CCL2", "CXCL8"]
-    present = [g for g in markers if g in adata.var_names]
+    # We use Cluster Modularity (n_modules) as a proxy for regulatory stabilization
+    # Samples: GSM5478754 (img), GSM5478755 (batch1), GSM5478756 (batch2)
+    sc.pp.highly_variable_genes(adata, n_top_genes=1000)
+    sc.pp.pca(adata)
+    sc.pp.neighbors(adata)
+    sc.tl.leiden(adata, resolution=0.5)
     
-    # This is a cell x gene matrix where cells are samples
-    # We don't have metadata for LPS +/- in the processed H5AD yet
-    # but we can look at the variance
-    print(f"  Top Variable Inflammatory Genes: {adata[:, present].X.var(axis=0)}")
-    
-    return {"popova_n_samples": adata.shape[0]}
+    results = []
+    for gsm in adata.obs['sample'].unique():
+        sub = adata[adata.obs['sample'] == gsm]
+        n_mod = len(sub.obs['leiden'].unique())
+        results.append({"gsm": gsm, "n_modules": n_mod})
+        print(f"  {gsm:<10}: {n_mod} modules")
+        
+    return {"popova_modularity": results}
 
 def main():
     parser = argparse.ArgumentParser()
@@ -108,7 +122,7 @@ def main():
     res_fav = benchmark_favuzzi_pruning(micro_dir, fig_dir)
     if res_fav: results.update(res_fav)
     
-    res_pop = benchmark_popova_inflammation(micro_dir, fig_dir)
+    res_pop = benchmark_popova_modularity(micro_dir, fig_dir)
     if res_pop: results.update(res_pop)
     
     with open(fig_dir / "microglia_track_results.json", "w") as f:

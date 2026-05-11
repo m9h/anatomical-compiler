@@ -1,6 +1,20 @@
 {
-  "park_maturity_shift": 0.06037326970801182,
-  "park_p": 2.6480279274421674e-11,
-  "favuzzi_n_cells": 29378,
-  "popova_n_samples": 24
+  "park_maturity_shift": 0.06949069468987906,
+  "park_p": 5.04226400218854e-15,
+  "favuzzi_pruning_shift": 0.001005612891176541,
+  "favuzzi_p": 0.2442820322582214,
+  "popova_modularity": [
+    {
+      "gsm": "GSM5478754",
+      "n_modules": 5
+    },
+    {
+      "gsm": "GSM5478755",
+      "n_modules": 8
+    },
+    {
+      "gsm": "GSM5478756",
+      "n_modules": 2
+    }
+  ]
 }
