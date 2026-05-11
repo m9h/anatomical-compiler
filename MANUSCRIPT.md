@@ -62,9 +62,10 @@ We benchmarked our organoid GRNs against the newly released **Neocortex Atlas** 
 
 ### 3.7 Standout Result: Bioprinting Bridges the Maturity Gap
 Our most significant finding using the **Neocortex Atlas** (Sonthalia 2026) projection is that 3D bioprinting specifically rescues the biological programs poorly captured by self-organized organoids:
-- **Synaptic Resilience**: Bioprinted brain models (Tang 2020) achieved a **9.8-fold increase** in the activity of the **Synaptic (ASD-enriched)** pattern compared to Fleck organoids.
-- **oRG Expansion**: The **Outer Radial Glia (oRG)** pattern—a hallmark of human-specific brain expansion—showed a **9.0-fold increase** in activity within bioprinted constructs.
+- **Synaptic Resilience**: Bioprinted brain models (**Tang 2020**, **Shin 2024**) achieved up to a **9.8-fold increase** in the activity of the **Synaptic (ASD-enriched)** pattern compared to Fleck organoids.
+- **oRG Expansion**: The **Outer Radial Glia (oRG)** pattern—a hallmark of human-specific brain expansion—showed a **9.0-fold increase** in activity within bioprinted constructs and was highly enriched in **hiPSC-derived NSCs (Vassal 2024)** compared to standard epithelial models.
 - **Modularity Gain**: These results quantify for the first time that biofabrication isn't just about structural control; it drives the maturation of the underlying regulatory programs necessary for modeling mature human brain function and disease.
+
 
 ### 3.8 Quantifying Modularity: Alignment with NITMB Theory
 In collaboration with the theoretical frameworks proposed by the **National Institute for Theory and Mathematics in Biology (NITMB)**, we implemented a novel **Module Identifiability Index** based on the spectral properties of the Hodge Laplacian. 

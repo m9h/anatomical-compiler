@@ -30,6 +30,8 @@ def main():
     datasets = {
         "Organoid (Fleck)": "data/zenodo/RNA_all_velo.h5ad",
         "Bioprinted Brain (Tang)": "data/bioprinting/tang_2020_processed.h5ad",
+        "Bioprinted Brain (Shin)": "data/bioprinting/shin_2024_processed.h5ad",
+        "hiPSC-NSC (Vassal)": "data/bioprinting/vassal_2024_processed.h5ad",
         "Bioprinted Liver (Zhang)": "data/bioprinting/zhang_2025_processed.h5ad"
     }
     
