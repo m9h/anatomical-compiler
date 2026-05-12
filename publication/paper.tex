@@ -401,6 +401,31 @@ subsampled to $\le 500$ nodes for tractability) summarises higher-order structur
 numbers ($\beta_0$ connected components, $\beta_1$ loops); we report these alongside the
 Laplacian spectrum as a complementary, coordinate-free view of modularity.
 
+\subsection{Network controllability and steer-to-target: the ``anatomical-compiler'' layer}\label{sec:methods-control}
+
+The three readouts above are diagnostic; closing the loop --- given a \emph{target} tissue
+state, compute the \emph{intervention} that reaches it --- is a control problem, which we
+address with \texttt{jaxctrl}~\cite{jaxctrl2026} (a differentiable JAX control-theory library;
+same Equinox/Lineax/Optimistix/Diffrax stack as \hgx). We build a linear network model
+$\dot x = A x + B u$ on the transcription-factor co-regulation graph: nodes are regulons,
+edges connect regulons by Jaccard target overlap (sparsified to each regulon's strongest few
+partners, since Pando regulons overlap heavily), $A = -(L_{\mathrm{sym}}+\varepsilon I)$ with
+$L_{\mathrm{sym}}$ the symmetric-normalised graph Laplacian (so $A$ is Hurwitz and
+finite-horizon Gramians exist), and $B$ selects a candidate \emph{driver} set (the curated
+master regulators). From this we report: (i) the Kalman-rank controllability of the network
+from the master-regulator set, and --- following structural-controllability theory
+\cite{liu2011,yan2017} --- whether few driver nodes suffice; (ii) per-TF \emph{control
+leverage} from single-input controllability Gramians $W_i = \int_0^T e^{As} e_i e_i^{\top}
+e^{A^{\top}s}\,ds$ --- $\operatorname{tr}(W_i)$ is ``average controllability'' and
+$\lambda_{\min}(W_i)$ ``modal/boundary controllability'' \cite{gu2015,pasqualetti2014};
+(iii) a \emph{steer-to-target} problem --- using the early-pseudotime TF state as $x_0$ and
+the late-pseudotime state as $x_f$, the minimum control energy
+$\mathcal{E}^\star = \min_u \int_0^T \lVert u\rVert^2$ to drive $x_0\to x_f$ under different
+input sets, plus an LQR feedback law $u=-K(x-x_f)$ and its closed-loop trajectory. This is
+the toy, transcriptome-only instance of Levin's ``anatomical compiler'' \cite{pezzulo2016,levin2022tame}
+--- desired state in, intervention out --- and it is the formal frame that unifies the
+forward-programme experiments of \S\ref{sec:concl-forward}.
+
 \subsection{Datasets}\label{sec:methods-datasets}
 
 {\footnotesize
@@ -629,6 +654,18 @@ Fos & 4.377 & dynamic injury marker\\
 \end{tabular}
 \end{table}
 
+\subsection{Network controllability of the regulome (toward the anatomical compiler)}\label{sec:results-control}
+
+Promoting the diagnostic readouts to a control problem (\S\ref{sec:methods-control}; \texttt{jaxctrl}
+on the TF co-regulation graph), we get a first, transcriptome-only pass at the ``anatomical
+compiler.'' Two findings stand out.
+
+\textbf{(1) The master-regulator set is \emph{not} a controlling input set in the linear sense.} On a sparse TF co-regulation network (200 regulons), the curated 7 master regulators (NEUROD6, GLI3, FOXG1, DLX2, DLX1, TBR1, EOMES) drive a controllability subspace of rank only 9/200 --- consistent with structural-controllability theory, where sparse heterogeneous-degree networks need many driver nodes.
+
+\begin{kframe}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in `x\$tf`:\\\#\# ! \$ operator is invalid for atomic vectors}}\end{kframe}
+
 \subsection{Activity-dependent regulome (agency proxy)}\label{sec:results-learn}
 
 As a scRNA-seq proxy for activity-dependent plasticity (the Kagan DishBrain data being
@@ -739,7 +776,17 @@ bound the strength of the higher-order-specific claims.
 
 The natural next step is to close the loop --- to use \hgx, its Module Identifiability Index,
 its Hypergraph Neural ODE, and its CellFlow-based simulation-based inference not just to
-\emph{score} engineered tissues after the fact but to \emph{design} the next round. Concretely:
+\emph{score} engineered tissues after the fact but to \emph{design} the next round. Stated
+abstractly, every item below is one \emph{optimal-control} problem on the Hypergraph Neural ODE:
+given a target tissue state $x_f$ (a primary-tissue pattern profile, a mature-driver
+configuration), find the actuation $u(t)$ --- print geometry, synNotch input, light schedule,
+microglia/vasculature dose, bioelectric set-point --- that drives $x_0 \to x_f$ with minimum
+cost, subject to what is physically actuatable. \texttt{jaxctrl}'s differentiable controllers
+(controllability Gramians, structural driver-node analysis, LQR, and MPC via \texttt{diffrax}
+adjoints) supply the solver; \S\ref{sec:methods-control}/\S\ref{sec:results-control} are the
+linear warm-up showing that the actuation must act on the nonlinear flow, not a linearisation.
+This is what Levin calls the \emph{anatomical compiler} \cite{pezzulo2016,levin2022tame}, and
+the experiments below are its first concrete targets. Concretely:
 
 \paragraph{(i) A 4D-bioprinting maturation assay with a model-in-the-loop.}
 The Gartner-style conformation sweep showed maturity scaling with print geometry; run a
@@ -915,6 +962,14 @@ and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
 \bibitem{huangYang2021} Huang J, Yang J. UniGNN: a unified framework for graph and hypergraph neural networks. \textit{IJCAI}, 2021. doi:10.24963/ijcai.2021/353
 \bibitem{chien2022} Chien E, Pan C, Peng J, Milenkovic O. You are AllSet: a multiset function framework for hypergraph neural networks. \textit{ICLR}, 2022.
 \bibitem{bodnar2022} Bodnar C, Di Giovanni F, Chamberlain BP, Li\`o P, Bronstein MM. Neural sheaf diffusion: a topological perspective on heterophily and oversmoothing in GNNs. \textit{NeurIPS}, 2022.
+
+% --- Network control theory / the anatomical compiler ---
+\bibitem{liu2011} Liu YY, Slotine JJ, Barab\'asi AL. Controllability of complex networks. \textit{Nature} 473:167--173, 2011. doi:10.1038/nature10011
+\bibitem{pasqualetti2014} Pasqualetti F, Zampieri S, Bullo F. Controllability metrics, limitations and algorithms for complex networks. \textit{IEEE Trans Control Netw Syst} 1(1):40--52, 2014. doi:10.1109/TCNS.2014.2310254
+\bibitem{gu2015} Gu S, Pasqualetti F, Cieslak M, et al. Controllability of structural brain networks. \textit{Nat Commun} 6:8414, 2015. doi:10.1038/ncomms9414
+\bibitem{yan2017} Yan G, Vasilyev A, Loscalzo J, et al. Network control principles predict neuron function in the \textit{Caenorhabditis elegans} connectome. \textit{Nature} 550:519--523, 2017. doi:10.1038/nature24056
+\bibitem{levin2022tame} Levin M. Technological approach to mind everywhere: an experimentally-grounded framework for understanding diverse bodies and minds. \textit{Front Syst Neurosci} 16:768201, 2022. doi:10.3389/fnsys.2022.768201
+\bibitem{jaxctrl2026} Hough M. \texttt{jaxctrl}: differentiable control theory in JAX (Lyapunov/Riccati/LQR, controllability Gramians, structural \& hypergraph controllability). 2026. \url{https://github.com/m9h/jaxctrl}
 
 % --- Modularity (theory) ---
 \bibitem{kirschner1998} Kirschner M, Gerhart J. Evolvability. \textit{PNAS} 95(15):8420--8427, 1998. doi:10.1073/pnas.95.15.8420

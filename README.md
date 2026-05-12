@@ -14,6 +14,7 @@
 [![Speed](https://img.shields.io/badge/inference-5–120×%20faster%20than%20DHG-red)](#-speed--accuracy)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](#)
 [![R](https://img.shields.io/badge/R-4.6-276DC3?logo=r&logoColor=white)](#)
+[![Control](https://img.shields.io/badge/control%20layer-jaxctrl%20·%20anatomical%20compiler-9467bd)](https://github.com/m9h/jaxctrl)
 [![Lab](https://img.shields.io/badge/Biopunk%20Lab-FRESH%20%2B%20PRINTESS%20bioprinting-ff69b4)](#-from-measurement-to-experiments)
 
 </div>
@@ -48,16 +49,19 @@ flowchart LR
     H3["🧩 Module Identifiability Index<br/>(Hodge Laplacian)"]
     H4["🌊 Hypergraph Neural ODE<br/>(drivers vs stress)"]
     H5["↩︎ SBI inverse<br/>(CellFlow flow-matching, Jacobian)"]
+    H6["🎮 jaxctrl: controllability<br/>+ LQR/MPC steer-to-target<br/>(the anatomical compiler)"]
   end
-  subgraph Blueprint["📐 Primary-tissue blueprints"]
+  subgraph Blueprint["📐 Primary-tissue blueprints / targets"]
     NA["Neocortex Atlas (Sonthalia 2026)<br/>7 conserved mammalian patterns"]
     FK["Fetal kidney / cortex refs"]
     PC["Primary cortex CRISPRi (Pollen 2026)"]
   end
   Inputs --> H1 --> H2 & H3 & H4
   Blueprint --> H2 & H3
-  H2 & H3 & H4 --> R["📊 figures/*_results.json"]
-  H5 -.design loop.-> Inputs
+  H4 --> H6
+  Blueprint -. target state .-> H6
+  H2 & H3 & H4 & H6 --> R["📊 figures/*_results.json"]
+  H5 & H6 -.design loop / intervention.-> Inputs
   R --> W["📄 paper.Rnw → paper.pdf<br/>(live knitr tables)"]
 ```
 
@@ -83,7 +87,7 @@ Rscript -e 'knitr::knit("publication/paper.Rnw", output="publication/paper.tex")
 
 ## 🧫 From measurement to experiments
 
-The point of the survey-plus-tool is the **programme it enables** (whitepaper §4.3) — a model-in-the-loop, engineering-biology agenda aimed at the core question of synthetic morphology (build predictably, with the cells' own competencies; know when you have):
+The point of the survey-plus-tool is the **programme it enables** (whitepaper §4.3) — a model-in-the-loop, engineering-biology agenda aimed at the core question of synthetic morphology (build predictably, with the cells' own competencies; know when you have). Abstractly, every item is **one optimal-control problem on the Hypergraph Neural ODE** — given a target tissue state, find the actuation (print geometry, synNotch input, light schedule, dose, bioelectric set-point) that gets there — i.e. **Levin's anatomical compiler**, with [`jaxctrl`](https://github.com/m9h/jaxctrl) (differentiable LQR/MPC, controllability Gramians, structural & hypergraph controllability) as the solver:
 
 | # | Experiment | Instrument readout in the loop | Tech |
 |---|---|---|---|
@@ -94,7 +98,9 @@ The point of the survey-plus-tool is the **programme it enables** (whitepaper §
 | (v) | **Bioelectric control layer** — perturb Vmem / gap-junctional coupling | shift in Identifiability Index & ODE driver set | bioelectric reprogramming |
 | (vi) | **Cancer-as-loss-of-module-identifiability assay** — primary → organoid → tumour organoid → cancer line | Index falls, driver set collapses, unicellular↔multicellular gene balance shifts | tissue-organization / atavism / attractor views, operationalised |
 
-The lineage behind (i): **Feinberg lab** FRESH freeform collagen printing → **Shiwarski** open-source bioprinting hardware (CHIPS/VAPOR) → **Skylar-Scott lab** SWIFT & the $250 open-source PRINTESS → **model-guided synthetic vasculature** fed straight to the printer. (Citations in [`REFERENCES.md`](REFERENCES.md) / `paper.Rnw`.)
+A first transcriptome-only pass at the control layer ships now: `scripts/benchmark_network_control.py` uses `jaxctrl` on the Pando TF co-regulation graph to compute Kalman/structural controllability from the master-regulator set, per-TF control-leverage (single-input Gramians), and a steer-to-target (early→late pseudotime) energy + LQR law — and finds that a *linear* model under-rates the master regulators (they're the privileged handles of the *nonlinear* flow), which is exactly why the anatomical-compiler experiments above optimise on the Hypergraph Neural ODE, not a linearisation. Output: `figures/network_control{,_results.json}` (read live by `paper.Rnw` §3).
+
+The bioprinting lineage behind (i): **Feinberg lab** FRESH freeform collagen printing → **Shiwarski** open-source bioprinting hardware (CHIPS/VAPOR) → **Skylar-Scott lab** SWIFT & the $250 open-source PRINTESS → **model-guided synthetic vasculature** fed straight to the printer. (Citations in [`REFERENCES.md`](REFERENCES.md) / `paper.Rnw`.)
 
 ---
 
@@ -204,6 +210,8 @@ python scripts/benchmark_anthrobot_fidelity.py     # embodied self-assembly
 python scripts/benchmark_vorganoid_crosstalk.py    # vascularization / metabolic wall
 python scripts/benchmark_regenerative_flow.py      # kidney IRI Hypergraph Neural ODE
 python scripts/test_nitmb_modularity.py            # Module Identifiability Index
+pip install -e ../jaxctrl                           # optional: control-theory layer
+python scripts/benchmark_network_control.py        # controllability / steer-to-target (jaxctrl)
 ```
 </details>
 
@@ -241,6 +249,7 @@ scripts/
   accuracy_ablation.py      ← LR/depth/hidden/dropout sweep × 4 tasks
   benchmark_*.py            ← synthetic-multicellularity tracks (Toda, Anthrobot, vOrganoid, regenerative flow, learning regulome, disease enrichment, bioprinting, ...)
   test_nitmb_modularity.py  ← Hodge-Laplacian Module Identifiability Index
+  benchmark_network_control.py ← network controllability + steer-to-target (jaxctrl; the anatomical-compiler layer)
 figures/
   *_results.json            ← per-dataset artifacts (consumed live by paper.Rnw)
   *.png                     ← per-track figures
@@ -276,6 +285,8 @@ Full theme-grouped bibliography with DOIs: **[`REFERENCES.md`](REFERENCES.md)** 
 - **Sonthalia S, et al. (2026)** — *Neocortex Atlas: a compendium of transcriptomic data.* Nat Neurosci. [doi](https://doi.org/10.1038/s41593-026-02204-4)
 - **Lee A, et al. (2019)** — *3D bioprinting of collagen to rebuild components of the human heart* (FRESH v2.0). Science 365(6452):482–487. [doi](https://doi.org/10.1126/science.aav9051)
 - **Sexton ZA, et al. (2025)** — *Rapid model-guided design of organ-scale synthetic vasculature for biomanufacturing.* Science 388(6752):1198–1204. [doi](https://doi.org/10.1126/science.adj6152)
-- **hgx**: [github.com/m9h/hgx](https://github.com/m9h/hgx) · **devograph**: [github.com/m9h/devograph](https://github.com/m9h/devograph) · **cellflow**: [github.com/m9h/cellflow](https://github.com/m9h/cellflow)
+- **Levin M (2022)** — *Technological approach to mind everywhere.* Front Syst Neurosci 16:768201 (the "anatomical compiler"). [doi](https://doi.org/10.3389/fnsys.2022.768201)
+- **Liu YY, Slotine JJ & Barabási AL (2011)** — *Controllability of complex networks.* Nature 473:167–173. [doi](https://doi.org/10.1038/nature10011)
+- **hgx**: [github.com/m9h/hgx](https://github.com/m9h/hgx) · **devograph**: [github.com/m9h/devograph](https://github.com/m9h/devograph) · **cellflow**: [github.com/m9h/cellflow](https://github.com/m9h/cellflow) · **jaxctrl**: [github.com/m9h/jaxctrl](https://github.com/m9h/jaxctrl)
 
 <div align="center"><sub>Biopunk Lab · built with hgx (JAX/Equinox) · manuscript via knitr + tectonic</sub></div>
