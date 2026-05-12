@@ -161,7 +161,7 @@ cellular dynamics (jaxctrl) → the anatomical compiler → synthetic morphology
 (stretch) cancer as loss of module identifiability. See `notebooks/README.md` for the sequence.
 Seed material: `notebooks/organoid_hgx_colab.ipynb` + the three `jaxctrl/examples/*.ipynb/.py`.
 
-- [ ] Notebook 1 — regulomes and hypergraphs (build the Fleck incidence; `hgx` basics)
+- [x] Notebook 1 — regulomes and hypergraphs (`notebooks/01_regulomes_and_hypergraphs.ipynb`): the Fleck incidence; why a regulon is a hyperedge not a clique; `hgx` basics; the Laplacian spectrum; exercises
 - [ ] Notebook 2 — benchmarking fidelity (organoid → primary CRISPRi; cross-species)
 - [ ] Notebook 3 — modularity & identifiability (Hodge Laplacian; the Module Identifiability Index)
 - [ ] Notebook 4 — Hypergraph Neural ODEs (latent dynamics; drivers vs stress; attractors)

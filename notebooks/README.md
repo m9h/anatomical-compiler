@@ -9,9 +9,17 @@ programme in its §4.
 
 ## What's here now
 
-- **`organoid_hgx_colab.ipynb`** — the existing GPU/Colab notebook: `hgx` on the Fleck et al.
-  (2023) cerebral-organoid regulome (preprocessing → figures → the 5 biological-validation
-  checks → the hgx-vs-DHG speed/accuracy benchmark). This is "Lab 0 / the benchmark."
+- **`01_regulomes_and_hypergraphs.ipynb`** — **Lab 1**: what a regulome is; load the Fleck
+  incidence matrix; why a regulon is a *hyperedge*, not a clique (the clique-expansion blow-up
+  *and* aliasing, worked on a toy example + the full regulome); `hgx` basics (`from_incidence`,
+  node/edge degrees, star vs clique expansion, a `UniGCNConv` forward pass); a first structural
+  readout (the hypergraph-Laplacian spectrum and its gap — the seed of the Module Identifiability
+  Index); exercises (all-pairs Jaccard regulon overlap among the master TFs, heavy-tailedness of
+  regulon sizes, graph degree vs hypergraph degree). Self-contained — reads `data/processed/`,
+  falls back to a tiny synthetic regulome if absent.
+- **`organoid_hgx_colab.ipynb`** — "Lab 0 / the benchmark": the GPU/Colab notebook running `hgx`
+  on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → figures → the
+  5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark).
 
 Companion worked examples live in the **`jaxctrl`** repo (the control-theory layer):
 [`examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py)
