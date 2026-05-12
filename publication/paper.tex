@@ -218,7 +218,13 @@ endogenous bioelectric networks that store patterning information above transcri
 can be read and rewritten \cite{levin2014,levin2018bioelectriccode,pezzulo2016,levin2021bioelectric}. In silico, the
 same systems are simulated in cellular-Potts \cite{graner1992,compucell3d,morpheus2014},
 agent-based \cite{physicell2018,chaste2020}, and whole-cell \cite{karr2012} frameworks ---
-the substrate a synthetic-morphology design loop runs inside.
+the substrate a synthetic-morphology design loop runs inside, exchanged through community
+standards and repositories (SBML \cite{hucka2003sbml}; the curated BioModels database
+\cite{malik2020biomodels}; the CompuCell3D \cite{compucell3d} and Morpheus \cite{morpheus2014}
+ecosystems, which also serve as the main student-facing on-ramps to cell-based tissue modelling).
+The framework presented here is the \emph{higher-order-network / control} complement to those
+cell-based simulators --- it operates on the inferred genome-scale regulome, not on a hand-built
+spatial circuit --- and the two meet in the model-in-the-loop design cycle of \S\ref{sec:concl-forward}.
 
 \subsection{Regulomes: the developmental software made concrete}\label{sec:intro-regulome}
 
@@ -345,6 +351,32 @@ Institute for Theory and Mathematics in Biology framing of decomposing engineere
 dynamics into discrete functional units. The same Laplacian spectrum is used to detect
 ``neurogenic stop-signals'' --- the modularity threshold at which an organoid's sensor/feedback
 behaviour transitions toward maturation (\S\ref{sec:results-nitmb}).
+
+A clarification on the word ``identifiability,'' which we use here in a specific sense and
+which a careful reader should not conflate with two neighbouring ones.
+\emph{(i) Module identifiability} --- the present index --- is a property of a network's
+\emph{topology}: does the regulome decompose into stable, distinct functional units? It is the
+question Hartwell et al.\ pose \cite{hartwell1999} and we answer it with the Hodge-Laplacian
+spectral gap.
+\emph{(ii) Structural identifiability} is a property of a \emph{parametric dynamic model}: given
+the species one can measure, are the model's rate constants (Hill coefficients, etc.) uniquely
+determined by the input--output map, even in the limit of perfect, noise-free data? This is
+settled \emph{symbolically}, before any fitting, by differential-algebra / power-series methods
+--- the line of work begun by Bellman and {\AA}str{\"o}m \cite{bellman1970} and developed
+extensively by DiStefano III and collaborators (e.g.\ the COMBOS web tool and the identifiable-
+parameter-combination framework \cite{distefano2014,meshkat2014combos}); the numerical, local
+counterpart is the observability rank condition, which the control layer used here
+(\S\ref{sec:methods-control}) exposes directly (\texttt{is\_observable}, \texttt{observability\_gramian}).
+A structural-identifiability check is the natural \emph{pre-condition} for fitting any
+\emph{mechanistic} reduced model --- the Hill-ODE GRNs of the small-circuit examples, or the
+linear surrogate warm-started in \S\ref{sec:results-anacomp} --- and where it fails, no quantity
+of data recovers the parameters and the simulation-based-inference posterior (\S\ref{sec:methods-sbi})
+is correctly ridge-shaped.
+\emph{(iii) Practical identifiability} is the finite-, noisy-data version --- profile likelihoods,
+Fisher information, posterior width --- which is what the SBI pipeline reports. The
+black-box Hypergraph Neural ODE is, by design, structurally non-identifiable in its
+weights (it is the \emph{flow}, not $\theta$, that matters); it is the mechanistic reductions
+beside it to which (ii) applies.
 
 \subsection{Hypergraph Neural ODEs and SDEs}\label{sec:methods-ode}
 
@@ -994,6 +1026,11 @@ and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
 \bibitem{alon2007} Alon U. Network motifs: theory and experimental approaches. \textit{Nat Rev Genet} 8:450--461, 2007. doi:10.1038/nrg2102
 \bibitem{clune2013} Clune J, Mouret JB, Lipson H. The evolutionary origins of modularity. \textit{Proc R Soc B} 280(1755):20122863, 2013. doi:10.1098/rspb.2012.2863
 
+% --- Structural identifiability of dynamic models (distinct from "module identifiability") ---
+\bibitem{bellman1970} Bellman R, {\AA}str{\"o}m KJ. On structural identifiability. \textit{Math Biosci} 7(3--4):329--339, 1970. doi:10.1016/0025-5564(70)90132-X
+\bibitem{distefano2014} DiStefano III J. \textit{Dynamic Systems Biology Modeling and Simulation.} Academic Press / Elsevier, 2014.
+\bibitem{meshkat2014combos} Meshkat N, Kuo CE, DiStefano III J. On finding and using identifiable parameter combinations in nonlinear dynamic systems biology models and COMBOS: a novel web implementation. \textit{PLoS ONE} 9(10):e110261, 2014. doi:10.1371/journal.pone.0110261
+
 % --- Complexity science applied to oncology ---
 \bibitem{sonnenschein1999} Sonnenschein C, Soto AM. \textit{The Society of Cells: Cancer and Control of Cell Proliferation.} Springer/BIOS, 1999.
 \bibitem{hanahan2000} Hanahan D, Weinberg RA. The hallmarks of cancer. \textit{Cell} 100(1):57--70, 2000. doi:10.1016/S0092-8674(00)81683-9
@@ -1014,6 +1051,8 @@ and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
 \bibitem{morpheus2014} Starru\ss\ J, de Back W, Brusch L, Deutsch A. Morpheus: a user-friendly modeling environment for multiscale and multicellular systems biology. \textit{Bioinformatics} 30(9):1331--1332, 2014. doi:10.1093/bioinformatics/btt772
 \bibitem{physicell2018} Ghaffarizadeh A, Heiland R, Friedman SH, Mumenthaler SM, Macklin P. PhysiCell: an open source physics-based cell simulator for 3-D multicellular systems. \textit{PLoS Comput Biol} 14(2):e1005991, 2018. doi:10.1371/journal.pcbi.1005991
 \bibitem{chaste2020} Cooper FR, Baker RE, Bernabeu MO, et al. Chaste: Cancer, Heart and Soft Tissue Environment. \textit{J Open Source Softw} 5(47):1848, 2020. doi:10.21105/joss.01848
+\bibitem{hucka2003sbml} Hucka M, Finney A, Sauro HM, et al. The systems biology markup language (SBML): a medium for representation and exchange of biochemical network models. \textit{Bioinformatics} 19(4):524--531, 2003. doi:10.1093/bioinformatics/btg015
+\bibitem{malik2020biomodels} Malik-Sheriff RS, Glont M, Nguyen TVN, et al. BioModels --- 15 years of sharing computational models in life science. \textit{Nucleic Acids Res} 48(D1):D407--D415, 2020. doi:10.1093/nar/gkz1055
 
 % --- Synthetic multicellularity: synthesis ---
 \bibitem{sole2016} Sol\'e R. Synthetic transitions: towards a new synthesis. \textit{Phil Trans R Soc B} 371(1701):20150438, 2016. doi:10.1098/rstb.2015.0438
