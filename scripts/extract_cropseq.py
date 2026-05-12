@@ -447,9 +447,14 @@ def inspect_organoid_regulomes() -> None:
     This is informational only — logs what the real DE data should look
     like based on the original analysis pipeline.
     """
-    regulomes_dir = Path("/home/mhough/dev/organoid_regulomes")
+    # Point ORGANOID_REGULOMES_DIR at a local checkout of the original R analysis
+    # repo if you have one; otherwise this informational step is just skipped.
+    regulomes_dir = Path(
+        os.environ.get("ORGANOID_REGULOMES_DIR", "../organoid_regulomes")
+    )
     if not regulomes_dir.exists():
-        log.info("organoid_regulomes repo not found at %s", regulomes_dir)
+        log.info("organoid_regulomes repo not found at %s "
+                 "(set ORGANOID_REGULOMES_DIR to override) — skipping", regulomes_dir)
         return
 
     log.info("Inspecting organoid_regulomes for CROP-seq data format ...")

@@ -262,11 +262,9 @@ figures/
 data/
   cropseq/*.csv             ← real CROP-seq DE (R/Seurat) — consumed live by paper.Rnw
   bioprinting/, choose/, krienen/, mouse/, ...   ← processed h5ad per dataset
-notebooks/organoid_hgx_colab.ipynb
+notebooks/                  ← Colab notebook + the seed of an educational "course" track (see notebooks/README.md)
 hgx_prep/                   ← hgx-prep CLI: standardized GRN dataset preparation
-docs/
-  data_preprocessing.md  benchmark_datasets.md  sbi_integration.md
-  archive/{status.md, phase3_report.md}   ← superseded snapshots
+docs/                       ← data_preprocessing.md · benchmark_datasets.md · sbi_integration.md
 README.md · ROADMAP.md · REFERENCES.md    ← (root) overview · plan · master bibliography
 ```
 

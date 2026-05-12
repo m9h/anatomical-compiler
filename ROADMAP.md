@@ -143,6 +143,31 @@ scoring activates automatically on DGX Spark.
 - 7 publication figures from real data
 - Quantitative metrics with confidence intervals
 - Code + data fully reproducible via Colab notebook
+- [x] Consolidated into a single literate knitr/Sweave manuscript (`publication/paper.Rnw` → `paper.tex` → `paper.pdf`); result tables/values pulled live from `figures/*_results.json` + `data/cropseq/*.csv`
+
+## Phase 5: Network control / the anatomical compiler (jaxctrl)
+
+- [x] `benchmark_network_control.py` — linear network controllability + steer-to-target on the Pando TF co-regulation graph (controllability Gramians, structural driver nodes, LQR)
+- [x] `benchmark_anatomical_compiler.py` — nonlinear optimal control on the *learned* Hypergraph Neural ODE (`diffrax` adjoints + Adam; jaxctrl LQR warm-start): target tissue state → TF-actuation schedule
+- [ ] `minimum_driver_nodes` via hgx on the (non-uniform) Pando hypergraph — needs a uniform decomposition first
+- [ ] richer plants (larger regulome, more timepoints, mechanistically-constrained drift) and richer actuators (the §4.3 bioprinting / optogenetic / dose / bioelectric handles)
+- [ ] couple the anatomical compiler to the wet-lab loop (FRESH/SWIFT/PRINTESS print parameters as actuation; model-guided vasculature)
+
+## Educational track (notebooks/)
+
+A planned course (~6–8 lab sessions) walking students through the project: regulomes & hypergraphs
+→ fidelity benchmarking → modularity/identifiability → Hypergraph Neural ODEs → control theory on
+cellular dynamics (jaxctrl) → the anatomical compiler → synthetic morphology in the wet lab →
+(stretch) cancer as loss of module identifiability. See `notebooks/README.md` for the sequence.
+Seed material: `notebooks/organoid_hgx_colab.ipynb` + the three `jaxctrl/examples/*.ipynb/.py`.
+
+- [ ] Notebook 1 — regulomes and hypergraphs (build the Fleck incidence; `hgx` basics)
+- [ ] Notebook 2 — benchmarking fidelity (organoid → primary CRISPRi; cross-species)
+- [ ] Notebook 3 — modularity & identifiability (Hodge Laplacian; the Module Identifiability Index)
+- [ ] Notebook 4 — Hypergraph Neural ODEs (latent dynamics; drivers vs stress; attractors)
+- [ ] Notebook 5 — control theory on cellular dynamics (reuse the jaxctrl example notebooks)
+- [ ] Notebook 6 — the anatomical compiler (optimal control on a learned regulome ODE)
+- [ ] Notebooks 7–8 — synthetic morphology in the wet lab; cancer-as-loss-of-identifiability (stretch)
 
 ## Scripts Added (2026-03-15)
 
