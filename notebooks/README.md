@@ -46,6 +46,21 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   Index); exercises (all-pairs Jaccard regulon overlap among the master TFs, heavy-tailedness of
   regulon sizes, graph degree vs hypergraph degree). Self-contained — reads `data/processed/`,
   falls back to a tiny synthetic regulome if absent.
+- **`02_benchmarking_fidelity.ipynb`** — **Lab 2**: does the organoid regulome *predict* perturbations?
+  The fidelity **triple** — in-domain magnitude r, transfer direction-accuracy, transfer r — instead
+  of a single "accuracy". GRN/screen overlap (organoid's 720 regulons vs Pollen/Ding 2026's 44
+  CRISPRi'd TFs → 34 shared, hypergeometric p ≈ 10⁻⁵); zero-shot transfer organoid → primary cortex
+  (live on the key TFs the regulome ships KO predictions for, plus the precomputed 34-TF benchmark:
+  **direction ≈ 83% with a trained `PerturbationPredictor`** — but raw regulon signs only ≈ 60% —
+  vs **magnitude r ≈ 0.13** zero-shot, ≈ 0.36 within-primary); the per-cell-type breakdown (raw
+  numbers near chance — aggregate accuracy can lie); why magnitude doesn't transfer = the *practical*
+  shadow of Lab 5.5's *structural* result (the downstream-magnitude ridge → the SBI valley of Lab 6);
+  what fidelity is *not* (≠ structural identifiability, ≠ module separability, ≠ transfer fidelity);
+  exercises (wire in the real CROP-seq from `extract_cropseq.py`; the `advanced_fidelity` pattern
+  scores — fidelity of *identity* vs of *perturbation*; cross-species conservation and why overlap is
+  the weak test). Self-contained — reads `data/processed/`, `data/pollen/processed/`, `data/cropseq/*.csv`,
+  `figures/pollen_*.json`, `figures/advanced_fidelity_results.json`; graceful fallbacks throughout.
+  Full pipeline: `scripts/compare_pollen.py`, `scripts/benchmark_advanced_fidelity.py`.
 - **`05b_structural_identifiability.ipynb`** — **Lab 5.5**: a `sympy` structural-identifiability
   check (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s
   linear `is_observable`/`observability_gramian`). Textbook sanity checks (one-pool ✓; Bellman &
@@ -165,8 +180,11 @@ know the rest of it.
    a clique. Build the Fleck incidence matrix; basic hypergraph operations in `hgx`. *(Refs: Davidson;
    Fleck et al. 2023; the §1.4 / §2.2 material.)*
 2. **Benchmarking fidelity.** Does an organoid regulome predict CRISPRi outcomes in primary cortex?
-   Regulon overlap, direction concordance, cross-species conservation. *(Builds on `organoid_hgx_colab.ipynb`;
-   Pollen 2026; §3.1–3.3.)*
+   The fidelity *triple* (in-domain r / transfer direction / transfer r); regulon–screen overlap;
+   direction-vs-magnitude transfer (raw signs ≈ 60% vs a trained predictor ≈ 83%; magnitude r ≈ 0.13);
+   per-cell-type disaggregation; what fidelity is *not*; cross-species conservation.
+   *(`notebooks/02_benchmarking_fidelity.ipynb`; builds on `organoid_hgx_colab.ipynb`; Pollen/Ding 2026;
+   `scripts/compare_pollen.py`, `scripts/benchmark_advanced_fidelity.py`; §3.1–3.3.)*
 3. **Modularity and identifiability.** The Hodge Laplacian; the Module Identifiability Index;
    "neurogenic stop-signals." Run it on organoid vs primary vs bioprinted systems. *(Hartwell 1999;
    NITMB framing; §2.3 / §3.x.)*
