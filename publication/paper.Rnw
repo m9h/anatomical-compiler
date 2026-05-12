@@ -1043,7 +1043,7 @@ cat("\\end{itemize}\n")
 \bibitem{gu2015} Gu S, Pasqualetti F, Cieslak M, et al. Controllability of structural brain networks. \textit{Nat Commun} 6:8414, 2015. doi:10.1038/ncomms9414
 \bibitem{yan2017} Yan G, Vasilyev A, Loscalzo J, et al. Network control principles predict neuron function in the \textit{Caenorhabditis elegans} connectome. \textit{Nature} 550:519--523, 2017. doi:10.1038/nature24056
 \bibitem{levin2022tame} Levin M. Technological approach to mind everywhere: an experimentally-grounded framework for understanding diverse bodies and minds. \textit{Front Syst Neurosci} 16:768201, 2022. doi:10.3389/fnsys.2022.768201
-\bibitem{jaxctrl2026} Hough M. \texttt{jaxctrl}: differentiable control theory in JAX (Lyapunov/Riccati/LQR, controllability Gramians, structural \& hypergraph controllability). 2026. \url{https://github.com/m9h/jaxctrl}
+\bibitem{jaxctrl2026} Biopunk Lab. \texttt{jaxctrl}: differentiable control theory in JAX (Lyapunov/Riccati/LQR, controllability Gramians, structural \& hypergraph controllability). 2026. \url{https://github.com/m9h/jaxctrl}
 
 % --- Modularity (theory) ---
 \bibitem{kirschner1998} Kirschner M, Gerhart J. Evolvability. \textit{PNAS} 95(15):8420--8427, 1998. doi:10.1073/pnas.95.15.8420
