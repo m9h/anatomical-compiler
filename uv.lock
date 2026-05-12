@@ -181,6 +181,7 @@ dependencies = [
     { name = "diffrax" },
     { name = "hgx" },
     { name = "huggingface-hub" },
+    { name = "jaxctrl" },
     { name = "leidenalg" },
     { name = "lightning" },
     { name = "matplotlib" },
@@ -212,6 +213,7 @@ requires-dist = [
     { name = "diffrax", specifier = ">=0.7.2" },
     { name = "hgx", directory = "../hgx" },
     { name = "huggingface-hub", specifier = ">=1.13.0" },
+    { name = "jaxctrl", directory = "../jaxctrl" },
     { name = "leidenalg", specifier = ">=0.11.0" },
     { name = "lightning", specifier = ">=2.6.1" },
     { name = "matplotlib", specifier = ">=3.10.8" },
@@ -1298,6 +1300,32 @@ sdist = { url = "https://files.pythonhosted.org/packages/50/f0/bcb81d28267d2054d
 wheels = [
     { url = "https://files.pythonhosted.org/packages/70/aa/dfac6d72cc35bc07e7587115b6946e333ef4ccb2e6cd26ecf639438c5d26/jax-0.10.0-py3-none-any.whl", hash = "sha256:76c42ba163c8db3dc2e449e225b888c0edfb623ded31efdc96d85e0fda1d26e8", size = 3094950, upload-time = "2026-04-16T12:32:11.576Z" },
 ]
+
+[[package]]
+name = "jaxctrl"
+version = "0.1.0"
+source = { directory = "../jaxctrl" }
+dependencies = [
+    { name = "equinox" },
+    { name = "jax" },
+    { name = "jaxlib" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beartype", marker = "extra == 'tests'" },
+    { name = "diffrax", marker = "extra == 'diffrax'", specifier = ">=0.6.0" },
+    { name = "equinox", specifier = ">=0.11.0" },
+    { name = "hgx", marker = "extra == 'hypergraph'", specifier = ">=0.1.0" },
+    { name = "jax", specifier = ">=0.10,<0.11" },
+    { name = "jaxlib", specifier = ">=0.10,<0.11" },
+    { name = "lineax", marker = "extra == 'solvers'", specifier = ">=0.0.4" },
+    { name = "optimistix", marker = "extra == 'solvers'", specifier = ">=0.0.6" },
+    { name = "pre-commit", marker = "extra == 'dev'" },
+    { name = "pytest", marker = "extra == 'tests'" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15,<0.16" },
+]
+provides-extras = ["solvers", "hypergraph", "diffrax", "dev", "tests"]
 
 [[package]]
 name = "jaxlib"

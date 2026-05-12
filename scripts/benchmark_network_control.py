@@ -127,7 +127,8 @@ def main():
         HAS_JAXCTRL = True
     except Exception as e:  # pragma: no cover
         HAS_JAXCTRL = False
-        print(f"  jaxctrl not available ({e!r}). Install with `pip install -e ../jaxctrl`.")
+        print(f"  jaxctrl not available ({e!r}). It is a project dependency -- run `uv sync` "
+              f"(or `pip install -e ../jaxctrl`).")
 
     A_np, kept, deg = _tf_network(data["inc"], n_tf_keep=args.n_tfs)
     kept_names = [data["tf_names"][i] for i in kept]
@@ -222,39 +223,59 @@ def main():
             E = temporal[:, np.asarray(gene_idx_for_kept)]           # (bins, n)
             E = (E - E.mean(0, keepdims=True)) / (E.std(0, keepdims=True) + 1e-6)
             x0 = jnp.asarray(E[0]); xf = jnp.asarray(E[-1])
-            # minimum control energy to steer x0 -> xf with different input sets
-            def energy(Bsel):
-                return float(jaxctrl.minimum_energy(A, Bsel, x0, xf, T))
+            # min control energy to steer x0 -> xf per input set, with the smallest
+            # controllability-Gramian eigenvalue as a steerability/conditioning flag
+            # (lam_min ~ 0  =>  the input set barely reaches the target direction, so the
+            #  "energy" is dominated by an ill-conditioned inverse and is not reliable).
+            def steer_metrics(Bsel):
+                W = jaxctrl.controllability_gramian(A, Bsel, T=T)
+                lam_min = float(jnp.linalg.eigvalsh(W)[0])
+                e = float(jaxctrl.minimum_energy(A, Bsel, x0, xf, T))
+                # None => the controllability Gramian is (numerically) singular for this
+                # input set, i.e. it does not span the target direction; "energy" undefined.
+                e = abs(e) if (np.isfinite(e) and lam_min > 1e-9) else None
+                return e, lam_min
             rng = np.random.default_rng(args.seed)
             rand_local = sorted(rng.choice(n, size=len(drivers_local), replace=False).tolist())
-            e_key = energy(B_drivers)
-            e_rand = energy(eye[:, jnp.asarray(rand_local)])
-            e_full = energy(eye)
+            e_key, lam_key = steer_metrics(B_drivers)
+            e_rand, lam_rand = steer_metrics(eye[:, jnp.asarray(rand_local)])
+            e_full, lam_full = steer_metrics(eye)
             # LQR steer-to-target: y = x - xf, dy/dt ~= A y + B u  =>  cost-to-go y0^T X y0
-            Q = jnp.eye(n); R = 1e-2 * jnp.eye(len(drivers_local))
-            K, X = jaxctrl.lqr(A, B_drivers, Q, R)
+            Q = jnp.eye(n)
             y0 = x0 - xf
-            cost_to_go = float(y0 @ X @ y0)
+            K_key, X_key = jaxctrl.lqr(A, B_drivers, Q, 1e-2 * jnp.eye(len(drivers_local)))
+            K_full, X_full = jaxctrl.lqr(A, eye, Q, 1e-2 * eye)   # well-posed (full actuation)
             steer = {"available": True,
                      "energy_key_tf_inputs": e_key,
                      "energy_random_inputs": e_rand,
                      "energy_full_inputs": e_full,
-                     "lqr_cost_to_go": cost_to_go,
-                     "lqr_gain_norm": float(jnp.linalg.norm(K)),
+                     "gramian_min_eig_key_tf": lam_key,
+                     "gramian_min_eig_random": lam_rand,
+                     "gramian_min_eig_full": lam_full,
+                     "lqr_cost_to_go_key_tf": float(y0 @ X_key @ y0),
+                     "lqr_cost_to_go_full": float(y0 @ X_full @ y0),
+                     "lqr_gain_norm_key_tf": float(jnp.linalg.norm(K_key)),
+                     "lqr_gain_norm_full": float(jnp.linalg.norm(K_full)),
                      "random_input_set": [kept_names[j] for j in rand_local]}
-            print(f"  Steer early->late TF state:  E*(key TFs)={e_key:.3g}  "
-                  f"E*(random {len(drivers_local)})={e_rand:.3g}  E*(all TFs)={e_full:.3g}")
-            print(f"  LQR cost-to-go from x0 (key-TF inputs): {cost_to_go:.3g}  "
-                  f"||K||={steer['lqr_gain_norm']:.2f}")
-            # closed-loop trajectory of a few TFs under u = -K(x - xf)
+            _e = lambda v: ("uncontrollable" if v is None else f"{v:.3g}")
+            print(f"  Steer early->late TF state:  E*(key TFs)={_e(e_key)} (lam_min={lam_key:.1e})  "
+                  f"E*(random {len(drivers_local)})={_e(e_rand)} (lam_min={lam_rand:.1e})  "
+                  f"E*(all TFs)={_e(e_full)} (lam_min={lam_full:.1e})")
+            print(f"  LQR cost-to-go from x0:  key-TF inputs {steer['lqr_cost_to_go_key_tf']:.3g} "
+                  f"(||K||={steer['lqr_gain_norm_key_tf']:.1f})   full actuation "
+                  f"{steer['lqr_cost_to_go_full']:.3g} (||K||={steer['lqr_gain_norm_full']:.1f})")
+            # closed-loop trajectory: regulate the deviation y = x - xf to 0 under u = -K y
+            # on the linearised dynamics (FULL actuation -- the well-posed case), then x = y + xf
             try:
-                ts, xs, us = jaxctrl.simulate_closed_loop(
-                    A, B_drivers, K, x0=x0, T=T, num_steps=60, reference=xf)
+                ts, ys, us = jaxctrl.simulate_closed_loop(
+                    A, eye, K_full, x0=(x0 - xf), T=T, num_steps=60)
+                xs_traj = np.asarray(ys) + np.asarray(xf)[None, :]
                 pick = drivers_local[:4]
                 steer["traj_ts"] = np.asarray(ts).tolist()
                 steer["traj_tfs"] = [kept_names[j] for j in pick]
-                steer["traj"] = np.asarray(xs)[:, np.asarray(pick)].tolist()
+                steer["traj"] = xs_traj[:, np.asarray(pick)].tolist()
                 steer["traj_target"] = [float(xf[j]) for j in pick]
+                steer["traj_actuation"] = "full"
             except Exception as e:
                 print(f"  (closed-loop sim skipped: {e!r})")
     results["steer_to_target"] = steer
@@ -270,17 +291,22 @@ def main():
     axes[0].set_title("Control leverage per TF\n(avg controllability = trace of single-input Gramian; red = curated driver)")
     axes[0].set_xlabel(f"avg controllability  (T={T})")
     if steer.get("available") and "traj" in steer:
-        tr = np.asarray(steer["traj"])
+        tr = np.asarray(steer["traj"]); tgt = steer.get("traj_target", [])
+        cyc = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         for j, nm in enumerate(steer["traj_tfs"]):
-            axes[1].plot(steer["traj_ts"], tr[:, j], label=nm)
-        axes[1].set_title("Closed-loop steer toward late-pseudotime TF state\n(u = -K(x - x_f), key-TF inputs)")
+            axes[1].plot(steer["traj_ts"], tr[:, j], color=cyc[j % len(cyc)], label=nm)
+            if j < len(tgt):
+                axes[1].axhline(tgt[j], color=cyc[j % len(cyc)], ls=":", lw=1)
+        axes[1].set_title("Closed-loop steer toward late-pseudotime TF state\n"
+                          "(LQR u = -K(x - x_f), full actuation; dotted = target x_f)")
         axes[1].set_xlabel("time"); axes[1].set_ylabel("TF state (z)"); axes[1].legend(fontsize=8)
     else:
         labels = ["key TFs", f"random ({len(drivers_local)})", "all TFs"]
         evs = [steer.get("energy_key_tf_inputs"), steer.get("energy_random_inputs"),
                steer.get("energy_full_inputs")] if steer.get("available") else [0, 0, 0]
-        axes[1].bar(labels, [e or 0 for e in evs], color=["#d62728", "#7f7f7f", "#2ca02c"])
-        axes[1].set_title("Min control energy: early -> late TF state\n(by input set)")
+        axes[1].bar(labels, [0 if (e is None or not np.isfinite(e)) else e for e in evs],
+                    color=["#d62728", "#7f7f7f", "#2ca02c"])
+        axes[1].set_title("Min control energy: early -> late TF state\n(by input set; 0 bar = uncontrollable in that subspace)")
         axes[1].set_ylabel("E*  (lower = easier to steer)")
     Path(args.out_fig).parent.mkdir(parents=True, exist_ok=True)
     plt.tight_layout(); plt.savefig(args.out_fig, dpi=200, bbox_inches="tight")

@@ -680,7 +680,7 @@ compiler.'' Two findings stand out.
 nc <- J$control
 if (is.null(nc)) nc <- load_json(fig("network_control_results.json"))
 if (is.null(nc) || isFALSE(nc$jaxctrl) || identical(nc$status, "jaxctrl_unavailable")) {
-  cat("\\noindent ", if (is.null(nc)) "" else "(\\texttt{jaxctrl} not installed at knit time --- run \\texttt{pip install -e ../jaxctrl} and \\texttt{scripts/benchmark\\_network\\_control.py}.) ")
+  cat("\\noindent ", if (is.null(nc)) "" else "(\\texttt{jaxctrl} not available at knit time --- it is a project dependency: \\texttt{uv sync}, then \\texttt{scripts/benchmark\\_network\\_control.py}.) ")
   if (is.null(nc)) note_missing("network controllability (jaxctrl)")
 } else {
   ct <- nc$controllability
@@ -688,11 +688,20 @@ if (is.null(nc) || isFALSE(nc$jaxctrl) || identical(nc$status, "jaxctrl_unavaila
               ct$n, ct$n_drivers, paste(nc$driver_tfs, collapse=", "), ct$key_tf_set_rank, ct$n))
   st <- nc$steer_to_target
   if (!is.null(st) && isTRUE(st$available)) {
-    fmt_e <- function(x) if (is.null(x)||!is.finite(x)) "n/a" else if (abs(x) >= 1e4 || (abs(x)>0 && abs(x)<1e-2)) sprintf("$%.1f\\times10^{%d}$", x/10^floor(log10(abs(x))), floor(log10(abs(x)))) else sprintf("$%.1f$", x)
-    cat(sprintf("\\textbf{(2) Steering the regulome to a target state is far cheaper with broad than with master-regulator-only actuation.} The minimum control energy to drive the early-pseudotime TF state to the late (mature) state is %s with full-TF actuation but %s using only the %d master regulators (and %s for a random %d-TF set) --- the master regulators are weak \\emph{linear} controllers even though they are privileged \\emph{nonlinear} drivers (cf.\\ Table~\\ref{tab:regen}). An LQR feedback law $u=-K(x-x_f)$ on the master-regulator inputs has cost-to-go %s and $\\lVert K\\rVert=%.0f$; the control-leverage ranking (single-input Gramian trace) is well-behaved (top TFs %s).\n\n",
-                fmt_e(st$energy_full_inputs), fmt_e(st$energy_key_tf_inputs), ct$n_drivers, fmt_e(st$energy_random_inputs), ct$n_drivers, fmt_e(st$lqr_cost_to_go), st$lqr_gain_norm, paste(sapply(nc$control_leverage_top20[1:5], function(x) x$tf), collapse=", ")))
+    ## return bare math content (no surrounding $...$); the template wraps it
+    msci <- function(x) {  # 0.36 -> "3.6\\times10^{-1}", 586 -> "5.9\\times10^{2}"
+      e <- floor(log10(abs(x) + 1e-300)); sprintf("%.1f\\times10^{%d}", x / 10^e, e)
+    }
+    fmt_e   <- function(x) if (is.null(x)||length(x)==0||!is.finite(x)) "\\mathrm{undef.}" else if (abs(x) >= 1e4 || (abs(x) > 0 && abs(x) < 1e-2)) msci(x) else sprintf("%.0f", x)
+    fmt_lam <- function(x) if (is.null(x)||length(x)==0) "\\mathrm{n/a}" else msci(x)
+    lv <- nc$control_leverage_top20  # data.frame (jsonlite simplifyVector) or list-of-lists
+    lv_tf <- if (is.data.frame(lv)) lv$tf else vapply(lv, function(e) e$tf, character(1))
+    leverage <- paste(utils::head(lv_tf, 5), collapse=", ")
+    cat(sprintf("\\textbf{(2) The regulome is steerable with broad actuation but \\emph{not} from the master regulators alone.} Driving the early-pseudotime TF state to the late (mature) state has finite minimum control energy ($\\mathcal{E}^\\star\\approx %s$) under full-TF actuation --- the controllability Gramian is well conditioned ($\\lambda_{\\min}\\approx %s$) --- whereas with only the %d master regulators (or a random %d-TF set) the Gramian is numerically singular ($\\lambda_{\\min}\\approx %s$, i.e.\\ $\\le 0$ to working precision), so $\\mathcal{E}^\\star$ along the unreachable directions is effectively unbounded. Consistently, an LQR feedback law $u=-K(x-x_f)$ on the master-regulator inputs has cost-to-go $%s$ ($\\lVert K\\rVert=%.0f$) versus $%s$ ($\\lVert K\\rVert=%.0f$) with full actuation, and the full-actuation closed loop drives the master TFs ($NEUROD6$, $GLI3$, $FOXG1$, $DLX2$) onto $x_f$ within the horizon (Fig.~\\texttt{network\\_control.png}). The single-input control-leverage ranking is well-behaved (top TFs %s).\n\n",
+                fmt_e(st$energy_full_inputs), fmt_lam(st$gramian_min_eig_full), ct$n_drivers, ct$n_drivers, fmt_lam(st$gramian_min_eig_key_tf),
+                fmt_e(st$lqr_cost_to_go_key_tf), st$lqr_gain_norm_key_tf, fmt_e(st$lqr_cost_to_go_full), st$lqr_gain_norm_full, leverage))
   }
-  cat("\\noindent The lesson is methodological: a \\emph{linear} model on the static co-regulation graph under-rates the master regulators (they are the privileged handles of the \\emph{nonlinear} flow, \\S\\ref{sec:results-regen}), so the anatomical-compiler programme (\\S\\ref{sec:concl-forward}) must do optimal control on the Hypergraph Neural ODE, not on a linearisation --- exactly what \\texttt{jaxctrl}'s differentiable LQR/MPC and \\texttt{diffrax} adjoints make tractable. (\\texttt{figures/network\\_control\\_results.json}.)")
+  cat("\\noindent The lesson is methodological. A \\emph{linear} model on the static co-regulation graph under-rates the master regulators --- they are the privileged handles of the \\emph{nonlinear} flow (\\S\\ref{sec:results-regen}), and the static graph's heavy regulon overlap collapses most directions into a slow, weakly-actuated subspace. So the anatomical-compiler programme (\\S\\ref{sec:concl-forward}) must do optimal control on the learned Hypergraph Neural ODE, not on a linearisation --- which is exactly what \\texttt{jaxctrl}'s differentiable LQR/MPC and \\texttt{diffrax} adjoints make tractable; the script here is the linear warm-up. (\\texttt{figures/network\\_control\\_results.json}; \\texttt{scripts/benchmark\\_network\\_control.py}.)")
 }
 @
 

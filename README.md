@@ -98,7 +98,7 @@ The point of the survey-plus-tool is the **programme it enables** (whitepaper §
 | (v) | **Bioelectric control layer** — perturb Vmem / gap-junctional coupling | shift in Identifiability Index & ODE driver set | bioelectric reprogramming |
 | (vi) | **Cancer-as-loss-of-module-identifiability assay** — primary → organoid → tumour organoid → cancer line | Index falls, driver set collapses, unicellular↔multicellular gene balance shifts | tissue-organization / atavism / attractor views, operationalised |
 
-A first transcriptome-only pass at the control layer ships now: `scripts/benchmark_network_control.py` uses `jaxctrl` on the Pando TF co-regulation graph to compute Kalman/structural controllability from the master-regulator set, per-TF control-leverage (single-input Gramians), and a steer-to-target (early→late pseudotime) energy + LQR law — and finds that a *linear* model under-rates the master regulators (they're the privileged handles of the *nonlinear* flow), which is exactly why the anatomical-compiler experiments above optimise on the Hypergraph Neural ODE, not a linearisation. Output: `figures/network_control{,_results.json}` (read live by `paper.Rnw` §3).
+A first transcriptome-only pass at the control layer ships now: `scripts/benchmark_network_control.py` uses `jaxctrl` on the Pando TF co-regulation graph to compute Kalman/structural controllability from the master-regulator set, per-TF control-leverage (single-input Gramians), and a steer-to-target (early→late pseudotime) energy + LQR law — and finds the regulome is steerable with broad actuation but *not* from the master regulators alone (the static co-regulation graph collapses most directions into a slow, weakly-actuated subspace; the master TFs are the privileged handles of the *nonlinear* flow, not the linearisation), which is exactly why the anatomical-compiler experiments above optimise on the Hypergraph Neural ODE. Output: `figures/network_control{,_results.json}` (read live by `paper.Rnw` §3). For the smallest possible worked example, see [`jaxctrl/examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py) — linearise a 3-gene oscillator → controllability → LQR → quench the nonlinear oscillation → `jax.grad` the cost w.r.t. the Hill coefficient.
 
 The bioprinting lineage behind (i): **Feinberg lab** FRESH freeform collagen printing → **Shiwarski** open-source bioprinting hardware (CHIPS/VAPOR) → **Skylar-Scott lab** SWIFT & the $250 open-source PRINTESS → **model-guided synthetic vasculature** fed straight to the printer. (Citations in [`REFERENCES.md`](REFERENCES.md) / `paper.Rnw`.)
 
@@ -210,8 +210,7 @@ python scripts/benchmark_anthrobot_fidelity.py     # embodied self-assembly
 python scripts/benchmark_vorganoid_crosstalk.py    # vascularization / metabolic wall
 python scripts/benchmark_regenerative_flow.py      # kidney IRI Hypergraph Neural ODE
 python scripts/test_nitmb_modularity.py            # Module Identifiability Index
-pip install -e ../jaxctrl                           # optional: control-theory layer
-python scripts/benchmark_network_control.py        # controllability / steer-to-target (jaxctrl)
+python scripts/benchmark_network_control.py        # controllability / steer-to-target (jaxctrl — a `uv sync` dependency)
 ```
 </details>
 

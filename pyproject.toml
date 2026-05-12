@@ -12,6 +12,7 @@ dependencies = [
     "diffrax>=0.7.2",
     "hgx",
     "huggingface-hub>=1.13.0",
+    "jaxctrl",
     "leidenalg>=0.11.0",
     "lightning>=2.6.1",
     "matplotlib>=3.10.8",
@@ -46,6 +47,7 @@ constraint-dependencies = [
 
 [tool.uv.sources]
 hgx = { path = "../hgx" }
+jaxctrl = { path = "../jaxctrl" }
 dhg = { git = "https://github.com/iMoonLab/DeepHypergraph", rev = "b36d98c" }
 devograph = { git = "https://github.com/m9h/devograph.git" }
 
