@@ -81,7 +81,7 @@ Rscript -e 'knitr::knit("publication/paper.Rnw", output="publication/paper.tex")
 
 **Structure** &nbsp;|&nbsp; **§1 Introduction** = the background review (synthetic morphology from **Davies 2008** → tissue engineering → computationally designed tissues/organs/organisms → regulomes → modularity & identifiability → complexity science in oncology → synthetic multicellularity & **Solé et al. 2024**'s open problems) &nbsp;·&nbsp; **§2 Computational Methods** (hgx, regulome→hypergraph, Module Identifiability Index, Hypergraph Neural ODE/SDE, `projectR`-in-JAX, fidelity metrics, CellFlow SBI, TDA, dataset table) &nbsp;·&nbsp; **§3 Results** (14 subsections, multi-dataset) &nbsp;·&nbsp; **§4 Conclusions & Outlook** (what the modeling demonstrates + a 6-experiment forward programme) &nbsp;·&nbsp; full bibliography.
 
-> 📚 Background review, bibliography, and the synthetic-morphogenesis primer used to live in `FOUNDATIONS.md`, `REFERENCES.md`, `SYNTHETIC_MORPHOGENESIS.md`, `MANUSCRIPT.md`. They are now **folded into `paper.Rnw`** (those files are short redirect stubs); the human-readable master bibliography is kept at **[`REFERENCES.md`](REFERENCES.md)**.
+> 📚 The background review, the synthetic-morphogenesis primer, and the manuscript prose are all **in `paper.Rnw`** (they used to be separate `FOUNDATIONS.md` / `SYNTHETIC_MORPHOGENESIS.md` / `MANUSCRIPT.md` files — now consolidated). The human-readable master bibliography is kept alongside it at **[`REFERENCES.md`](REFERENCES.md)**.
 
 ---
 
@@ -187,7 +187,7 @@ All **5/5** Fleck et al. (2023) checks pass:
 
 ## 🔁 Simulation-based inference & CellFlow
 
-Forward: hgx Hypergraph Neural ODEs simulate TF knockouts. Inverse: [CellFlow](https://github.com/m9h/cellflow) (flow matching) learns velocity fields from real CRISPRi distributions; Jacobian analysis (∂V/∂X) attributes regulatory drivers and compares them to the biological GRN — a posterior estimate of the regulome benchmarked against Pando/GRN-VAE-style methods. Details: [`SBI_INTEGRATION.md`](SBI_INTEGRATION.md).
+Forward: hgx Hypergraph Neural ODEs simulate TF knockouts. Inverse: [CellFlow](https://github.com/m9h/cellflow) (flow matching) learns velocity fields from real CRISPRi distributions; Jacobian analysis (∂V/∂X) attributes regulatory drivers and compares them to the biological GRN — a posterior estimate of the regulome benchmarked against Pando/GRN-VAE-style methods. Details: [`docs/sbi_integration.md`](docs/sbi_integration.md).
 
 ---
 
@@ -203,7 +203,7 @@ git clone https://github.com/m9h/devograph.git
 pip install -e hgx -e devograph
 pip install "jax[cuda12]" equinox diffrax optax scanpy anndata ripser
 cd anatomical-compiler
-# download data from Zenodo — see DATA_PREPROCESSING.md
+# download data from Zenodo — see docs/data_preprocessing.md
 python scripts/00_preprocess.py        # PPCA features, pseudotime bins, fate probs (~13 s)
 python scripts/generate_figures.py     # 8 publication figures on GPU (~175 s)
 python scripts/validate_against_pando.py   # 5 biological checks
@@ -264,9 +264,10 @@ data/
   bioprinting/, choose/, krienen/, mouse/, ...   ← processed h5ad per dataset
 notebooks/organoid_hgx_colab.ipynb
 hgx_prep/                   ← hgx-prep CLI: standardized GRN dataset preparation
-REFERENCES.md               ← 📚 master bibliography (also in paper.Rnw)
-ROADMAP.md · STATUS.md      ← project plan & status
-DATA_PREPROCESSING.md · BENCHMARK_DATASETS.md · SBI_INTEGRATION.md
+docs/
+  data_preprocessing.md  benchmark_datasets.md  sbi_integration.md
+  archive/{status.md, phase3_report.md}   ← superseded snapshots
+README.md · ROADMAP.md · REFERENCES.md    ← (root) overview · plan · master bibliography
 ```
 
 ---

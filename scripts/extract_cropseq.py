@@ -124,7 +124,7 @@ def extract_tarball(data_dir: Path) -> Path | None:
             "  This file is 17 GB and must be downloaded from Zenodo first."
         )
         log.info(
-            "  See BENCHMARK_DATASETS.md for download instructions."
+            "  See docs/benchmark_datasets.md for download instructions."
         )
         return None
 
