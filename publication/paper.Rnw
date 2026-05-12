@@ -42,8 +42,11 @@
 \emergencystretch=3em  % absorb the long \texttt{} filenames / DOIs without overfull boxes
 \hyphenpenalty=1000
 
-\title{\textbf{A Higher-Order Network Instrument for Synthetic Multicellularity:\\
-Benchmarking and Re-engineering Organoid, Bioprinted, and Programmed Tissue Regulomes}}
+\title{\textbf{Engineering Fully-Biologic Tissue Systems:\\
+A Higher-Order Network Instrument for Synthetic Morphology and Synthetic Multicellularity}}
+% Title nods to Shiwarski/Feinberg, ``3D Bioprinting of Collagen-based Microfluidics for
+% Engineering Fully-biologic Tissue Systems'' (bioRxiv 2024 / Sci Adv 2025) -- the
+% ``fully-biologic'' framing is the wet-lab endpoint this instrument is built to serve.
 
 \author[1]{Morgan Hough}
 \affil[1]{Biopunk Lab}
@@ -197,7 +200,11 @@ niche signalling to make organoids more reproducible and more mature, i.e.\ synt
 meeting tissue engineering \cite{daviesCachat2016,hofer2021}. The recurring problem this exposes is a \emph{fidelity gap}: organoids
 robustly execute early developmental programs but under-execute mature, region-specific,
 and human-specific ones. Quantifying that gap --- where it is, how large, and what
-bioengineering closes it --- is the empirical problem this paper takes up.
+bioengineering closes it --- is the empirical problem this paper takes up. It is also one
+instance of a broader call: to make developmental biology \emph{predictive} rather than merely
+descriptive, the field needs quantitative measurement and modelling technology that can follow
+the central dogma in living tissue \cite{garcia2020} --- and, for engineered tissue, technology
+that can say whether the designed program ran.
 
 \subsection{Computationally designed tissues, organs, and organisms}\label{sec:intro-designed}
 
@@ -224,7 +231,7 @@ adult human airway epithelial cells, given the right environment, self-construct
 motile multiciliated biobots with no genome editing or synthetic circuit at all
 \cite{gumuskaya2024}. Underneath several of these sits a putative \emph{control layer}:
 endogenous bioelectric networks that store patterning information above transcription and
-can be read and rewritten \cite{levin2014,pezzulo2016,levin2021bioelectric}. In silico, the
+can be read and rewritten \cite{levin2014,levin2018bioelectriccode,pezzulo2016,levin2021bioelectric}. In silico, the
 same systems are simulated in cellular-Potts \cite{graner1992,compucell3d,morpheus2014},
 agent-based \cite{physicell2018,chaste2020}, and whole-cell \cite{karr2012} frameworks ---
 the substrate a synthetic-morphology design loop runs inside.
@@ -785,7 +792,7 @@ synaptic genes) cross from ``dynamic marker'' into ``stable driver,'' i.e.\ beco
 the construct's attractor. That dose is the engineering target.
 
 \paragraph{(v) A bioelectric layer.}
-Following the morphogenetic-information programme \cite{levin2014,pezzulo2016,levin2021bioelectric},
+Following the morphogenetic-information programme \cite{levin2014,levin2018bioelectriccode,pezzulo2016,levin2021bioelectric},
 manipulate resting potential / gap-junctional coupling in an organoid or printed construct
 and read out the regulome; if the bioelectric state is genuinely a control layer above
 transcription, the Identifiability Index and the ODE driver set should shift predictably.
@@ -888,7 +895,7 @@ cat("\\end{itemize}\n")
 \bibitem{hughes2018} Hughes AJ, Miyazaki H, Coyle MC, et al. Engineered tissue folding by mechanical compaction of the mesenchyme. \textit{Dev Cell} 44(2):165--178, 2018. doi:10.1016/j.devcel.2017.12.004
 \bibitem{lee2019fresh} Lee A, Hudson AR, Shiwarski DJ, Tashman JW, Hinton TJ, Yerneni S, Bliley JM, Campbell PG, Feinberg AW. 3D bioprinting of collagen to rebuild components of the human heart (FRESH v2.0). \textit{Science} 365(6452):482--487, 2019. doi:10.1126/science.aav9051
 \bibitem{moss2025fresh} Moss SP, Shiwarski DJ, Feinberg AW. FRESH 3D bioprinting of collagen types I, II, and III. \textit{ACS Biomater Sci Eng} 11(1):556--563, 2025. doi:10.1021/acsbiomaterials.4c01826
-\bibitem{shiwarski2025chips} Shiwarski DJ, Hudson AR, Tashman JW, Bakirci E, Moss S, Coffin BD, Feinberg AW. 3D bioprinting of collagen-based high-resolution internally perfusable scaffolds (CHIPS) for engineering fully biologic tissue systems. \textit{Sci Adv} 11(17):eadu5905, 2025. doi:10.1126/sciadv.adu5905
+\bibitem{shiwarski2025chips} Shiwarski DJ, Hudson AR, Tashman JW, Bakirci E, Moss S, Coffin BD, Feinberg AW. 3D bioprinting of collagen-based high-resolution internally perfusable scaffolds (CHIPS) for engineering fully biologic tissue systems. \textit{Sci Adv} 11(17):eadu5905, 2025. doi:10.1126/sciadv.adu5905. Preprint: ``3D Bioprinting of Collagen-based Microfluidics for Engineering Fully-biologic Tissue Systems,'' \textit{bioRxiv} 2024.01.26.577422, 2024. doi:10.1101/2024.01.26.577422
 \bibitem{skylarscott2019swift} Skylar-Scott MA, Uzel SGM, Nam LL, Ahrens JH, Truby RL, Damaraju S, Lewis JA. Biomanufacturing of organ-specific tissues with high cellular density and embedded vascular channels (SWIFT). \textit{Sci Adv} 5(9):eaaw2459, 2019. doi:10.1126/sciadv.aaw2459
 \bibitem{sexton2025vasc} Sexton ZA, R\"utsche D, Herrmann JE, et al. Rapid model-guided design of organ-scale synthetic vasculature for biomanufacturing. \textit{Science} 388(6752):1198--1204, 2025. doi:10.1126/science.adj6152
 \bibitem{printess2025} Skylar-Scott Lab (Stanford University). PRINTESS: a low-cost ($\sim$\$250), modular, open-source direct-ink-writing bioprinter for soft and biological materials. 2024--2025. \url{https://printess.org} (build files, GitHub).
@@ -908,10 +915,12 @@ cat("\\end{itemize}\n")
 
 % --- Bioelectricity & morphogenetic information ---
 \bibitem{levin2014} Levin M. Endogenous bioelectrical networks store non-genetic patterning information during development and regeneration. \textit{J Physiol} 592(11):2295--2305, 2014. doi:10.1113/jphysiol.2014.271940
+\bibitem{levin2018bioelectriccode} Levin M, Martyniuk CJ. The bioelectric code: an ancient computational medium for dynamic control of growth and form. \textit{Biosystems} 164:76--93, 2018. doi:10.1016/j.biosystems.2017.08.009
 \bibitem{pezzulo2016} Pezzulo G, Levin M. Top-down models in biology: explanation and control of complex living systems above the molecular level. \textit{J R Soc Interface} 13(124):20160555, 2016. doi:10.1098/rsif.2016.0555
 \bibitem{levin2021bioelectric} Levin M. Bioelectric signaling: Reprogrammable circuits underlying embryogenesis, regeneration, and cancer. \textit{Cell} 184(8):1971--1989, 2021. doi:10.1016/j.cell.2021.02.034
 
 % --- Regulomes & gene regulatory network theory / inference ---
+\bibitem{garcia2020} Garcia HG, Berrocal A, Kim YJ, Martini G, Zhao J. Lighting up the central dogma for predictive developmental biology. \textit{Curr Top Dev Biol} 137:1--35, 2020. doi:10.1016/bs.ctdb.2019.10.010
 \bibitem{kauffman1969} Kauffman SA. Metabolic stability and epigenesis in randomly constructed genetic nets. \textit{J Theor Biol} 22(3):437--467, 1969. doi:10.1016/0022-5193(69)90015-0
 \bibitem{davidson2006} Davidson EH, Erwin DH. Gene regulatory networks and the evolution of animal body plans. \textit{Science} 311(5762):796--800, 2006. doi:10.1126/science.1113832 (See also Davidson EH, \textit{The Regulatory Genome}, Academic Press, 2006.)
 \bibitem{peterDavidson2011} Peter IS, Davidson EH. A gene regulatory network controlling the embryonic specification of endoderm. \textit{Nature} 474:635--639, 2011. doi:10.1038/nature10100
