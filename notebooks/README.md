@@ -61,6 +61,24 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   the weak test). Self-contained — reads `data/processed/`, `data/pollen/processed/`, `data/cropseq/*.csv`,
   `figures/pollen_*.json`, `figures/advanced_fidelity_results.json`; graceful fallbacks throughout.
   Full pipeline: `scripts/compare_pollen.py`, `scripts/benchmark_advanced_fidelity.py`.
+- **`03_modularity_identifiability.ipynb`** — **Lab 3**: does the regulome *decompose into modules*,
+  and how cleanly? Builds the **Hodge Laplacian** of the regulon hypergraph by hand ($L_0$ on genes
+  = clique-expansion graph Laplacian, $L_1$ on regulons), reads off the harmonic null (connected
+  components), the Fiedler value, and the low-lying spectral gap; defines the **Module Identifiability
+  Index** two ways — the project's heuristic (mean of the first 10 spectral gaps / std of the first
+  10 eigenvalues, *verbatim* from `scripts/test_nitmb_modularity.py`) and a normalised relative
+  eigengap ∈ [0,1] — and shows the genome-scale regulome is *one tangled component* with weak module
+  identifiability (the index discriminates *between* systems, it doesn't pull a clean module count out
+  of a GRN); reproduces the cross-system NITMB ordering live from the committed Hodge spectra
+  (**brain organoid > fetal kidney > bioprinted kidney** — self-organisation makes *sharper* modules
+  than cell-by-cell printing); a light "neurogenic stop-signal" sweep (MII / #components along
+  organoid pseudotime — the late bins fragment); what the MII is *not* (≠ structural/practical
+  identifiability, ≠ fidelity, ≠ a unique number, ≠ the module *labels*); exercises ($L_1$ vs $L_0$ —
+  the orderings can flip!; the eigengap as a module count + labelling; where multi-TF cooperativity
+  lives; cancer as loss of module identifiability — the Lab 8 stretch). Self-contained — reads
+  `data/processed/`, `figures/{kidney_modularity,nitmb_modularity}*.json`; synthetic "blocky"
+  fallback. Pipeline: `scripts/benchmark_kidney_modularity.py`, `scripts/test_nitmb_modularity.py`,
+  `scripts/06_topology.py`.
 - **`05b_structural_identifiability.ipynb`** — **Lab 5.5**: a `sympy` structural-identifiability
   check (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s
   linear `is_observable`/`observability_gramian`). Textbook sanity checks (one-pool ✓; Bellman &
@@ -185,9 +203,12 @@ know the rest of it.
    per-cell-type disaggregation; what fidelity is *not*; cross-species conservation.
    *(`notebooks/02_benchmarking_fidelity.ipynb`; builds on `organoid_hgx_colab.ipynb`; Pollen/Ding 2026;
    `scripts/compare_pollen.py`, `scripts/benchmark_advanced_fidelity.py`; §3.1–3.3.)*
-3. **Modularity and identifiability.** The Hodge Laplacian; the Module Identifiability Index;
-   "neurogenic stop-signals." Run it on organoid vs primary vs bioprinted systems. *(Hartwell 1999;
-   NITMB framing; §2.3 / §3.x.)*
+3. **Modularity and identifiability.** The Hodge Laplacian ($L_0$/$L_1$) of the regulon hypergraph;
+   the spectral gap → the Module Identifiability Index (the project heuristic + a normalised relative
+   eigengap); cross-system ordering (organoid > blueprint > bioprint); "neurogenic stop-signals" along
+   pseudotime; what module identifiability is *not* (≠ structural/practical ID, ≠ fidelity).
+   *(`notebooks/03_modularity_identifiability.ipynb`; `scripts/benchmark_kidney_modularity.py`,
+   `scripts/test_nitmb_modularity.py`, `scripts/06_topology.py`; Hartwell 1999; NITMB framing; §2.3 / §3.x.)*
 4. **Dynamics: Hypergraph Neural ODEs.** Fit a latent ODE on a timecourse; separate stable
    structural drivers from transient stress responders; the attractor view of cell identity.
    *(Kauffman; Huang et al. 2009; §2.4 / §3 regenerative-flow.)*
