@@ -32,6 +32,35 @@ controllability → LQR "drug input" → sensitivity analysis), and
 (GRN-as-hypergraph: `minimum_driver_nodes`, `controllability_profile`, the `control_energy`
 landscape, `HypergraphControlSystem` + LQR — "which TFs must I perturb to control this regulon?").
 
+## Recommended background — and how this differs from "Biological Circuit Design"
+
+If you want the *dynamical-systems-of-gene-circuits* foundations this course leans on but does not
+re-derive — Hill kinetics and cooperativity, autoregulation, the toggle switch and bistability,
+feed-forward loops, the **repressilator**, ultrasensitivity, exact adaptation, stochastic gene
+expression (Gillespie), and the classic patterning circuits (lateral inhibition / Notch–Delta,
+Turing, morphogen-gradient scaling) — work through **Elowitz & Bois, *Biological Circuit Design***
+([biocircuits.github.io](https://biocircuits.github.io/), Caltech BE 150 / Bi 250b; SciPy/Bokeh +
+the `biocircuits` package). It is the natural **prerequisite/sibling** to this track, especially for
+Lab 4 (Hypergraph Neural ODEs) and Lab 5 (control theory) — a student who's done it arrives already
+fluent in fixed points, linear stability, Hill ODEs, and the repressilator (which reappears here as
+[`jaxctrl/examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py),
+now as a *control* target rather than a design exercise).
+
+This course is a **different direction**, not an alternative intro. *Biological Circuit Design* is
+about *small, hand-specified* circuits and their dynamics/noise; this track picks up where its
+"small circuits" section leaves off and goes toward (i) **genome-scale, data-driven regulomes**
+inferred from single-cell multiomics (Pando/SCENIC/CellOracle), (ii) **higher-order (hypergraph)**
+representations and **hypergraph neural networks**, (iii) **modularity & identifiability** as
+*computed* metrics (the Hodge-Laplacian spectral gap → the Module Identifiability Index), (iv)
+**network control theory** — controllability, driver nodes, LQR/MPC via `diffrax` adjoints — i.e.
+the **anatomical compiler**, and (v) **engineered tissues**: organoids, 3D/4D/freeform bioprinting,
+synthetic morphogenesis, cancer-as-loss-of-module-identifiability. Different toolchain too
+(JAX/Equinox/Diffrax + `hgx`/`jaxctrl`/`devograph` vs SciPy/Bokeh + `biocircuits`). Overlap is real
+but narrow — it lives almost entirely at the small-circuit end (the repressilator, the toggle
+switch, Hill-ODE GRNs in the `jaxctrl` examples), and where it overlaps, *Biological Circuit Design*
+goes deeper on the dynamics and noise while this track goes further toward inference, control, and
+tissue scale.
+
 ## Planned sequence (a 6–8 session course)
 
 1. **Regulomes and hypergraphs.** Gene regulatory networks; why a regulon is a *hyperedge*, not
