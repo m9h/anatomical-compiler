@@ -1,0 +1,14 @@
+[
+  {
+    "module": 152,
+    "category": "SFARI_Score1",
+    "n_both": 2,
+    "n_mod": 2,
+    "n_dis": 207,
+    "p_val": 0.005472204455787585,
+    "genes": [
+      "NLGN4X",
+      "PTCHD1"
+    ]
+  }
+]

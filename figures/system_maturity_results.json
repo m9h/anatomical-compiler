@@ -1,0 +1,26 @@
+[
+  {
+    "dataset": "Organoid (Fleck)",
+    "p2_mature": 188.45768567812445,
+    "p5_progenitor": 277.01197093994006,
+    "p7_excitatory": 199.19925350954512
+  },
+  {
+    "dataset": "Bioprinted Brain (Tang)",
+    "p2_mature": 1701.4212817010111,
+    "p5_progenitor": 2393.388804076335,
+    "p7_excitatory": 1788.2436984120868
+  },
+  {
+    "dataset": "Bioprinted Kidney (Lawlor)",
+    "p2_mature": 257.64641698164047,
+    "p5_progenitor": 370.2617676086889,
+    "p7_excitatory": 271.2402655151654
+  },
+  {
+    "dataset": "Bioprinted Liver (Zhang)",
+    "p2_mature": 56.501754076530375,
+    "p5_progenitor": 45.91145604471447,
+    "p7_excitatory": 40.77608527361182
+  }
+]

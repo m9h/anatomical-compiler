@@ -1,0 +1,40 @@
+{
+  "n_cells": 65216,
+  "iegs_found": [
+    "Fos",
+    "Fosb",
+    "Egr1",
+    "Egr2",
+    "Arc",
+    "Jun",
+    "Junb",
+    "Npas4"
+  ],
+  "late_found": [
+    "Bdnf",
+    "Homer1",
+    "Dusp1",
+    "Rgs2",
+    "Crem"
+  ],
+  "timecourse": {
+    "0h": {
+      "n_cells": 22808,
+      "ieg_mean": -0.12822038821666817,
+      "late_mean": -0.18913579596443705
+    },
+    "1h": {
+      "n_cells": 18674,
+      "ieg_mean": 0.06150830875618406,
+      "late_mean": -0.010090975262378147
+    },
+    "4h": {
+      "n_cells": 23734,
+      "ieg_mean": -0.07146263530156473,
+      "late_mean": -0.05317708883510608
+    }
+  },
+  "regulon_dynamics": {},
+  "regulon_source": "missing",
+  "note_dishbrain": "GSE207577 (Kagan DishBrain) is private until 2026-12-31; Hrvatin GSE102827 used as scRNA-seq proxy for activity-induced regulome"
+}

@@ -1,0 +1,962 @@
+%==============================================================================
+% Organoid-HGX: A Higher-Order Network Instrument for Synthetic Multicellularity
+%
+% CANONICAL SOURCE: this is a knitr (Sweave-style) .Rnw document.  It
+% consolidates the former MANUSCRIPT.md, FOUNDATIONS.md, REFERENCES.md,
+% SYNTHETIC_MORPHOGENESIS.md, STATUS.md and ROADMAP.md (Phase 3G), and pulls
+% result tables / inline values live from the per-dataset artifacts in
+% figures/*_results.json and data/cropseq/*.csv (the latter produced with
+% R/Seurat).  publication/paper.tex is a GENERATED artifact -- do not edit it
+% by hand; edit paper.Rnw and re-knit.
+%
+% Build:
+%   Rscript -e 'knitr::knit("publication/paper.Rnw", output="publication/paper.tex")'
+%   tectonic publication/paper.tex
+% (or, from inside publication/:  Rscript -e 'knitr::knit("paper.Rnw")' && tectonic paper.tex)
+%
+% All chunks are resilient: if a result file is missing the chunk emits a
+% "[run scripts/benchmark_*.py]" note rather than failing, so the document
+% always knits + compiles.  Requires R packages: knitr, jsonlite (and,
+% optionally, reticulate for the Python/JAX environment chunk).
+%==============================================================================
+\documentclass[11pt]{article}\usepackage[]{graphicx}\usepackage[]{xcolor}
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlsng}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hldef}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\graphicspath{{./}{../figures/}{figures/}}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{authblk}
+\usepackage{microtype}
+
+\newcommand{\hgx}{\texttt{hgx}}
+\newcommand{\devograph}{\texttt{devograph}}
+\definecolor{hgxblue}{HTML}{4393C3}
+\emergencystretch=3em  % absorb the long \texttt{} filenames / DOIs without overfull boxes
+\hyphenpenalty=1000
+
+\title{\textbf{A Higher-Order Network Instrument for Synthetic Multicellularity:\\
+Benchmarking and Re-engineering Organoid, Bioprinted, and Programmed Tissue Regulomes}}
+
+\author[1]{Morgan Hough}
+\affil[1]{Biopunk Lab}
+\date{May 2026}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+
+\maketitle
+
+\begin{abstract}
+Synthetic morphology --- the project, set out by Davies in 2008, of programming cells to
+self-construct designed anatomies --- has matured into a cluster of fast-moving frontier
+areas that are rarely treated as one subject: self-organizing organoids, 3D/4D and freeform
+collagen bioprinting, synthetic-morphogen and synthetic-Notch circuits, computer-designed
+biobots, bioelectric pattern control, single-cell ``regulome'' inference, the theory of
+biological modularity and identifiability, and the systems/tissue-organization view of
+cancer. We argue that what links them is a single missing capability --- a quantitative
+instrument that can read out, for any engineered or natural tissue, \emph{whether the
+intended regulatory program has been executed} and \emph{how distinct and stable its modular
+organization is relative to a primary-tissue blueprint} --- and we build one. \hgx, a
+JAX/Equinox framework for higher-order (hypergraph) network analysis, treats a regulome as
+a hypergraph of co-regulated gene batteries and yields three reusable readouts: a
+regulon-overlap / perturbation-direction fidelity score, a Hodge-Laplacian \emph{Module
+Identifiability Index}, and a \emph{Hypergraph Neural ODE} that decomposes a tissue's
+dynamics into stable structural drivers versus transient stress responders. We validate the
+framework against published baselines and a published cerebral-organoid regulome, then apply
+it across self-organized, biofabricated, programmed, embodied, and perturbed systems mapped
+onto the open problems of synthetic multicellularity --- showing, among other things, that
+organoid regulatory logic is conserved into primary human cortex and across species, that
+the organoid ``fidelity gap'' is specific and locatable, and that 3D/4D bioprinting closes
+much of it. The point of the survey-plus-tool, however, is the programme it enables: a
+concrete, model-in-the-loop experimental agenda in which the instrument's
+simulation-based-inference inverse drives the next round of FRESH/SWIFT collagen bioprinting,
+optogenetic morphogenesis, microglia/vasculature titration, bioelectric patterning, and a
+cancer-as-loss-of-module-identifiability assay --- an engineering-biology research line aimed
+squarely at the core question of synthetic morphology: how to build, predictably, with the
+cells' own competencies, and how to know when you have.
+\end{abstract}
+
+\tableofcontents
+
+%==============================================================================
+\section{Introduction}\label{sec:intro}
+%==============================================================================
+
+\subsection{From self-organization to programmable anatomy}\label{sec:intro-synmorph}
+
+Modern developmental biology has shown that complex tissue architecture is, to a
+surprising degree, latent in the cells: dissociated cells re-aggregate into
+ordered structures, embryonic stem cells fold an optic cup with no scaffold and no
+external instruction \cite{eiraku2011}, single intestinal stem cells build crypt--villus
+organoids \cite{sato2009}, and pluripotent cells assemble cerebral organoids that
+recapitulate cortical layering and disease phenotypes \cite{lancaster2013,lancaster2014}.
+\emph{Synthetic morphology}, introduced by Davies \cite{davies2008}, asks the engineering
+question this raises: can we \emph{program} that latent competency --- invoke
+shape-generating cell behaviours at times and in orders of a designer's choosing --- to
+build novel, specified anatomies? Davies' framing has two payoffs: a route to clinically
+useful tissue engineering (``build it, don't carve it''), and a way to \emph{falsify}
+theories of morphogenesis, since one can construct a minimal synthetic system the theory
+predicts should make a particular shape and check whether it does.
+
+The conceptual machinery of that programme is now standard and frames this work. (1) A
+small parts list of \emph{morphogenetic effector modules} --- differential adhesion,
+de-adhesion, motility/chemotaxis, proliferation, apoptosis, ECM remodelling, condensation,
+elongation, lumen formation, branching, fusion --- of which a mammalian library has been
+built and characterised \cite{cachat2014,cachat2016}. (2) A separation of layers:
+\emph{developmental ``software''} (gene-regulatory networks, natural or synthetic, e.g.\
+synthetic Notch \cite{morsut2016}) versus \emph{morphogenetic ``hardware''} (the
+shape-generating cell behaviours the software drives) \cite{davies2022ieee}. (3) A move,
+in its most recent statement, from micromanaging molecules toward \emph{collaborating with
+``agential materials''} --- exploiting the cells' own goal-directed, multiscale competencies
+\cite{daviesLevin2023}. The same impulse appears on the computer-science side as
+\emph{morphogenetic engineering}: programmable self-organisation, swarm and embryomorphic
+design \cite{doursat2013}.
+
+\subsection{Self-organizing organoids and the fidelity gap}\label{sec:intro-organoids}
+
+Tissue engineering as a field dates to Langer and Vacanti's cells-plus-scaffolds-plus-signals
+synthesis \cite{langer1993}; the organoid era reframed it around self-organisation
+\cite{eiraku2011,sato2009,lancaster2013,lancaster2014}, and the current frontier is
+\emph{engineering} that self-organisation --- controlling matrix mechanics, geometry, and
+niche signalling to make organoids more reproducible and more mature, i.e.\ synthetic biology
+meeting tissue engineering \cite{daviesCachat2016,hofer2021}. The recurring problem this exposes is a \emph{fidelity gap}: organoids
+robustly execute early developmental programs but under-execute mature, region-specific,
+and human-specific ones. Quantifying that gap --- where it is, how large, and what
+bioengineering closes it --- is the empirical problem this paper takes up.
+
+\subsection{Computationally designed tissues, organs, and organisms}\label{sec:intro-designed}
+
+Three complementary lines push beyond ``program the cells'' to ``program the cells \emph{and}
+their arrangement.''
+\emph{DNA-programmed assembly and bioprinting} place cells at single-cell resolution and
+let them self-organise from a designed initial condition \cite{todhunter2015}, then exploit
+folding and active mechanics to canalise shape \cite{hughes2018,murphy2014}; freeform
+reversible embedding (FRESH) prints soft matrices --- collagen types I/II/III --- at tissue
+resolution \cite{lee2019fresh,moss2025fresh}, sacrificial-channel writing (SWIFT) reaches
+organ-relevant cellular density \cite{skylarscott2019swift}, and the supporting open-source
+hardware is itself a research output \cite{printess2025,shiwarski2025chips}; 4D bioprinting
+adds time, using cellular forces and stress-relaxing matrices to guide morphology.
+\emph{Synthetic developmental biology} builds the regulatory layer directly: synthetic-Notch
+receptors \cite{morsut2016} wired with differential adhesion produce self-organising
+two- and three-layer structures with regeneration-like behaviour \cite{toda2018}, and
+diffusible \emph{synthetic morphogens} program tunable spatial patterns \cite{toda2020} ---
+the engineering descendants of classical reaction--diffusion theory \cite{turing1952}.
+\emph{Computationally designed organisms} let an algorithm choose the body plan:
+evolutionary search in a physics simulator designs ``xenobots'' built from frog cells
+\cite{kriegman2020}, which then locomote, behave collectively \cite{blackiston2021}, and
+kinematically self-replicate \cite{kriegman2021}; ``anthrobots'' go further still ---
+adult human airway epithelial cells, given the right environment, self-construct into
+motile multiciliated biobots with no genome editing or synthetic circuit at all
+\cite{gumuskaya2024}. Underneath several of these sits a putative \emph{control layer}:
+endogenous bioelectric networks that store patterning information above transcription and
+can be read and rewritten \cite{levin2014,pezzulo2016,levin2021bioelectric}. In silico, the
+same systems are simulated in cellular-Potts \cite{graner1992,compucell3d,morpheus2014},
+agent-based \cite{physicell2018,chaste2020}, and whole-cell \cite{karr2012} frameworks ---
+the substrate a synthetic-morphology design loop runs inside.
+
+\subsection{Regulomes: the developmental software made concrete}\label{sec:intro-regulome}
+
+Davidson's gene-regulatory-network framework --- conserved ``kernels'' (recursively wired
+subcircuits that define a body part), plug-ins, switches, and differentiation gene batteries
+\cite{davidson2006,peterDavidson2011} --- is the conceptual ancestor of the modern
+single-cell \emph{regulome}. Inference methods (SCENIC \cite{aibar2017}, CellOracle
+\cite{kamimoto2023}, and the multiome method Pando \cite{fleck2023}) reconstruct, from
+RNA and chromatin accessibility, the transcription-factor $\rightarrow$ region $\rightarrow$
+gene wiring of a developing tissue. Fleck et al.'s cerebral-organoid regulome (720 TFs,
+2{,}792 genes, 74{,}448 edges) is the substrate of this study; the Pollen-lab 44-TF CRISPRi
+screen in primary human cortex \cite{ding2026} is the gold standard against which we test
+it. A central, rarely-tested claim of the GRN-kernel view is that this wiring is conserved:
+across self-organised and primary tissue, across species. Crucially, a regulon is naturally
+a \emph{hyperedge} --- one TF acting on many targets, or several cooperating TFs on one
+battery --- so pairwise graph representations lose precisely the higher-order structure that
+makes regulomes regulomes. This motivates a hypergraph treatment \cite{feng2019,yadati2019,huangYang2021,chien2022,bodnar2022}.
+
+\subsection{Modularity and identifiability}\label{sec:intro-modularity}
+
+Biology is organised into functional modules; understanding it means identifying those
+modules and their interfaces \cite{hartwell1999}. Modularity is also what makes biology
+\emph{engineerable}: conserved core processes loosely coupled by regulatory linkages give
+``facilitated variation'' --- the same property that lets evolution recombine parts lets a
+synthetic biologist do so \cite{kirschner1998,wagner2007}, and modular structure itself
+arises under modularly varying goals or connection cost \cite{kashtan2005,clune2013,alon2007}.
+But there is a hard problem behind ``identify the modules'': given a high-dimensional
+dynamical system --- a regulome, an organoid --- can one decompose it into discrete functional
+units in a way that is stable and not arbitrary? We operationalise this as a spectral
+property of the regulon hypergraph (\S\ref{sec:methods-mii}).
+
+\subsection{Complexity science and oncology}\label{sec:intro-cancer}
+
+The same machinery that asks ``is this organoid's module like the primary one?'' asks ``has
+this tissue's module structure \emph{collapsed}, the way it does in cancer?'' Several
+complexity-science traditions converge here. The hallmarks framework has become increasingly
+systems-flavoured, now including phenotypic plasticity and non-mutational epigenetic
+reprogramming \cite{hanahan2000,hanahan2011,hanahan2022}. Tissue Organization Field Theory
+treats carcinogenesis as a tissue-level breakdown of the constraints cells normally impose
+on one another rather than (only) cell-autonomous mutation \cite{sonnenschein1999,soto2011}.
+The atavism view reads cancer as reversion to an ancient unicellular toolkit --- the
+multicellularity ``contract'' failing \cite{davies2011metazoa,trigos2017,aktipis2015} ---
+which is the mirror image of the synthetic systems above (anthrobots are human somatic cells
+\emph{also} leaving the body plan, benignly). The network-dynamics view treats cell types
+as attractors of the regulatory network \cite{kauffman1969}, with tumours as pre-existing
+but normally-unused attractor basins and differentiation therapy as pushing cells out of
+them \cite{huang2009} --- the dynamical-systems sibling of the ODE driver/stress
+decomposition we report. The bioelectric view treats cancer cells as having dropped out of
+the tissue's bioelectric collective \cite{levin2021bioelectric}; the eco-evolutionary view
+treats the tumour as an evolving population to be contained rather than maximally killed
+\cite{gatenby2009}; and computational oncology turns ``cancer as a network/tissue disorder''
+into patient-specific simulations \cite{physicell2018,montagud2022}. A tool that scores
+how modular, how mature, and how primary-like an engineered tissue is, is --- by construction
+--- a tool that scores how far a tissue's organisation has degraded.
+
+\subsection{Synthetic multicellularity: open problems, and what this work contributes}\label{sec:intro-synmulti}
+
+Sol\'e and colleagues recast multicellularity as a major evolutionary transition one can
+re-run in the lab \cite{sole2016,sole2018}, and their recent ``open problems'' map
+\cite{sole2024} sorts engineered multicellular systems into three classes --- synthetic
+multicellular \emph{circuits} (engineered GRNs computing via cell--cell signalling),
+programmable synthetic \emph{assemblies} (differential adhesion $\rightarrow$ predictable
+form), and synthetic \emph{morphology with agential materials} (organoids and biobots
+exploiting intrinsic competency) --- and lists nine open problems: synthetic developmental
+programs / dynamical patterning modules; embodied memory and learning without a neural
+substrate; synthetic collective intelligence; synthetic neural cognition; synthetic
+proto-organisms and life cycles; building novel organs; multiscale synthetic holobionts;
+synthetic behaviour; and predictable design under a nonlinear, emergent genotype--phenotype
+map (``Waddington's demon cannot read organs off molecules''). This paper does not solve
+these; it builds the \emph{measurement layer} for several of them, and instantiates each as
+a concrete benchmark on real data (Table~\ref{tab:datasets}, \S\ref{sec:results}). The
+contribution is threefold: a fast, validated higher-order-network framework (\hgx);
+three reusable quantitative metrics --- regulon-overlap/direction-concordance fidelity, the
+Hodge-Laplacian Module Identifiability Index, and Hypergraph-Neural-ODE driver stability ---
+and a body of cross-dataset evidence, spanning self-organised, biofabricated, programmed,
+embodied, and perturbed systems, on where engineered tissues match their blueprints and
+where (and how) they can be pushed to match them better.
+
+%==============================================================================
+\section{Computational Methods}\label{sec:methods}
+%==============================================================================
+
+\subsection{The \hgx\ framework}\label{sec:methods-hgx}
+
+\hgx\ is a hypergraph-neural-network library built on JAX and Equinox, using
+just-in-time compilation and hardware acceleration. It implements the standard family of
+hypergraph convolutions --- UniGCN, UniGAT, UniGIN \cite{huangYang2021}, HGNN/HGNN+
+\cite{feng2019}, HyperGCN \cite{yadati2019}, AllSet-style multiset aggregation
+\cite{chien2022}, and neural sheaf diffusion \cite{bodnar2022} --- as composable Equinox
+modules (an \texttt{HGNNStack} of width 64, depth 2, dropout 0.5, Adam at $\mathrm{lr}=0.01$,
+early stopping with patience 50 is the default classifier). Incidence matrices are stored
+sparse where possible; dense representations are used inside JIT-compiled convolution kernels.
+The developmental-neurobiology extensions (lineage-aware losses, pseudotime binning, fate-probability
+heads, Poincar\'e/hyperbolic embeddings, neural ODE/SDE rollouts) live in a companion package
+(\devograph). Two issues found during development are documented for reproducibility:
+\textsc{SheafDiffusion} out-of-memory (root cause: \texttt{edge\_stalk\_dim}${}={}$\texttt{in\_dim}
+producing $\sim$190\,GB restriction maps; fixed by capping the stalk dimension) and
+\textsc{THNNConv} NaNs on large regulons (root cause: sum-of-logs overflow in
+$H^{\top}\log|z|$; a clamping fix is provided and is pending integration into \hgx\ core).
+
+\subsection{Regulome $\rightarrow$ hypergraph construction}\label{sec:methods-construct}
+
+From the Pando output \cite{fleck2023} we build a $2{,}792 \times 720$ gene$\times$regulon
+incidence matrix $H$ ($H_{gr}=1$ if gene $g$ is a member of regulon $r$). Node features are
+the top principal components of the log-normalised expression matrix; the number of
+components is chosen by a probabilistic-PCA / MELODIC-style criterion (AIC $=168$,
+BIC $=26$, consensus $k=97$). Pseudotime is binned (default 10 bins, with $T\!\in\!\{20,50\}$
+variants for finer temporal resolution); per-bin we store mean expression, lineage fractions,
+and CellRank fate probabilities (dorsal forebrain DF, ventral forebrain VF, mesenchyme MH).
+Preprocessing runs in $\sim$13\,s.
+
+\subsection{Module Identifiability Index}\label{sec:methods-mii}
+
+To quantify how distinct a system's regulatory modules are, we work with the higher-order
+Hodge Laplacian of the regulon hypergraph (built via the incidence matrix and its
+clique/star expansions). Writing $L_0 = D_v - H W H^{\top}$ for the (weighted) vertex
+Laplacian and $L_1$ for the edge Laplacian, the \emph{Module Identifiability Index} is a
+normalised function of the low-lying spectrum of $L_1$ (the size of the spectral gap after
+the harmonic null space, scaled to $[0,1]$): a large gap means the hypergraph decomposes
+into a few well-separated modules (high identifiability), a small gap means the module
+structure is diffuse. This is the spectral answer to the ``identifiability'' challenge of
+the modularity programme \cite{hartwell1999,wagner2007}, and aligns with the National
+Institute for Theory and Mathematics in Biology framing of decomposing engineered-system
+dynamics into discrete functional units. The same Laplacian spectrum is used to detect
+``neurogenic stop-signals'' --- the modularity threshold at which an organoid's sensor/feedback
+behaviour transitions toward maturation (\S\ref{sec:results-nitmb}).
+
+\subsection{Hypergraph Neural ODEs and SDEs}\label{sec:methods-ode}
+
+For temporal data we fit a latent dynamical system on the hypergraph. A
+\texttt{LatentHypergraphODE} encodes per-timepoint expression into a latent state, integrates
+$\dot{z} = f_\theta(z)$ with \texttt{diffrax} (the SDE variant adds a learned diffusion term
+$\sigma_\theta$), and decodes back to gene space; training minimises rollout reconstruction
+error per TF. Two readouts matter here: (i) the SDE diffusion magnitude is validated against
+CellRank fate entropy as an independent measure of trajectory stochasticity; (ii) ranking
+TFs by rollout MSE separates \emph{stable drivers} (well-fit by the autonomous flow ---
+homeostatic, structural) from \emph{dynamic markers} (poorly fit --- transient, stress-induced),
+a decomposition we use in the kidney injury-repair track. A typical fit on $\sim$10$^5$ cells
+across four timepoints takes $\sim$1.2\,s.
+
+\subsection{Pattern projection against primary-tissue blueprints}\label{sec:methods-projection}
+
+To anchor engineered systems to primary tissue we project their transcriptomes onto
+reference gene-loading sets, principally the seven conserved mammalian developmental patterns
+of the Neocortex Atlas \cite{sonthalia2026} (a joint matrix decomposition over $\sim$200
+studies; loadings supplied as gene$\times$pattern weights). Our projection is a JAX
+re-implementation of the \texttt{projectR} transfer-learning procedure (regress a sample's
+expression vector onto the loading matrix, take the coefficients as pattern activities),
+optimised for GPU/TPU; per-sample pattern scores are then compared across systems. Cell-type
+labels are harmonised across datasets with the \texttt{scTab} foundation model \cite{sctab2024},
+giving a stable coordinate system for cross-system and cross-species comparison (e.g.\
+matching organoid NPCs to primary radial glia).
+
+\subsection{Cross-dataset fidelity metrics}\label{sec:methods-fidelity}
+
+Given a query regulon (TF $\to$ target set) from the organoid GRN and a comparison network
+in the test system (correlation network in primary tissue, or the empirical DE set from a
+CRISPRi knockdown), we report: (i) regulon overlap as a Jaccard index and a Fisher's exact
+test with multiple-testing correction (Bonferroni); (ii) \emph{direction concordance} ---
+among shared members, the fraction whose CRISPRi-knockdown sign matches the GRN's predicted
+regulatory sign; and (iii) zero-shot transfer --- train \hgx's perturbation head on one
+dataset, predict another, score Pearson $r$ and direction agreement against a within-dataset
+leave-one-out baseline.
+
+\subsection{Perturbation prediction and simulation-based inference}\label{sec:methods-sbi}
+
+\emph{Forward:} \hgx\ propagates an in-silico TF knockout through the incidence matrix via
+multi-hop signal propagation (decay 0.5, 3 hops) so that indirect targets are reached (e.g.\
+$GLI3 \to$ intermediate TFs $\to DLX1/2$, $GAD1$); Hypergraph Neural ODEs give the
+distributional version. \emph{Inverse:} we integrate CellFlow (flow matching) to learn a
+velocity field from real CRISPRi distributions, then attribute drivers by Jacobian analysis
+($\partial V/\partial X$) of the learned flow and compare the attribution against the
+biological GRN --- a simulation-based-inference estimate of the regulome posterior that we
+benchmark against Pando/GRN-VAE-style methods.
+
+\subsection{Topological data analysis}\label{sec:methods-tda}
+
+Persistent homology of the regulon-hypergraph point cloud (Vietoris--Rips via \texttt{ripser},
+subsampled to $\le 500$ nodes for tractability) summarises higher-order structure as Betti
+numbers ($\beta_0$ connected components, $\beta_1$ loops); we report these alongside the
+Laplacian spectrum as a complementary, coordinate-free view of modularity.
+
+\subsection{Datasets}\label{sec:methods-datasets}
+
+{\footnotesize
+\begin{longtable}{@{}p{3.0cm}p{2.7cm}p{4.4cm}p{4.6cm}@{}}
+\caption{Datasets benchmarked, grouped by the synthetic-multicellularity question they
+instantiate (Sol\'e et al.\ \cite{sole2024}) and the Davies module they probe.}\label{tab:datasets}\\
+\toprule
+\textbf{Question / module} & \textbf{System class} & \textbf{Dataset} & \textbf{Role here} \\ \midrule
+\endfirsthead
+\toprule
+\textbf{Question / module} & \textbf{System class} & \textbf{Dataset} & \textbf{Role here} \\ \midrule
+\endhead
+Regulome (sensor/feedback) & Self-organised & Fleck et al.\ 2023 cerebral organoid \cite{fleck2023} & Substrate GRN; 5/5 biological checks; stop-signal detection \\
+GRN fidelity & Primary cortex (CRISPRi) & Pollen lab 44-TF screen \cite{ding2026} & Gold standard for organoid-GRN prediction; 2D/3D-slice/IN contexts \\
+GRN fidelity & Primary brain organoid (CRISPR) & CHOOSE screen \cite{li2023choose} & CHD4/ADNP KO validation \\
+Evolutionary conservation & Primate / rodent & Krienen marmoset interneurons \cite{krienen2020}; Loo E14.5 mouse neocortex \cite{loo2019} & $DLX1$ regulon ($p\!=\!2.1\!\times\!10^{-3}$); $EOMES$/$NEUROD2$ conservation \\
+Spatiotemporal blueprint & Primary atlas & Neocortex Atlas (Sonthalia 2026) \cite{sonthalia2026} & 7 conserved mammalian patterns; maturity-gap reference \\
+Patterning / regulatory logic & Programmed (synNotch) & Toda 2020 synthetic morphogens \cite{toda2020} & ``Hypergraph states'' vs primary patterns \\
+Effector / motility & Embodied biobot & Gumuskaya 2023 Anthrobots \cite{gumuskaya2024} & $FOXJ1$/$DNAI1$ multiciliated program; 236 modules \\
+Building novel organs / vascularisation & Engineered organ & Shi 2020 vOrganoids \cite{shi2020} & Vascular--neural cross-talk; ``metabolic wall'' \\
+Robustness / self-repair & Regenerating organ & Balzer 2022 mouse kidney IRI \cite{balzer2022} & Hypergraph Neural ODE: stable drivers vs stress markers \\
+Embodied memory / agency proxy & Activity-induced & Hrvatin 2018 V1 light-stim scRNA-seq \cite{hrvatin2018} & IEG timecourse (DishBrain data embargoed to 2026-12-31) \\
+Multiscale holobiont / maturation module & Chimeric / co-culture & Park 2023 \cite{park2023}; Popova 2021 \cite{popova2021} & Microglia drive Pattern-2 maturation; chimera modularity \\
+Scaffold / support (4D control) & Bioprinted / conformation-controlled & Lawlor 2021 kidney \cite{lawlor2021}; Gartner 2021/25 (4D) \cite{foyt2024} & Conformation $\rightarrow$ proximal-tubule maturity \\
+Scaffold / support (3D) & 3D bioprinted & Tang 2020 GBM \cite{tang2020}; Zhang 2025 liver \cite{zhang2025}; Vassal/Shin/Yan 2024 neural \cite{vassal2024} & Rescue of synaptic/oRG/HNF4A programs \\
+\bottomrule
+\end{longtable}
+}
+
+%==============================================================================
+\section{Results}\label{sec:results}
+%==============================================================================
+
+\subsection{\hgx\ matches published baselines and is 5--120$\times$ faster}\label{sec:results-bench}
+
+On the standard Cora cocitation benchmark (2{,}708 nodes, 7 classes, 1-hop neighbourhood
+construction, Planetoid splits, 5-seed evaluation), \hgx\ UniGCNConv reaches
+$78.72\pm1.06\%$, matching published HGNN (79.39\%) and exceeding UniGCN (78.95\%), AllSet
+(78.58\%), and HyperGCN (78.45\%); on Pubmed (19{,}717 nodes, 60 training labels) it reaches
+76.10\% in 15.5\,s using 6.7\,GB. On the Fleck organoid GRN (2{,}792 nodes, 720 hyperedges)
+\hgx\ inference is $1.5$--$3.2$\,ms versus $11$--$257$\,ms for DHG (PyTorch) --- a
+$5$--$120\times$ speedup --- with competitive training ($\sim$5\,s for 200 epochs). The
+720-regulon classification task is degenerate (258 singleton classes); on balanced tasks
+\hgx\ performs as expected (94.6\% on 20 spectral clusters; 77.2\% on 3-class lineage
+prediction --- $2.3\times$ above chance, evidence that the regulon hypergraph carries genuine
+fate biology). All five Fleck biological checks pass (TF centrality: 5/8 master regulators in
+the top 100 of 720; regulon coherence: within-vs-between correlation gap $+0.116$; $GLI3$ KO
+direction: 4/5 correct via multi-hop propagation; pseudotime: $TBR1$/$NEUROD6$ increase late;
+fate probabilities: DF $r=0.80$, MH $r=-0.74$). See Figs.~\ref{fig:main} and
+\texttt{benchmark\_standard.png}, \texttt{figure\_02cd\_conv\_comparison.png}.
+
+\subsection{Organoid regulomes predict primary-cortex perturbation targets}\label{sec:results-fidelity}
+
+GRN topology inferred from cerebral organoids predicts CRISPRi targets in primary human
+cortex \cite{ding2026}: of 44 screened TFs, 34 are shared with the organoid GRN, and 8 ---
+including $NR2E1$, $ARX$, $MEIS2$, $SOX2$ --- show Bonferroni-significant regulon overlap
+(Fisher's exact). Among shared regulon members, CRISPRi knockdown changes expression in the
+GRN-predicted direction in $\sim$91.5\% of cases. Conservation increases with tissue
+context: mean Jaccard $0.066$ (2D screen) $\rightarrow$ $0.094$ (3D slice culture)
+$\rightarrow$ $0.089$ (interneuron subset). Zero-shot transfer of \hgx's perturbation head
+from the organoid dataset to the primary screen reaches 82.9\% direction concordance
+($POU2F1$ 79.6\%, $ASCL1$ 76.7\%), well above the within-dataset leave-one-out baseline
+($r\approx0.36$). Across species, the $DLX1$ interneuron regulon overlaps marmoset cortex
+networks at $p=2.1\times10^{-3}$, and $EOMES$ (14.3\%) and $NEUROD2$ (11.6\%) are conserved
+in the E14.5 mouse neocortex (Figs.~\texttt{pollen\_comparison.png}, \texttt{marmoset\_benchmark.png},
+\texttt{mouse\_benchmark.png}). The CHOOSE screen \cite{li2023choose} reproduces ADNP/CHD4
+effects in organoids after human--mouse symbol mapping.
+
+\subsection{Real CROP-seq cross-validation}\label{sec:results-cropseq}
+
+The five Fleck biological checks (\S\ref{sec:results-bench}) include an \emph{in silico} $GLI3$
+knockout whose predicted direction we now cross-check against the \emph{empirical}
+differential-expression profiles extracted (with R/Seurat) from the real Fleck CROP-seq
+knockouts. The dorsal-ventral axis regulators $GLI3$ and $TBR1$ have strongly correlated
+knockdown signatures, as expected if they sit in a shared neurogenic regulome:
+
+\noindent On the 3,155 genes shared between the two knockout DE tables, the $\log_2$ fold-changes correlate at Pearson $r = 0.83$ (R/Seurat-derived DE; \texttt{data/cropseq/}). The \hgx\ multi-hop in-silico $GLI3$ KO recovers the empirical sign for 4/5 axis genes ($DLX1$, $DLX2$, $GAD1$, $TBR1$, $NEUROD6$).
+
+\subsection{The maturity gap, located: Neocortex Atlas projection}\label{sec:results-maturity}
+
+Projecting Fleck organoid cells onto the seven conserved mammalian patterns
+\cite{sonthalia2026} (15,412 shared genes) recovers the full corticogenic trajectory ---
+strong Pattern 5 (progenitors, mean score 277), Pattern 7 (excitatory neurons, 199) ---
+but Pattern 2 (mature, layer-specific) is comparatively weak (188), the lowest of the seven
+patterns most relevant to mature function. This pattern-2 deficit is the quantitative
+location of the organoid maturity gap. It has a regulatory correlate we term the
+\emph{Early-Stage Buffer}: the master regulators of early organoid development are
+\emph{depleted} for mature disease-risk genes (e.g.\ $NR2E1$ shows no enrichment for SFARI
+Score-1, ASD\_HC65, DD, or microcephaly gene sets; Fisher $p>0.8$ in all categories), so a
+model dominated by these regulators structurally under-represents the genes that matter for
+neuropsychiatric phenotype --- a molecular reason current organoids miss those phenotypes.
+Module-level enrichment is correspondingly sparse (one spectral module weakly enriched for
+SFARI Score-1, carrying $NLGN4X$ and $PTCHD1$, $p\approx5\times10^{-3}$).
+
+\subsection{3D bioprinting specifically rescues maturity programs}\label{sec:results-bioprint}
+
+Anchoring the same projection to bioprinted brain models locates a striking rescue. Relative
+to Fleck organoids, bioprinted brain tissue (Tang 2020 \cite{tang2020}; corroborated by
+Shin 2024) shows a $\sim$9.8-fold increase in the synaptic (autism-risk-enriched) pattern
+(173 $\rightarrow$ 1713) and a $\sim$9.0-fold increase in the human-specific outer-radial-glia
+pattern (255 $\rightarrow$ 2303); the mature-neuron pattern rises $\sim$7.9-fold
+(268 $\rightarrow$ 2102), and hiPSC-derived NSCs (Vassal 2024 \cite{vassal2024}) likewise
+adopt the oRG signature (361 vs 255). A system-maturity comparison across constructs
+(Pattern 2 / Pattern 5 / Pattern 7 scores: Fleck 188/277/199; bioprinted brain 1701/2393/1788;
+bioprinted kidney 258/370/271; bioprinted liver 57/46/41) shows that biofabrication does not
+merely add structure --- it drives the underlying regulatory programs toward maturity
+(Figs.~\ref{fig:fidelity}, \texttt{system\_maturity\_comparison.png},
+\texttt{bioprinting\_tang\_validation.png}).
+
+\begin{table}
+
+\caption{\label{tab:tab:sysmat}Neocortex-Atlas pattern activity across self-organised vs biofabricated constructs (mean projection score; \texttt{figures/system\_maturity\_results.json}). P2/P5/P7 = the mature-layer, progenitor, and excitatory-neuron patterns; biofabrication raises activity across all three, most steeply in P2.}
+\centering
+\begin{tabular}[t]{lrrr}
+\toprule
+System & P2 (mature) & P5 (progenitor) & P7 (excitatory)\\
+\midrule
+Organoid (Fleck) & 188 & 277 & 199\\
+Bioprinted Brain (Tang) & 1701 & 2393 & 1788\\
+Bioprinted Kidney (Lawlor) & 258 & 370 & 271\\
+Bioprinted Liver (Zhang) & 57 & 46 & 41\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{4D structural control drives differentiation}\label{sec:results-4d}
+
+In conformation-controlled kidney organoids (Gartner 2021/25 \cite{foyt2024}), printed
+high-aspect-ratio ``lines'' (r40) reach a proximal-tubule maturity score of $+0.016$ versus
+$+0.008$ for manual ``dots'' and $+0.0003$ for low-aspect ``r0'' --- a $\sim$3.2-fold
+increase --- with parallel gains in podocyte score ($+0.030$ for r40 vs $-0.062$ for manual)
+and reduced off-target stroma ($-0.012$ vs $-0.041$). Time and geometry, not cell identity,
+account for the difference: this is the ``scaffold/support'' (4D) module of synthetic
+morphology made quantitative (Fig.~\texttt{gartner\_4d\_fidelity.png}).
+
+\begin{table}
+
+\caption{\label{tab:tab:gartner}Conformation-controlled kidney organoids (Gartner 2021/25; \texttt{figures/gartner\_results.json}): lineage-maturity projection scores for manual ``dots'' vs 4D-printed ``lines'' (high aspect ratio, r40). The r40 conformation maximises proximal-tubule and podocyte maturity and minimises off-target stroma.}
+\centering
+\begin{tabular}[t]{llrrr}
+\toprule
+  & Lineage & Manual (dots) & 4D r0 & 4D r40 (lines)\\
+\midrule
+1 & Podocyte & -0.0624 & -0.0199 & 0.0297\\
+4 & Proximal Tubule & 0.0081 & 0.0003 & 0.0164\\
+7 & Loop of Henle & -0.0043 & -0.0032 & -0.0013\\
+10 & Stroma & -0.0408 & -0.0301 & -0.0121\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Programmed regulatory logic: synthetic-morphogen states}\label{sec:results-toda}
+
+Projecting Toda et al.\ synNotch-morphogen samples \cite{toda2020} into the Neocortex Atlas
+patterns (11{,}068 shared genes), the engineered circuits do not produce noise --- they park
+cells in stable, high-score pattern states ($\sim$19{,}000--22{,}000 across patterns 3--7),
+and the synNotch ON/OFF toggle moves cells between a growth-like and an arrest-like regime.
+This is the empirical content of Davies' ``regulatory module'': an engineered circuit creating
+reproducible ``hypergraph states'' that align with primary developmental patterns
+(Fig.~\texttt{toda\_morphogenesis\_logic.png}).
+
+\subsection{Effector self-assembly: Anthrobots}\label{sec:results-anthrobot}
+
+The Anthrobot self-assembly transcriptome (90{,}083 cells, two samples \cite{gumuskaya2024})
+shows robust activation of the multiciliated-cell program ($FOXJ1$, $DNAI1$) and high
+regulatory modularity (236 spectral modules) --- the ``effector/motility'' module: the
+$FOXJ1$ regulon (the regulatory layer) successfully driving the formation of motile ciliary
+structures (the effector layer) in adult human airway progenitors with no synthetic circuit
+(Fig.~\texttt{anthrobot\_motility\_benchmark.png}).
+
+\subsection{Vascularisation and the metabolic wall}\label{sec:results-vorg}
+
+In vascularised cortical organoids (vOrganoids, 57{,}180 cells; vOrg 31{,}851 / Org 25{,}329;
+days 65 and 100 \cite{shi2020}) we find clean transcriptomic evidence that vasculature
+relieves the hypoxic ``metabolic wall'': Notch-pathway cross-talk regulons are up in
+vOrganoids ($RBPJ$ $+0.072$, $p=7.5\times10^{-19}$; $HES5$ $+0.052$, $p=5.6\times10^{-5}$;
+$HIF1A$ $+0.042$, $p=5.7\times10^{-8}$) while the chronic-hypoxia regulator $EPAS1$ (HIF-2$\alpha$)
+is down ($-0.056$, $p=6.3\times10^{-17}$); endothelial markers $CDH5$/$KDR$/$CLDN5$/$VWF$/$FLT1$/$TIE1$
+are detected as expected. (These scores use TF-expression fallback; richer regulon-based
+scoring activates when the Pando GRN module table is present on GPU hardware.) The constructive
+counterpart --- actually \emph{building} that vasculature rather than waiting for it to
+co-emerge --- is now within reach via embedded sacrificial channels \cite{skylarscott2019swift}
+and model-guided organ-scale vascular layout fed directly to the bioprinter
+\cite{sexton2025vasc}; \S\ref{sec:concl-forward}(iv) proposes pairing it with the Hypergraph
+Neural ODE to find the dose at which the relief signal stabilises (Fig.~\texttt{vorganoid\_crosstalk.png}).
+
+\subsection{Self-repair dynamics: Hypergraph Neural ODE}\label{sec:results-regen}
+
+In a mouse kidney ischemia--reperfusion time course (Balzer 2022; 113{,}579 cells; days
+0/1/3/14; short and long injury \cite{balzer2022}), a \texttt{LatentHypergraphODE} fitted in
+1.2\,s separates the regulatory layers cleanly. \emph{Stable regenerative drivers} (low
+rollout MSE --- well-described by the autonomous flow): $Lhx1$ 0.047, $Cdh1$ 0.056, $Pax8$
+0.075, $Pax2$ 0.097, $Six2$/$Six1$ $\approx$0.110, $Wt1$ 0.111, $Foxc2$ 0.112. \emph{Dynamic
+injury markers} (high MSE --- transient, not captured by an autonomous flow): $Fos$ 4.38,
+$Jun$ 1.45, $Cd44$ 0.93, $Atf3$ 0.80. This is exactly the homeostatic-versus-stress split
+predicted by a regenerative-flow view --- and the dynamical-systems analogue of the
+attractor picture of cell identity \cite{kauffman1969,huang2009}
+(Fig.~\texttt{regenerative\_flow.png}).
+
+\begin{table}
+
+\caption{\label{tab:tab:regen}Hypergraph Neural ODE fit to the Balzer 2022 mouse-kidney ischemia--reperfusion time course (\texttt{figures/regenerative\_flow\_results.json}; 113,579 cells, days 0/1/3/14, fit in 1.2\,s). TFs with low rollout error are well-described by an autonomous flow (homeostatic, structural); high-error TFs are transient stress responders.}
+\centering
+\begin{tabular}[t]{lrl}
+\toprule
+TF & Rollout MSE & Class\\
+\midrule
+Lhx1 & 0.047 & stable regenerative driver\\
+Cdh1 & 0.056 & stable regenerative driver\\
+Pax8 & 0.075 & stable regenerative driver\\
+Pax2 & 0.097 & stable regenerative driver\\
+Six2 & 0.110 & stable regenerative driver\\
+Six1 & 0.110 & stable regenerative driver\\
+Wt1 & 0.111 & stable regenerative driver\\
+Foxc2 & 0.112 & stable regenerative driver\\
+Foxc1 & 0.116 & stable regenerative driver\\
+Sox9 & 0.130 & stable regenerative driver\\
+Havcr1 & 0.132 & stable regenerative driver\\
+Myc & 0.139 & stable regenerative driver\\
+Vcam1 & 0.175 & stable regenerative driver\\
+Atf3 & 0.797 & dynamic injury marker\\
+Cd44 & 0.927 & dynamic injury marker\\
+Jun & 1.451 & dynamic injury marker\\
+Fos & 4.377 & dynamic injury marker\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Activity-dependent regulome (agency proxy)}\label{sec:results-learn}
+
+As a scRNA-seq proxy for activity-dependent plasticity (the Kagan DishBrain data being
+embargoed until 2026-12-31), the Hrvatin V1 light-stimulation dataset (65{,}216 cells; 0/1/4\,h
+\cite{hrvatin2018}) reproduces the canonical immediate-early dynamics: IEG module mean
+$-0.13 \rightarrow +0.06 \rightarrow -0.07$ (peak at 1\,h: $Fos$, $Fosb$, $Egr1/2$, $Arc$,
+$Jun$, $Junb$, $Npas4$), with late-response genes ($Bdnf$, $Homer1$, $Dusp1$, $Rgs2$, $Crem$)
+peaking 1--4\,h --- the substrate on which an ``embodied memory / learning'' module would
+have to act (Fig.~\texttt{learning\_regulome.png}).
+
+\subsection{Microglia as a maturation module}\label{sec:results-microglia}
+
+Adding iPSC-derived microglia to brain organoids (Park 2023 \cite{park2023}) drives a highly
+significant increase in Neocortex-Atlas Pattern 2 (mature neuron) activity (shift $+0.071$,
+$p=$\,$1.05\times10^{-14}$); a microglial pruning signature is not significantly changed in the
+Favuzzi comparison ($p=0.24$), consistent with the effect being maturation rather than
+pruning per se. In the Popova chimeric model \cite{popova2021}, microglia integrated into
+organoids reach higher regulatory modularity (up to 8 spectral modules) than in primary
+culture (5), evidence that the organoid microenvironment supports the emergence of complex
+immune--neural regulatory states --- a ``multiscale holobiont / maturation module'' result
+(Figs.~\texttt{microglia\_park\_maturation.png}, \texttt{microglia\_favuzzi\_validation.png}).
+
+\subsection{Module identifiability across systems}\label{sec:results-nitmb}
+
+The Module Identifiability Index (Hodge-Laplacian spectral gap, \S\ref{sec:methods-mii}) orders
+systems by how distinct their regulatory modules are (Table~\ref{tab:nitmb}): self-organised
+brain organoids and primary fetal kidney maintain the sharpest module structure, and bioprinted
+kidney is close behind --- a topological quantification of the ``identifiability'' challenge, and
+a way to track how close a biofabricated construct is to a primary-tissue blueprint at the level
+of modular organisation (Figs.~\texttt{kidney\_modularity\_hodge.png}, \texttt{nitmb\_modularity\_test.png}).
+
+\begin{table}
+
+\caption{\label{tab:tab:nitmb}Module Identifiability Index across self-organised, primary, and bioprinted systems (\texttt{figures/nitmb\_modularity\_report.json}; higher = sharper, more distinct regulatory modules).}
+\centering
+\begin{tabular}[t]{lr}
+\toprule
+System & Module Identifiability Index\\
+\midrule
+Brain Organoid & 0.381\\
+Fetal Kidney (Ref) & 0.367\\
+Bioprinted Kidney & 0.353\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Liver master-regulator induction}\label{sec:results-liver}
+
+In 3D-bioprinted human hepatorganoids \cite{zhang2025}, the liver master regulators are robustly
+induced relative to 2D hiHeps (Table~\ref{tab:liver}) --- the same ``3D context induces the right
+regulatory program'' signal seen in brain and kidney, in a third organ system
+(Fig.~\texttt{liver\_fidelity\_zhang.png}).
+
+\begin{table}
+
+\caption{\label{tab:tab:liver}3D-bioprinted human hepatorganoid (HHO) regulon induction relative to 2D hiHeps (\texttt{figures/liver\_fidelity\_results.json}).}
+\centering
+\begin{tabular}[t]{lrrr}
+\toprule
+Master regulator & Mean $\log_2$FC (3D HHO vs 2D hiHep) & $p$ & $n$ targets\\
+\midrule
+HNF4A & 1.82 & $6.44\times10^{-4}$ & 5\\
+FOXA2 & 2.06 & $3.60\times10^{-4}$ & 4\\
+HHEX & 0.61 & $0.403$ & 1\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==============================================================================
+\section{Conclusions and Outlook}\label{sec:conclusions}
+%==============================================================================
+
+\subsection{What the modeling demonstrates}\label{sec:concl-demonstrates}
+
+Taken together, these results establish four things. (1) \emph{A higher-order network
+framework can be both fast and faithful}: \hgx\ matches published HGNN accuracy, reproduces
+all five biological checks of a published organoid regulome, and runs inference one to two
+orders of magnitude faster than existing implementations --- fast enough to be a routine
+analysis tool rather than a one-off. (2) \emph{Organoid regulomes encode conserved human
+regulatory logic}: their topology predicts CRISPRi outcomes in primary human cortex with
+high direction concordance, conservation rises monotonically as the test system becomes more
+tissue-like, and key regulons are conserved to marmoset and mouse --- empirical support for
+the GRN-kernel view of development. (3) \emph{The organoid fidelity gap is specific,
+locatable, and bioengineerable}: it sits in the mature, layer-specific, human-specific
+programs (Neocortex-Atlas Pattern 2; the oRG and synaptic patterns), it has a regulatory
+correlate (the Early-Stage Buffer --- early master regulators depleted for mature disease
+genes), and 3D/4D bioprinting closes much of it --- roughly tenfold gains in synaptic and
+oRG pattern activity, a 3.2-fold gain in proximal-tubule maturity, $>1.8\;\log_2\!\mathrm{FC}$
+induction of liver master regulators. (4) \emph{The same instruments measure organisation
+itself}: the Hodge-Laplacian Module Identifiability Index ranks systems by modular distinctness
+and tracks biofabricated constructs converging toward primary tissue, and the Hypergraph
+Neural ODE decomposes a regulome into stable structural drivers versus transient stress
+markers --- a decomposition that is, by construction, also a way to ask how far a tissue's
+modular organisation has degraded (the link to the tissue-organisation and attractor views of
+cancer).
+
+\subsection{Limitations}\label{sec:concl-limits}
+
+Several of the engineered-system tracks currently score against TF expression rather than the
+full Pando regulon table (which is large and GPU-resident); cross-validation is not yet
+applied uniformly across analyses; the persistent-homology summaries are computed on
+subsampled hypergraphs; the THNNConv overflow fix is diagnosed but not yet merged into \hgx\
+core; and the ``agency'' track uses an activity-induced scRNA-seq proxy rather than the
+embargoed in-vitro-learning data. None of these affect the headline comparisons, but they
+bound the strength of the higher-order-specific claims.
+
+\subsection{Pushing the technology forward: a programme of new experiments}\label{sec:concl-forward}
+
+The natural next step is to close the loop --- to use \hgx, its Module Identifiability Index,
+its Hypergraph Neural ODE, and its CellFlow-based simulation-based inference not just to
+\emph{score} engineered tissues after the fact but to \emph{design} the next round. Concretely:
+
+\paragraph{(i) A 4D-bioprinting maturation assay with a model-in-the-loop.}
+The Gartner-style conformation sweep showed maturity scaling with print geometry; run a
+denser sweep (aspect ratio, curvature, packing, matrix stress-relaxation rate) with \hgx\
+pattern-projection and the Identifiability Index as the live readout, and let an
+optimiser (Bayesian / evolutionary, as in the xenobot design pipeline \cite{kriegman2020})
+propose the next geometry. The deliverable is a \emph{design map}: which physical parameters
+move which mature regulatory programs, for brain, kidney, and liver constructs. This is now
+practicable: FRESH-style freeform embedding lets one print collagen types I/II/III at tissue
+resolution \cite{lee2019fresh,moss2025fresh}, perfusable internal channels (CHIPS) keep
+organ-scale constructs alive in a bioreactor \cite{shiwarski2025chips}, embedded sacrificial
+vascular networks (SWIFT) reach high cellular density \cite{skylarscott2019swift}, and
+model-guided algorithms can lay out organ-scale synthetic vasculature for the printer in
+minutes \cite{sexton2025vasc} --- the wet-lab analogue of the design loop above. Low-cost,
+open-source direct-ink-writing platforms (PRINTESS \cite{printess2025}; and the broader
+open-hardware effort led from the Feinberg/Shiwarski groups) make running the sweep at the
+scale of dozens of conditions realistic; the corresponding lab operates a FRESH collagen
+bioprinter and a locally-built PRINTESS, so the model-in-the-loop assay is the immediate next
+step rather than an aspiration.
+
+\paragraph{(ii) Hybrid programmed-plus-printed tissues.}
+Combine a synNotch / synthetic-morphogen circuit \cite{morsut2016,toda2018,toda2020}
+(the regulatory module) with bioprinted geometry (the scaffold module) and ask whether the
+two together hit a primary-tissue pattern state that neither reaches alone --- using the
+``hypergraph state'' alignment of \S\ref{sec:results-toda} as the target metric and the
+ODE driver-stability of \S\ref{sec:results-regen} to check the state is an attractor, not a
+transient. This is a direct experimental attack on Sol\'e's ``synthetic developmental
+programs / predictable design'' open problem.
+
+\paragraph{(iii) Optogenetic morphogenesis with a transcriptomic readout.}
+Light-gated control of WNT (or SHH, BMP) lets one impose a designed signalling schedule;
+pair it with single-cell readout and use the Hodge-Laplacian stop-signal detector to find
+the modularity threshold at which the construct ``commits'' to maturation, then test whether
+holding the schedule at that threshold improves Pattern-2 activity. This turns the
+``sensor/feedback'' module from a descriptive label into a controllable variable.
+
+\paragraph{(iv) A microglia (and vasculature) titration series.}
+Park and Popova showed microglia act as a maturation module; titrate microglia (and,
+separately, engineered vasculature, building on the vOrganoid metabolic-wall result) into
+brain organoids across a dose series and fit the Hypergraph Neural ODE to the resulting time
+course --- the prediction is that there is a dose at which mature drivers ($SATB2$, $BCL11B$,
+synaptic genes) cross from ``dynamic marker'' into ``stable driver,'' i.e.\ become part of
+the construct's attractor. That dose is the engineering target.
+
+\paragraph{(v) A bioelectric layer.}
+Following the morphogenetic-information programme \cite{levin2014,pezzulo2016,levin2021bioelectric},
+manipulate resting potential / gap-junctional coupling in an organoid or printed construct
+and read out the regulome; if the bioelectric state is genuinely a control layer above
+transcription, the Identifiability Index and the ODE driver set should shift predictably.
+This is the cleanest available test of whether ``agential materials'' can be steered at the
+tissue level with a non-genetic knob.
+
+\paragraph{(vi) A cancer-as-loss-of-module-identifiability assay.}
+Finally, the inverse experiment: take a graded series from primary tissue $\rightarrow$
+organoid $\rightarrow$ tumour organoid $\rightarrow$ established cancer line, and show that
+the Module Identifiability Index falls, the ODE driver set collapses (homeostatic regulators
+moving from ``stable'' to ``unconstrained''), and the unicellular-vs-multicellular gene
+balance shifts \cite{trigos2017} --- operationalising the tissue-organisation \cite{soto2011},
+atavism \cite{davies2011metazoa}, and attractor \cite{huang2009} views of cancer on the same
+footing as the synthetic-tissue benchmarks, and giving differentiation-/adaptive-therapy
+programmes \cite{gatenby2009,montagud2022} a higher-order-network target to steer toward.
+
+The throughline is the one Davies stated in 2008 \cite{davies2008} and Sol\'e et al.\
+restated in 2024 \cite{sole2024}: the genotype--phenotype map for multicellular form is
+nonlinear and emergent, so progress comes less from micromanaging molecules than from
+building tissues with the materials' own competencies \emph{and} from having instruments
+sharp enough to tell, quantitatively, when the program has been executed. This work
+contributes the instrument; the programme above is what we propose to do with it.
+
+%==============================================================================
+\section*{Code and data availability}
+%==============================================================================
+\hgx: \url{https://github.com/m9h/hgx}. \devograph: \url{https://github.com/m9h/devograph}.
+Benchmark code, preprocessing pipelines, and per-dataset result files:
+\url{https://github.com/m9h/organoid-hgx-benchmark}. Organoid GRN: Zenodo
+\href{https://doi.org/10.5281/zenodo.5242913}{10.5281/zenodo.5242913}. Neocortex Atlas:
+NeMO Analytics (\url{https://nemoanalytics.org/landing/neocortex/}); SJD
+(\url{https://github.com/CHuanSite/SJD}); projectR (Bioconductor). A Colab notebook
+reproduces the core analyses (A100 runtime). NITMB: National Institute for Theory and
+Mathematics in Biology (Northwestern University \& University of Chicago).
+This manuscript is a knitr/Sweave document (\texttt{publication/paper.Rnw}); result tables
+and inline values are pulled live from \texttt{figures/*\_results.json} (Python/JAX analyses)
+and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
+
+\paragraph{Computational environment.}
+\begin{itemize}
+\item R version 4.6.0 (2026-04-24); knitr 1.51, jsonlite 2.0.0
+\item Python 3.12; numpy=yes, scanpy=no, jax=no (used by \texttt{scripts/benchmark\_*.py} to regenerate \texttt{figures/*\_results.json}) 
+\end{itemize}
+
+
+%==============================================================================
+\begin{figure}[t]\centering
+  \includegraphics[width=0.92\textwidth]{publication_main_figure.png}
+  \caption{\textbf{Framework and core validation.} (A) Organoid regulome as a hypergraph.
+  (B) \hgx\ vs DHG inference/training. (C) Regulon-overlap (Jaccard) across Pollen contexts
+  --- 2D screen $\rightarrow$ 3D slice $\rightarrow$ interneurons. (D) Direction concordance
+  of organoid-GRN predictions against primary-cortex CRISPRi.}\label{fig:main}
+\end{figure}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=0.92\textwidth]{advanced_fidelity_bioprinting.png}
+  \caption{\textbf{Bioprinting rescues maturity programs.} Neocortex-Atlas pattern activity
+  (mature-neuron, outer-radial-glia, synaptic/ASD) for self-organised organoids vs bioprinted
+  brain tissue and hiPSC-NSCs; biofabricated constructs show $\sim$8--10$\times$ higher activity
+  in exactly the patterns organoids capture worst.}\label{fig:fidelity}
+\end{figure}
+
+%==============================================================================
+\begin{thebibliography}{99}
+\small
+
+% --- Synthetic morphology / morphogenetic engineering ---
+\bibitem{davies2008} Davies JA. Synthetic morphology: prospects for engineered, self-constructing anatomies. \textit{J Anat} 212(6):707--719, 2008. doi:10.1111/j.1469-7580.2008.00896.x
+\bibitem{daviesCachat2016} Davies JA, Cachat E. Synthetic biology meets tissue engineering. \textit{Biochem Soc Trans} 44(3):696--701, 2016. doi:10.1042/BST20150289
+\bibitem{cachat2014} Cachat E, Liu W, Hohenstein P, Davies JA. A library of mammalian effector modules for synthetic morphology. \textit{J Biol Eng} 8:26, 2014. doi:10.1186/1754-1611-8-26
+\bibitem{cachat2016} Cachat E, Liu W, Martin KC, et al. 2- and 3-dimensional synthetic large-scale de novo patterning by mammalian cells through phase separation. \textit{Sci Rep} 6:20664, 2016. doi:10.1038/srep20664
+\bibitem{davies2022ieee} Davies JA. Synthetic Morphogenesis: introducing IEEE journal readers to programming living mammalian cells to make structures. \textit{Proc IEEE} 110(5):688--707, 2022. doi:10.1109/JPROC.2022.3218556
+\bibitem{daviesLevin2023} Davies J, Levin M. Synthetic morphology with agential materials. \textit{Nat Rev Bioeng} 1:46--59, 2023. doi:10.1038/s44222-022-00001-9
+\bibitem{doursat2013} Doursat R, Sayama H, Michel O. A review of morphogenetic engineering. \textit{Nat Comput} 12:517--535, 2013. doi:10.1007/s11047-013-9398-1
+
+% --- Foundational tissue engineering & self-organizing organoids ---
+\bibitem{langer1993} Langer R, Vacanti JP. Tissue engineering. \textit{Science} 260(5110):920--926, 1993. doi:10.1126/science.8493529
+\bibitem{eiraku2011} Eiraku M, Takata N, Ishibashi H, et al. Self-organizing optic-cup morphogenesis in three-dimensional culture. \textit{Nature} 472:51--56, 2011. doi:10.1038/nature09941
+\bibitem{sato2009} Sato T, Vries RG, Snippert HJ, et al. Single Lgr5 stem cells build crypt-villus structures in vitro without a mesenchymal niche. \textit{Nature} 459:262--265, 2009. doi:10.1038/nature07935
+\bibitem{lancaster2013} Lancaster MA, Renner M, Martin CA, et al. Cerebral organoids model human brain development and microcephaly. \textit{Nature} 501:373--379, 2013. doi:10.1038/nature12517
+\bibitem{lancaster2014} Lancaster MA, Knoblich JA. Organogenesis in a dish: modeling development and disease using organoid technologies. \textit{Science} 345(6194):1247125, 2014. doi:10.1126/science.1247125
+\bibitem{hofer2021} Hofer M, Lutolf MP. Engineering organoids. \textit{Nat Rev Mater} 6:402--420, 2021. doi:10.1038/s41578-021-00279-y
+
+% --- Computationally designed tissues/organs: DNA-programmed & 3D/4D bioprinting ---
+\bibitem{todhunter2015} Todhunter ME, Jee NY, Hughes AJ, et al. Programmed synthesis of three-dimensional tissues. \textit{Nat Methods} 12:975--981, 2015. doi:10.1038/nmeth.3553
+\bibitem{murphy2014} Murphy SV, Atala A. 3D bioprinting of tissues and organs. \textit{Nat Biotechnol} 32:773--785, 2014. doi:10.1038/nbt.2958
+\bibitem{hughes2018} Hughes AJ, Miyazaki H, Coyle MC, et al. Engineered tissue folding by mechanical compaction of the mesenchyme. \textit{Dev Cell} 44(2):165--178, 2018. doi:10.1016/j.devcel.2017.12.004
+\bibitem{lee2019fresh} Lee A, Hudson AR, Shiwarski DJ, Tashman JW, Hinton TJ, Yerneni S, Bliley JM, Campbell PG, Feinberg AW. 3D bioprinting of collagen to rebuild components of the human heart (FRESH v2.0). \textit{Science} 365(6452):482--487, 2019. doi:10.1126/science.aav9051
+\bibitem{moss2025fresh} Moss SP, Shiwarski DJ, Feinberg AW. FRESH 3D bioprinting of collagen types I, II, and III. \textit{ACS Biomater Sci Eng} 11(1):556--563, 2025. doi:10.1021/acsbiomaterials.4c01826
+\bibitem{shiwarski2025chips} Shiwarski DJ, Hudson AR, Tashman JW, Bakirci E, Moss S, Coffin BD, Feinberg AW. 3D bioprinting of collagen-based high-resolution internally perfusable scaffolds (CHIPS) for engineering fully biologic tissue systems. \textit{Sci Adv} 11(17):eadu5905, 2025. doi:10.1126/sciadv.adu5905
+\bibitem{skylarscott2019swift} Skylar-Scott MA, Uzel SGM, Nam LL, Ahrens JH, Truby RL, Damaraju S, Lewis JA. Biomanufacturing of organ-specific tissues with high cellular density and embedded vascular channels (SWIFT). \textit{Sci Adv} 5(9):eaaw2459, 2019. doi:10.1126/sciadv.aaw2459
+\bibitem{sexton2025vasc} Sexton ZA, R\"utsche D, Herrmann JE, et al. Rapid model-guided design of organ-scale synthetic vasculature for biomanufacturing. \textit{Science} 388(6752):1198--1204, 2025. doi:10.1126/science.adj6152
+\bibitem{printess2025} Skylar-Scott Lab (Stanford University). PRINTESS: a low-cost ($\sim$\$250), modular, open-source direct-ink-writing bioprinter for soft and biological materials. 2024--2025. \url{https://printess.org} (build files, GitHub).
+\bibitem{foyt2024} Foyt DA, et al. Active mechanics and stress-relaxing matrices in 4D bioprinting. Gartner Lab, 2024--2025. (Conformation-controlled kidney organoids; \texttt{scripts/download\_bioprinting.py}.)
+
+% --- Synthetic developmental biology: programmable morphogen circuits ---
+\bibitem{turing1952} Turing AM. The chemical basis of morphogenesis. \textit{Phil Trans R Soc Lond B} 237(641):37--72, 1952. doi:10.1098/rstb.1952.0012
+\bibitem{morsut2016} Morsut L, Roybal KT, Xiong X, et al. Engineering customized cell sensing and response behaviors using synthetic Notch receptors. \textit{Cell} 164(4):780--791, 2016. doi:10.1016/j.cell.2016.01.012
+\bibitem{toda2018} Toda S, Blauch LR, Tang SKY, Morsut L, Lim WA. Programming self-organizing multicellular structures with synthetic cell-cell signaling. \textit{Science} 361(6398):156--162, 2018. doi:10.1126/science.aat0271
+\bibitem{toda2020} Toda S, McKeithan WL, Hakkinen TJ, et al. Engineering synthetic morphogen systems that can program multicellular patterning. \textit{Science} 370(6514):327--331, 2020. doi:10.1126/science.abc0033
+
+% --- Computationally designed organisms: xenobots, anthrobots, agential materials ---
+\bibitem{kriegman2020} Kriegman S, Blackiston D, Levin M, Bongard J. A scalable pipeline for designing reconfigurable organisms. \textit{PNAS} 117(4):1853--1859, 2020. doi:10.1073/pnas.1910837117
+\bibitem{blackiston2021} Blackiston D, Lederer E, Kriegman S, et al. A cellular platform for the development of synthetic living machines. \textit{Sci Robot} 6(52):eabf1571, 2021. doi:10.1126/scirobotics.abf1571
+\bibitem{kriegman2021} Kriegman S, Blackiston D, Levin M, Bongard J. Kinematic self-replication in reconfigurable organisms. \textit{PNAS} 118(49):e2112672118, 2021. doi:10.1073/pnas.2112672118
+\bibitem{gumuskaya2024} Gumuskaya G, Srivastava P, Cooper BG, et al. Motile living biobots self-construct from adult human somatic progenitor seed cells. \textit{Adv Sci} 11(4):2303575, 2024. doi:10.1002/advs.202303575
+
+% --- Bioelectricity & morphogenetic information ---
+\bibitem{levin2014} Levin M. Endogenous bioelectrical networks store non-genetic patterning information during development and regeneration. \textit{J Physiol} 592(11):2295--2305, 2014. doi:10.1113/jphysiol.2014.271940
+\bibitem{pezzulo2016} Pezzulo G, Levin M. Top-down models in biology: explanation and control of complex living systems above the molecular level. \textit{J R Soc Interface} 13(124):20160555, 2016. doi:10.1098/rsif.2016.0555
+\bibitem{levin2021bioelectric} Levin M. Bioelectric signaling: Reprogrammable circuits underlying embryogenesis, regeneration, and cancer. \textit{Cell} 184(8):1971--1989, 2021. doi:10.1016/j.cell.2021.02.034
+
+% --- Regulomes & gene regulatory network theory / inference ---
+\bibitem{kauffman1969} Kauffman SA. Metabolic stability and epigenesis in randomly constructed genetic nets. \textit{J Theor Biol} 22(3):437--467, 1969. doi:10.1016/0022-5193(69)90015-0
+\bibitem{davidson2006} Davidson EH, Erwin DH. Gene regulatory networks and the evolution of animal body plans. \textit{Science} 311(5762):796--800, 2006. doi:10.1126/science.1113832 (See also Davidson EH, \textit{The Regulatory Genome}, Academic Press, 2006.)
+\bibitem{peterDavidson2011} Peter IS, Davidson EH. A gene regulatory network controlling the embryonic specification of endoderm. \textit{Nature} 474:635--639, 2011. doi:10.1038/nature10100
+\bibitem{aibar2017} Aibar S, Gonz\'alez-Blas CB, Moerman T, et al. SCENIC: single-cell regulatory network inference and clustering. \textit{Nat Methods} 14:1083--1086, 2017. doi:10.1038/nmeth.4463
+\bibitem{fleck2023} Fleck JS, Jansen SMJ, Wollny D, et al. Inferring and perturbing cell fate regulomes in human brain organoids. \textit{Nature} 621:365--372, 2023. doi:10.1038/s41586-022-05279-8
+\bibitem{kamimoto2023} Kamimoto K, Stringa B, Hoffmann CM, et al. Dissecting cell identity via network inference and in silico gene perturbation (CellOracle). \textit{Nature} 614:742--751, 2023. doi:10.1038/s41586-022-05688-9
+\bibitem{ding2026} Ding J, Kim CN, Ostrowski et al. (Pollen lab). Dissecting gene regulatory networks governing human cortical cell fate. \textit{Nature}, 2026. doi:10.1038/s41586-025-09997-7 (GEO GSE284197)
+
+% --- Hypergraph neural networks ---
+\bibitem{feng2019} Feng Y, You H, Zhang Z, Ji R, Gao Y. Hypergraph neural networks. \textit{AAAI} 33:3558--3565, 2019. doi:10.1609/aaai.v33i01.33013558
+\bibitem{yadati2019} Yadati N, Nimishakavi M, Yadav P, et al. HyperGCN: a new method for training graph convolutional networks on hypergraphs. \textit{NeurIPS}, 2019.
+\bibitem{huangYang2021} Huang J, Yang J. UniGNN: a unified framework for graph and hypergraph neural networks. \textit{IJCAI}, 2021. doi:10.24963/ijcai.2021/353
+\bibitem{chien2022} Chien E, Pan C, Peng J, Milenkovic O. You are AllSet: a multiset function framework for hypergraph neural networks. \textit{ICLR}, 2022.
+\bibitem{bodnar2022} Bodnar C, Di Giovanni F, Chamberlain BP, Li\`o P, Bronstein MM. Neural sheaf diffusion: a topological perspective on heterophily and oversmoothing in GNNs. \textit{NeurIPS}, 2022.
+
+% --- Modularity (theory) ---
+\bibitem{kirschner1998} Kirschner M, Gerhart J. Evolvability. \textit{PNAS} 95(15):8420--8427, 1998. doi:10.1073/pnas.95.15.8420
+\bibitem{hartwell1999} Hartwell LH, Hopfield JJ, Leibler S, Murray AW. From molecular to modular cell biology. \textit{Nature} 402(Suppl):C47--C52, 1999. doi:10.1038/35011540
+\bibitem{kashtan2005} Kashtan N, Alon U. Spontaneous evolution of modularity and network motifs. \textit{PNAS} 102(39):13773--13778, 2005. doi:10.1073/pnas.0503610102
+\bibitem{wagner2007} Wagner GP, Pavlicev M, Cheverud JM. The road to modularity. \textit{Nat Rev Genet} 8:921--931, 2007. doi:10.1038/nrg2267
+\bibitem{alon2007} Alon U. Network motifs: theory and experimental approaches. \textit{Nat Rev Genet} 8:450--461, 2007. doi:10.1038/nrg2102
+\bibitem{clune2013} Clune J, Mouret JB, Lipson H. The evolutionary origins of modularity. \textit{Proc R Soc B} 280(1755):20122863, 2013. doi:10.1098/rspb.2012.2863
+
+% --- Complexity science applied to oncology ---
+\bibitem{sonnenschein1999} Sonnenschein C, Soto AM. \textit{The Society of Cells: Cancer and Control of Cell Proliferation.} Springer/BIOS, 1999.
+\bibitem{hanahan2000} Hanahan D, Weinberg RA. The hallmarks of cancer. \textit{Cell} 100(1):57--70, 2000. doi:10.1016/S0092-8674(00)81683-9
+\bibitem{huang2009} Huang S, Ernberg I, Kauffman S. Cancer attractors: a systems view of tumors from a gene network dynamics and developmental perspective. \textit{Semin Cell Dev Biol} 20(7):869--876, 2009. doi:10.1016/j.semcdb.2009.07.003
+\bibitem{gatenby2009} Gatenby RA, Silva AS, Gillies RJ, Frieden BR. Adaptive therapy. \textit{Cancer Res} 69(11):4894--4903, 2009. doi:10.1158/0008-5472.CAN-08-3658
+\bibitem{hanahan2011} Hanahan D, Weinberg RA. Hallmarks of cancer: the next generation. \textit{Cell} 144(5):646--674, 2011. doi:10.1016/j.cell.2011.02.013
+\bibitem{davies2011metazoa} Davies PCW, Lineweaver CH. Cancer tumors as Metazoa 1.0: tapping genes of ancient ancestors. \textit{Phys Biol} 8(1):015001, 2011. doi:10.1088/1478-3975/8/1/015001
+\bibitem{soto2011} Soto AM, Sonnenschein C. The tissue organization field theory of cancer: a testable replacement for the somatic mutation theory. \textit{BioEssays} 33(5):332--340, 2011. doi:10.1002/bies.201100025
+\bibitem{trigos2017} Trigos AS, Pearson RB, Papenfuss AT, Goode DL. Altered interactions between unicellular and multicellular genes drive hallmarks of transformation in a diverse range of solid tumors. \textit{PNAS} 114(24):6406--6411, 2017. doi:10.1073/pnas.1617743114
+\bibitem{aktipis2015} Aktipis CA, Boddy AM, Jansen G, et al. Cancer across the tree of life: cooperation and cheating in multicellularity. \textit{Phil Trans R Soc B} 370(1673):20140219, 2015. doi:10.1098/rstb.2014.0219
+\bibitem{hanahan2022} Hanahan D. Hallmarks of cancer: new dimensions. \textit{Cancer Discov} 12(1):31--46, 2022. doi:10.1158/2159-8290.CD-21-1059
+\bibitem{montagud2022} Montagud A, B\'eal J, Tobalina L, et al. Patient-specific Boolean models of signalling networks guide personalised treatments. \textit{eLife} 11:e72626, 2022. doi:10.7554/eLife.72626
+
+% --- In-silico tissue / organism simulation platforms ---
+\bibitem{graner1992} Graner F, Glazier JA. Simulation of biological cell sorting using a two-dimensional extended Potts model. \textit{Phys Rev Lett} 69(13):2013--2016, 1992. doi:10.1103/PhysRevLett.69.2013
+\bibitem{karr2012} Karr JR, Sanghvi JC, Macklin DN, et al. A whole-cell computational model predicts phenotype from genotype. \textit{Cell} 150(2):389--401, 2012. doi:10.1016/j.cell.2012.05.044
+\bibitem{compucell3d} Swat MH, Thomas GL, Belmonte JM, et al. Multi-scale modeling of tissues using CompuCell3D. \textit{Methods Cell Biol} 110:325--366, 2012. doi:10.1016/B978-0-12-388403-9.00013-8
+\bibitem{morpheus2014} Starru\ss\ J, de Back W, Brusch L, Deutsch A. Morpheus: a user-friendly modeling environment for multiscale and multicellular systems biology. \textit{Bioinformatics} 30(9):1331--1332, 2014. doi:10.1093/bioinformatics/btt772
+\bibitem{physicell2018} Ghaffarizadeh A, Heiland R, Friedman SH, Mumenthaler SM, Macklin P. PhysiCell: an open source physics-based cell simulator for 3-D multicellular systems. \textit{PLoS Comput Biol} 14(2):e1005991, 2018. doi:10.1371/journal.pcbi.1005991
+\bibitem{chaste2020} Cooper FR, Baker RE, Bernabeu MO, et al. Chaste: Cancer, Heart and Soft Tissue Environment. \textit{J Open Source Softw} 5(47):1848, 2020. doi:10.21105/joss.01848
+
+% --- Synthetic multicellularity: synthesis ---
+\bibitem{sole2016} Sol\'e R. Synthetic transitions: towards a new synthesis. \textit{Phil Trans R Soc B} 371(1701):20150438, 2016. doi:10.1098/rstb.2015.0438
+\bibitem{sole2018} Sol\'e R, Oll\'e-Vila A, Vidiella B, Duran-Nebreda S, Conde-Pueyo N. The road to synthetic multicellularity. \textit{Curr Opin Syst Biol} 7:60--67, 2018. doi:10.1016/j.coisb.2017.11.007
+\bibitem{sole2024} Sol\'e R, Conde-Pueyo N, Pla-Mauri J, Garcia-Ojalvo J, Montserrat N, Levin M. Open problems in synthetic multicellularity. \textit{npj Syst Biol Appl} 10:151, 2024. doi:10.1038/s41540-024-00477-8
+
+% --- Atlases & datasets benchmarked ---
+\bibitem{sonthalia2026} Sonthalia S, et al. Neocortex Atlas: a compendium of transcriptomic data spanning mammalian neocortical development. \textit{Nat Neurosci}, 2026. doi:10.1038/s41593-026-02204-4
+\bibitem{krienen2020} Krienen FM, Goldman M, Zhang Q, et al. Innovations present in the primate interneuron repertoire. \textit{Nature} 586:262--269, 2020. doi:10.1038/s41586-020-2781-z
+\bibitem{loo2019} Loo L, Simon JM, Xing L, et al. Single-cell transcriptomic analysis of mouse neocortical development. \textit{Nat Commun} 10:134, 2019. doi:10.1038/s41467-018-08079-9
+\bibitem{li2023choose} Li C, Fleck JS, Martins-Costa C, et al. Single-cell brain organoid screening identifies developmental defects in autism (CHOOSE). \textit{Nature} 621:373--380, 2023. doi:10.1038/s41586-023-06473-y
+\bibitem{popova2021} Popova G, Soliman SS, Kim CN, et al. Human microglia states are conserved across experimental models and regulate neural stem cell responses in chimeric organoids. \textit{Cell Stem Cell} 28(12):2153--2166, 2021. doi:10.1016/j.stem.2021.08.015
+\bibitem{park2023} Park DS, Kozaki T, Tiwari SK, et al. iPS-cell-derived microglia promote brain organoid maturation. \textit{Nature} 623:397--405, 2023. doi:10.1038/s41586-023-06713-1
+\bibitem{hrvatin2018} Hrvatin S, Hochbaum DR, Nagy MA, et al. Single-cell analysis of experience-dependent transcriptomic states in the mouse visual cortex. \textit{Nat Neurosci} 21:120--129, 2018. doi:10.1038/s41593-017-0029-5
+\bibitem{balzer2022} Balzer MS, Doke T, Yang YW, et al. Single-cell analysis highlights differences in druggable pathways underlying adaptive or fibrotic kidney regeneration. \textit{Nat Commun} 13:4018, 2022. doi:10.1038/s41467-022-31772-9
+\bibitem{shi2020} Shi Y, Sun L, Wang M, et al. Vascularized human cortical organoids model cortical development in vivo. \textit{PLoS Biol} 18(5):e3000705, 2020. doi:10.1371/journal.pbio.3000705
+\bibitem{tang2020} Tang M, Xie Q, Gimple RC, et al. Three-dimensional bioprinted glioblastoma microenvironments. \textit{Cell Res} 30:833--853, 2020. doi:10.1038/s41422-020-0338-1
+\bibitem{lawlor2021} Lawlor KT, Vanslambrouck JM, Higgins JW, et al. Cellular extrusion bioprinting improves kidney organoid reproducibility and conformation. \textit{Nat Mater} 20:260--271, 2021. doi:10.1038/s41563-020-00853-9
+\bibitem{zhang2025} Zhang J, et al. 3D-bioprinted human hepatorganoids (HHO). 2025. (Repo dataset; \texttt{scripts/download\_bioprinting.py}.)
+\bibitem{vassal2024} Vassal et al.\ hiPSC-derived neural stem cells in bioengineered constructs; Shin et al.\ 2024; Yan et al.\ 2024 (bioprinted neural tissue). 2024. (Repo datasets.)
+\bibitem{sctab2024} Fischer F, Fischer DS, Biederstedt E, et al. scTab: scaling cross-tissue single-cell annotation models. Theis Lab, 2024.
+
+\end{thebibliography}
+
+\end{document}

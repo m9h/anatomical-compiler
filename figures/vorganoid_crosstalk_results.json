@@ -1,0 +1,88 @@
+{
+  "n_cells": 57180,
+  "n_genes": 23089,
+  "conditions": {
+    "vOrganoid": 31851,
+    "Organoid": 25329
+  },
+  "timepoints": {
+    "d100": 30390,
+    "d65": 26790
+  },
+  "vascular_markers_found": [
+    "CDH5",
+    "KDR",
+    "CLDN5",
+    "VWF",
+    "FLT1",
+    "TIE1"
+  ],
+  "neural_markers_found": [
+    "SOX2",
+    "PAX6",
+    "FOXG1",
+    "NEUROD2",
+    "TBR1",
+    "SATB2",
+    "BCL11B"
+  ],
+  "crosstalk_regulons": {
+    "HES1": {
+      "vorganoid_mean": -0.0028217725921422243,
+      "organoid_mean": 0.003548294771462679,
+      "delta": -0.006370067596435547,
+      "u_stat": 402011744.0,
+      "p_value": 0.39900776743888855
+    },
+    "HES5": {
+      "vorganoid_mean": 0.022986702620983124,
+      "organoid_mean": -0.02890557423233986,
+      "delta": 0.05189227685332298,
+      "u_stat": 408374496.0,
+      "p_value": 5.5815853556850925e-05
+    },
+    "RBPJ": {
+      "vorganoid_mean": 0.03200384974479675,
+      "organoid_mean": -0.040244609117507935,
+      "delta": 0.07224845886230469,
+      "u_stat": 420565472.0,
+      "p_value": 7.529900596301106e-19
+    },
+    "EPAS1": {
+      "vorganoid_mean": -0.03892066702246666,
+      "organoid_mean": 0.017511215060949326,
+      "delta": -0.056431882083415985,
+      "u_stat": 400797408.0,
+      "p_value": 6.26566152951767e-17
+    },
+    "HIF1A": {
+      "vorganoid_mean": 0.01860365830361843,
+      "organoid_mean": -0.023393908515572548,
+      "delta": 0.04199756681919098,
+      "u_stat": 411804384.0,
+      "p_value": 5.702726824097226e-08
+    },
+    "ETS1": {
+      "vorganoid_mean": -0.018455224111676216,
+      "organoid_mean": -0.019424259662628174,
+      "delta": 0.0009690355509519577,
+      "u_stat": 403415904.0,
+      "p_value": 0.7116649150848389
+    },
+    "SOX17": {
+      "vorganoid_mean": -0.01150917261838913,
+      "organoid_mean": -0.011966659687459469,
+      "delta": 0.0004574870690703392,
+      "u_stat": 403395424.0,
+      "p_value": 0.7375276684761047
+    },
+    "GATA2": {
+      "vorganoid_mean": -0.016498195007443428,
+      "organoid_mean": -0.01945573091506958,
+      "delta": 0.002957535907626152,
+      "u_stat": 403495648.0,
+      "p_value": 0.23717167973518372
+    }
+  },
+  "regulon_source": "TF-expression-fallback"
+}

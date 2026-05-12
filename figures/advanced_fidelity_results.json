@@ -30,6 +30,21 @@
     "score": 1713.2647809834898
   },
   {
+    "dataset": "hiPSC-NSC (Vassal)",
+    "pattern": "Mature Neuron",
+    "score": 349.1357549233947
+  },
+  {
+    "dataset": "hiPSC-NSC (Vassal)",
+    "pattern": "Outer Radial Glia",
+    "score": 361.2754216169508
+  },
+  {
+    "dataset": "hiPSC-NSC (Vassal)",
+    "pattern": "Synaptic (ASD)",
+    "score": 235.44489193359763
+  },
+  {
     "dataset": "Bioprinted Liver (Zhang)",
     "pattern": "Mature Neuron",
     "score": 25.957819264560886

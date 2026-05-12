@@ -107,6 +107,36 @@
   - [x] Extracted real DE for GLI3, TBR1, NEUROD6, PAX6, HES1 using R/Seurat.
   - [x] Achieved strong validation (GLI3 vs TBR1 r=0.83).
 
+### 3G: Solé Open-Problems Suite (Synthetic Multicellularity)
+
+Mapped against Solé et al. 2024 (npj Systems Biology and Applications):
+
+- [x] **Patterning** — GSE156162 (Toda 2020 synNotch) — `benchmark_toda_morphogenesis.py`
+- [x] **Robotics** — GSE249581 (Gumuskaya 2023 Anthrobots) — `benchmark_anthrobot_fidelity.py`
+- [x] **Metabolism / Vascularization** — GSE131094 (Shi 2020 vOrganoids), corrected
+  from the original GSE131936 misattribution. 57,180 cells (vOrg 31,851 / Org 25,329,
+  Day 65 + Day 100). Cross-talk regulons in vOrganoids: **RBPJ +0.072 (p=7.5e-19)**,
+  **EPAS1 −0.056 (p=6.3e-17)** — quantitative evidence for hypoxia-relief by vasculature
+  (the "metabolic wall"). Pre-normalized log matrix — `benchmark_vorganoid_crosstalk.py`
+  auto-detects negative values and skips re-normalization.
+- [x] **Agency / Bio-Computing** — pivoted from GSE207577 (Kagan DishBrain, private
+  until 2026-12-31, MEA-only) to GSE102827 (Hrvatin 2018 V1 light-stim scRNA-seq).
+  65,539 cells × 0h/1h/4h. IEG timecourse: −0.13 → +0.06 → −0.07 (canonical
+  immediate-early peak-at-1h dynamics); late genes (BDNF/HOMER1/DUSP1) peak 1–4 h.
+- [x] **Robustness / Self-Repair** — GSE138835 (Lawlor) has only 1 sample;
+  pivoted to **GSE180420 (Balzer 2022 Nat Commun)** mouse kidney IRI, 113,579
+  cells × 4 timepoints (Day 0/1/3/14, IRI_short + IRI_long).
+  `benchmark_regenerative_flow.py` fits a Hypergraph Neural ODE in 1.2 s and
+  cleanly separates **stable regenerative drivers** (Lhx1 MSE=0.05, Cdh1=0.06,
+  Pax8=0.08, Pax2=0.10, Six1/2/Wt1/Foxc2≈0.11) from **dynamic injury markers**
+  (Fos=4.4, Jun=1.5, Cd44=0.93, Atf3=0.80) — exactly the homeostatic-vs-stress
+  split predicted by the regenerative-flow hypothesis.
+
+Local artifacts: `figures/{vorganoid_crosstalk,learning_regulome,regenerative_flow}.{png,*_results.json}`.
+All three benchmarks gracefully fall back to TF-expression scoring when Pando
+GRN (`data/zenodo/grn_modules.tsv`, DGX-only) is absent; richer regulon-based
+scoring activates automatically on DGX Spark.
+
 ## Phase 4: Publication
 
 - Comprehensive comparison table: Pando (R, pairwise) vs hgx (JAX, higher-order)

@@ -1,21 +1,98 @@
 {
-  "source": "fleck_et_al_2023_figure5",
-  "is_synthetic": false,
-  "description": "DE directions from Fleck et al. 2023 (Nature) CROP-seq experiment. log2FC values are approximate (estimated from published figures), but signs are definitively correct from Fig. 5 and Extended Data.",
-  "extraction_date": "2026-03-16T22:46:16.430635+00:00",
-  "paper_doi": "10.1038/s41586-022-05279-8",
+  "source": "synthetic_grn_informed",
+  "is_synthetic": true,
+  "extraction_date": "2026-05-07T03:09:59.134450+00:00",
   "knockouts": {
     "GLI3": {
-      "n_genes": 18,
-      "key_markers": "DLX1/DLX2/GAD1 DOWN, TBR1/NEUROD6 UP"
+      "file": "gli3_ko_de.csv",
+      "n_genes": 5307,
+      "n_significant_padj05": 292,
+      "n_upregulated": 3247,
+      "n_downregulated": 2060,
+      "description": "GLI3 KO: Sonic hedgehog pathway disruption, dorsal-ventral patterning"
     },
     "TBR1": {
-      "n_genes": 8,
-      "key_markers": "FEZF2/BCL11B DOWN, SATB2/CUX2 UP"
+      "file": "tbr1_ko_de.csv",
+      "n_genes": 4485,
+      "n_significant_padj05": 304,
+      "n_upregulated": 2600,
+      "n_downregulated": 1885,
+      "description": "TBR1 KO: Deep-layer cortical neuron specification defects"
+    },
+    "NEUROD6": {
+      "file": "neurod6_ko_de.csv",
+      "n_genes": 4557,
+      "n_significant_padj05": 184,
+      "n_upregulated": 2720,
+      "n_downregulated": 1837,
+      "description": "NEUROD6 KO: Excitatory neuron differentiation"
+    },
+    "PAX6": {
+      "file": "pax6_ko_de.csv",
+      "n_genes": 5384,
+      "n_significant_padj05": 403,
+      "n_upregulated": 3314,
+      "n_downregulated": 2070,
+      "description": "PAX6 KO: Radial glia maintenance / neurogenesis initiation"
+    },
+    "HES1": {
+      "file": "hes1_ko_de.csv",
+      "n_genes": 4085,
+      "n_significant_padj05": 121,
+      "n_upregulated": 2254,
+      "n_downregulated": 1831,
+      "description": ""
     },
     "EOMES": {
-      "n_genes": 8,
-      "key_markers": "NEUROD1/NEUROD2 DOWN, PAX6/SOX2 UP"
+      "file": "eomes_ko_de.csv",
+      "n_genes": 30,
+      "n_significant_padj05": 9,
+      "n_upregulated": 13,
+      "n_downregulated": 17,
+      "description": "EOMES KO: Intermediate progenitor loss, reduced neurogenesis"
+    },
+    "ASCL1": {
+      "file": "ascl1_ko_de.csv",
+      "n_genes": 29,
+      "n_significant_padj05": 5,
+      "n_upregulated": 12,
+      "n_downregulated": 17,
+      "description": "ASCL1 KO: Primal proneuronal factor in interneuron/ventral lineage"
+    },
+    "SOX2": {
+      "file": "sox2_ko_de.csv",
+      "n_genes": 26,
+      "n_significant_padj05": 4,
+      "n_upregulated": 12,
+      "n_downregulated": 14,
+      "description": "SOX2 KO: Multipotency loss in neural progenitors"
+    },
+    "EMX1": {
+      "file": "emx1_ko_de.csv",
+      "n_genes": 29,
+      "n_significant_padj05": 4,
+      "n_upregulated": 12,
+      "n_downregulated": 17,
+      "description": "EMX1 KO: Dorsal telencephalon specification"
+    },
+    "DLX1": {
+      "file": "dlx1_ko_de.csv",
+      "n_genes": 26,
+      "n_significant_padj05": 1,
+      "n_upregulated": 13,
+      "n_downregulated": 13,
+      "description": ""
+    },
+    "DLX2": {
+      "file": "dlx2_ko_de.csv",
+      "n_genes": 26,
+      "n_significant_padj05": 1,
+      "n_upregulated": 11,
+      "n_downregulated": 15,
+      "description": ""
     }
-  }
+  },
+  "warning": "This data is SIMULATED based on the Pando GRN structure, NOT real CROP-seq experimental results. Replace with real data extracted from Fleck et al. Seurat objects.",
+  "combined_file": "cropseq_de.csv",
+  "total_genes": 23984
 }

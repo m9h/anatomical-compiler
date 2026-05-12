@@ -1,0 +1,74 @@
+[
+  {
+    "lineage": "Podocyte",
+    "sample": "man",
+    "is_4d": false,
+    "score": -0.06236451582503651
+  },
+  {
+    "lineage": "Podocyte",
+    "sample": "r0",
+    "is_4d": true,
+    "score": -0.01991428055074771
+  },
+  {
+    "lineage": "Podocyte",
+    "sample": "r40",
+    "is_4d": true,
+    "score": 0.029720200988494417
+  },
+  {
+    "lineage": "Proximal Tubule",
+    "sample": "man",
+    "is_4d": false,
+    "score": 0.008093006281107271
+  },
+  {
+    "lineage": "Proximal Tubule",
+    "sample": "r0",
+    "is_4d": true,
+    "score": 0.0003047491438154158
+  },
+  {
+    "lineage": "Proximal Tubule",
+    "sample": "r40",
+    "is_4d": true,
+    "score": 0.01644253784323344
+  },
+  {
+    "lineage": "Loop of Henle",
+    "sample": "man",
+    "is_4d": false,
+    "score": -0.004277830524267178
+  },
+  {
+    "lineage": "Loop of Henle",
+    "sample": "r0",
+    "is_4d": true,
+    "score": -0.0031557619805966607
+  },
+  {
+    "lineage": "Loop of Henle",
+    "sample": "r40",
+    "is_4d": true,
+    "score": -0.0012527707280586672
+  },
+  {
+    "lineage": "Stroma",
+    "sample": "man",
+    "is_4d": false,
+    "score": -0.04077567154081725
+  },
+  {
+    "lineage": "Stroma",
+    "sample": "r0",
+    "is_4d": true,
+    "score": -0.030055547663513402
+  },
+  {
+    "lineage": "Stroma",
+    "sample": "r40",
+    "is_4d": true,
+    "score": -0.01207621591033346
+  }
+]

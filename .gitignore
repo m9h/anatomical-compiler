@@ -14,14 +14,47 @@ data/zenodo/
 data/expression/
 data/processed_old/
 
-# Large h5ad/rds files (download via scripts)
+# Large per-dataset downloads / processed objects (regenerate via scripts/download_*.py + preprocess_*.py)
+data/bioprinting/
+data/agency/
+data/azbukina/
+data/krienen/
+data/mouse/
+data/zscape/
+data/choose/extracted_rds/
+data/choose/processed_real/
+data/choose/CHOOSE_filtered.h5ad*
 data/pollen/*.h5ad
 data/choose/*.rds
 data/choose/processed/data.mtx
 data/choose/processed/cells.txt
+*.h5ad
+*.h5ad.gz
+data/Sonthalia_Table3.xlsx
+# (keep small text/csv/json inputs: data/cropseq/*.csv, data/disease_gene_lists.json,
+#  data/SonthaliaEtAl_SupplTable3_*.txt — add explicitly if large)
+
+# Trained models / checkpoints
+models/
+
+# OS / coverage / scratch
+.DS_Store
+.coverage
+.pytest_cache/
+tmp/
 
 # Claude memory (private)
 .claude/
+
+# LaTeX build artifacts (keep .tex/.Rnw and the committed .pdf)
+*.aux
+*.toc
+*.out
+*.log
+*.synctex.gz
+*.bbl
+*.blg
+publication/*.knit.*
 
 # Misc
 adapter.py
