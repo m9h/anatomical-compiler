@@ -46,6 +46,18 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   Index); exercises (all-pairs Jaccard regulon overlap among the master TFs, heavy-tailedness of
   regulon sizes, graph degree vs hypergraph degree). Self-contained — reads `data/processed/`,
   falls back to a tiny synthetic regulome if absent.
+- **`05b_structural_identifiability.ipynb`** — **Lab 5.5**: a `sympy` structural-identifiability
+  check (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s
+  linear `is_observable`/`observability_gramian`). Textbook sanity checks (one-pool ✓; Bellman &
+  Åström's $k_1{+}k_2$ ✗ with the nullspace direction printed); the Lab-0.5 circuits (negative
+  autoregulation, the repressilator — identifiable from a single output only if you also know the
+  initial state, identifiable from all outputs regardless); the linear special case = `jaxctrl`'s
+  observability rank, tied to the `benchmark_network_control.py` finding (the regulome's linear
+  surrogate is not identifiable/controllable from the master regulators alone → the SBI posterior
+  is correctly ridge-shaped); exercises (free Hill exponent → the $n$–$K$ confound; the IRMA GRN's
+  minimal output set; a COMBOS compartmental example; the SBI loss-valley). Distinguishes the
+  *structural*, *practical*, and *module* senses of "identifiability". Self-contained. (One cell —
+  the 6-unknown repressilator — takes ~2–3 min.)
 - **`organoid_hgx_colab.ipynb`** — "Lab 0 / the benchmark": the GPU/Colab notebook running `hgx`
   on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → figures → the
   5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark).
@@ -163,6 +175,13 @@ know the rest of it.
    *(Kauffman; Huang et al. 2009; §2.4 / §3 regenerative-flow.)*
 5. **Control theory on cellular dynamics (`jaxctrl`).** Identify a surrogate (SINDy/Koopman) →
    controllability → LQR → driver nodes on a hypergraph. Use the three jaxctrl example notebooks.
+5.5. **Is the model even identifiable?** A symbolic *structural* identifiability check in `sympy`
+   (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s linear
+   `is_observable`): before you fit a mechanistic model, can its parameters be recovered from what
+   you measure, with perfect data? Run on the Lab 0.5 circuits and the linear surrogate of Lab 6;
+   distinguished from *module* identifiability (Lab 3) and *practical* identifiability (Lab 6).
+   *(`notebooks/05b_structural_identifiability.ipynb`; Bellman & Åström 1970; DiStefano III / COMBOS;
+   §2 of the whitepaper.)*
 6. **The anatomical compiler.** Optimal control on the *learned* Hypergraph Neural ODE: given a
    target tissue state, compute an actuation schedule (`diffrax` adjoints). *(§3 anatomical-compiler;
    `scripts/benchmark_anatomical_compiler.py`; Levin 2022.)*

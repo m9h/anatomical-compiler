@@ -184,6 +184,7 @@ Seed material: `notebooks/00b_gene_circuit_dynamics.ipynb`,
 - [ ] Notebook 3 — modularity & identifiability (Hodge Laplacian; the Module Identifiability Index)
 - [ ] Notebook 4 — Hypergraph Neural ODEs (latent dynamics; drivers vs stress; attractors)
 - [ ] Notebook 5 — control theory on cellular dynamics (reuse the jaxctrl example notebooks)
+- [x] Notebook 5.5 — structural identifiability (`notebooks/05b_structural_identifiability.ipynb`): a sympy Taylor-series/observability-rank check; textbook cases (one-pool, Bellman); the Lab-0.5 circuits; the linear special case = jaxctrl's observability rank, tied to benchmark_network_control.py; structural ≠ module ≠ practical identifiability; exercises (free Hill exponent, IRMA minimal output set, COMBOS example, SBI loss-valley)
 - [ ] Notebook 6 — the anatomical compiler (optimal control on a learned regulome ODE)
 - [ ] Notebooks 7–8 — synthetic morphology in the wet lab; cancer-as-loss-of-identifiability (stretch)
 
