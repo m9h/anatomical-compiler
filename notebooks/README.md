@@ -172,6 +172,20 @@ know the rest of it.
   (§4.3(v) of the whitepaper) would actually be simulated; it is also a candidate for a serious
   modernisation (a differentiable / JAX rewrite, the way `vpjax` modernises the hemodynamics in
   `vbjax`) — a natural Biopunk-Lab project, and a good capstone for this course.
+- **Cellular-engineering research programmes** — the *wet-lab* communities this computational track
+  is in dialogue with. The [**Center for Cellular Construction (CCC)**](https://centerforcellularconstruction.org)
+  — an NSF Science and Technology Center headquartered at UCSF with the California Academy of Sciences
+  (Wallace Marshall, director; Zev Gartner, co-director) — treats the cell as a *smart, reconfigurable
+  material*: cytocomputing, cell-shape / organelle engineering, programmed multicellular assembly. The
+  [**Gartner Lab**](https://gartnerlab.ucsf.edu) (UCSF) is the tissue-self-organisation / DNA-programmed-
+  assembly-of-cells (DPAC) node — and is *already* a benchmark in this repo: the conformation-controlled
+  kidney-organoid data (`man`/`r0`/`r40`; `scripts/benchmark_gartner_4d.py`, `figures/gartner_4d_fidelity.png`)
+  that the whitepaper's §4 uses for "print geometry → lineage maturity". The natural complement: CCC /
+  Gartner provide the *constructible substrate* and the assembly handles (DPAC, conformation control,
+  4D matrices), this track provides the *regulatory readout and the controller* (`hgx` / `jaxctrl` on
+  the inferred regulome) — together, the §4.3 model-in-the-loop design cycle. (See also the Levin Lab
+  for the bioelectric layer, and the Lewis / Feinberg / Skylar-Scott labs for the bioprinting handles —
+  refs in `REFERENCES.md`.)
 
 > **A note on "identifiability."** This course uses the word in the *modular-structure* sense — the
 > Hodge-Laplacian **Module Identifiability Index** (Lab 3) asks whether a regulome *decomposes* into

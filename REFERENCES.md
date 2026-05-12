@@ -30,7 +30,7 @@ Master (human-readable) bibliography for the **anatomical-compiler** project —
 
 ## Computationally designed tissues/organs — DNA-programmed assembly & 3D/4D/freeform bioprinting
 
-21. Todhunter ME, Jee NY, Hughes AJ, et al. **Programmed synthesis of three-dimensional tissues.** *Nat Methods* 12:975–981, 2015. doi:10.1038/nmeth.3553
+21. Todhunter ME, Jee NY, Hughes AJ, et al. **Programmed synthesis of three-dimensional tissues** (DNA-programmed assembly of cells, DPAC). *Nat Methods* 12:975–981, 2015. doi:10.1038/nmeth.3553 — Gartner Lab, UCSF (gartnerlab.ucsf.edu): tissue self-organization, DPAC, mammary organoids, cell patterning; source of the *conformation-controlled kidney organoid* benchmark in this repo (GSE152014, `man`/`r0`/`r40`; `scripts/benchmark_gartner_4d.py`).
 22. Cerchiari AE, Garbe JC, Jee NY, et al. **A strategy for tissue self-organization that is robust to cellular heterogeneity and plasticity.** *PNAS* 112(7):2287–2292, 2015. doi:10.1073/pnas.1410776112
 23. Murphy SV, Atala A. **3D bioprinting of tissues and organs.** *Nat Biotechnol* 32:773–785, 2014. doi:10.1038/nbt.2958
 24. Hughes AJ, Miyazaki H, Coyle MC, et al. **Engineered tissue folding by mechanical compaction of the mesenchyme.** *Dev Cell* 44(2):165–178.e6, 2018. doi:10.1016/j.devcel.2017.12.004
@@ -155,6 +155,7 @@ Master (human-readable) bibliography for the **anatomical-compiler** project —
 101. **devograph** — developmental-neurobiology extensions. github.com/m9h/devograph
 102. **anatomical-compiler** — this repository. github.com/m9h/anatomical-compiler
 103. **NITMB** — National Institute for Theory and Mathematics in Biology (Northwestern University & University of Chicago). nitmb.org *(Module Identifiability Index framing.)*
+104. **Center for Cellular Construction (CCC)** — NSF Science and Technology Center, headquartered at UCSF with the California Academy of Sciences and partners; Wallace Marshall (director), Zev Gartner (co-director). centerforcellularconstruction.org *(the cell as a smart, reconfigurable material: cytocomputing, cell-shape / organelle engineering, programmed cell assembly — the cellular-engineering ecosystem this "anatomical compiler" sits inside; see refs 18–24, 80–82.)*
 
 ---
 

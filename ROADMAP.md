@@ -169,7 +169,11 @@ virtual-tissue platforms (the *spatial/mechanics* side this track does not cover
 (compucell3d.org — its [Workshop26](https://compucell3d.org/Workshop26) series and the
 [nanoHub-hosted model library](https://compucell3d.org/Models-nanoHub)), **Morpheus**
 (morpheus.gitlab.io), PhysiCell, Chaste — Cellular-Potts / agent-based; this track is the *regulome
-/ control* complement (`hgx`/`jaxctrl`). Model standards/repositories the whole ecosystem shares:
+/ control* complement (`hgx`/`jaxctrl`). Cellular-engineering programmes on the *wet-lab* side:
+the **Center for Cellular Construction** (centerforcellularconstruction.org — NSF STC at UCSF + Cal
+Academy; Marshall/Gartner) and the **Gartner Lab** (gartnerlab.ucsf.edu — tissue self-organisation /
+DPAC; already a benchmark here: the conformation-controlled kidney data, `scripts/benchmark_gartner_4d.py`).
+Model standards/repositories the whole ecosystem shares:
 **SBML** (sbml.org) + **BioModels** (biomodels.org) — pull a curated SBML model, import it into
 `diffrax`, and you have a Lab. (Distinct thread — *structural* identifiability of model parameters:
 the differential-algebra/power-series program of J. DiStefano III et al. / the COMBOS tool; the
