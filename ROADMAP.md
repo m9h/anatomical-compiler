@@ -160,10 +160,23 @@ A planned course (~6–8 lab sessions) walking students through the project: reg
 cellular dynamics (jaxctrl) → the anatomical compiler → synthetic morphology in the wet lab →
 (stretch) cancer as loss of module identifiability. See `notebooks/README.md` for the sequence.
 Run out of **Biopunk Lab** (the West Coast node of [HTGAA 2026a](https://2026a.htgaa.org)); supports
-two HTGAA modules incl. Week 7 (*Genetic Circuits II: Neuromorphic Circuits*, Ron Weiss). Upstream:
-Elowitz & Bois, *Biological Circuit Design* (biocircuits.github.io). Seed material:
-`notebooks/00b_gene_circuit_dynamics.ipynb`, `notebooks/01_regulomes_and_hypergraphs.ipynb`,
-`notebooks/organoid_hgx_colab.ipynb`, the three `jaxctrl/examples/*.{ipynb,py}`.
+the course's two **Genetic Circuits** modules — [Week 6](https://2026a.htgaa.org/2026a/course-pages/weeks/week-06/index.html)
+*Assembly Technologies* (Densmore, Haddock — DNA assembly + the Asimov Kernel design platform;
+assignment recreates the repressilator) and [Week 7](https://2026a.htgaa.org/2026a/course-pages/weeks/week-07/index.html)
+*Neuromorphic Circuits* (Ron Weiss — intracellular ANNs / perceptrons in cells). Upstream foundations:
+Elowitz & Bois, *Biological Circuit Design* (biocircuits.github.io). Complementary student-facing
+virtual-tissue platforms (the *spatial/mechanics* side this track does not cover): **CompuCell3D**
+(compucell3d.org — its [Workshop26](https://compucell3d.org/Workshop26) series and the
+[nanoHub-hosted model library](https://compucell3d.org/Models-nanoHub)), **Morpheus**
+(morpheus.gitlab.io), PhysiCell, Chaste — Cellular-Potts / agent-based; this track is the *regulome
+/ control* complement (`hgx`/`jaxctrl`). Model standards/repositories the whole ecosystem shares:
+**SBML** (sbml.org) + **BioModels** (biomodels.org) — pull a curated SBML model, import it into
+`diffrax`, and you have a Lab. (Distinct thread — *structural* identifiability of model parameters:
+the differential-algebra/power-series program of J. DiStefano III et al. / the COMBOS tool; the
+numerical-local counterpart is `jaxctrl`'s observability functions. See `notebooks/README.md`.)
+Seed material: `notebooks/00b_gene_circuit_dynamics.ipynb`,
+`notebooks/01_regulomes_and_hypergraphs.ipynb`, `notebooks/organoid_hgx_colab.ipynb`, the three
+`jaxctrl/examples/*.{ipynb,py}`.
 
 - [x] Notebook 0.5 — gene-circuit dynamics in a nutshell (`notebooks/00b_gene_circuit_dynamics.ipynb`): Hill functions, negative autoregulation, the toggle switch & bistability (`jax.jacfwd`), the repressilator + linearize→LQR — the bridge from *Biological Circuit Design* into this course's toolchain
 - [x] Notebook 1 — regulomes and hypergraphs (`notebooks/01_regulomes_and_hypergraphs.ipynb`): the Fleck incidence; why a regulon is a hyperedge not a clique; `hgx` basics; the Laplacian spectrum; exercises

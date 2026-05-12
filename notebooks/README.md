@@ -10,16 +10,27 @@ programme in its §4.
 ## Context: Biopunk Lab × HTGAA 2026a
 
 This educational track is run out of **Biopunk Lab**, the **West Coast node** of
-[*How to Grow Almost Anything (HTGAA) 2026a*](https://2026a.htgaa.org), and supports two of the
-course's modules — including **Week 7, *Genetic Circuits Part II: Neuromorphic Circuits*** (Ron
-Weiss; intracellular artificial neural networks / perceptrons implemented in genetic systems
-— [week-07](https://2026a.htgaa.org/2026a/course-pages/weeks/week-07/index.html)). The dependency
-chain reads cleanly: **Elowitz & Bois, *Biological Circuit Design*** (the dynamical-systems
-foundations, see below) → HTGAA's genetic-circuits weeks (incl. neuromorphic circuits) → **this
-track** (regulomes as hypergraphs → hypergraph neural networks → modularity/identifiability metrics
-→ network control / the *anatomical compiler*) → **wet-lab synthetic morphology** (bioprinting,
-synthetic morphogenesis). HTGAA Week 7 is "gene networks *as* neural networks"; this track is
-"neural networks and control theory *on* gene networks" — adjacent halves of the same idea.
+[*How to Grow Almost Anything (HTGAA) 2026a*](https://2026a.htgaa.org), and supports the course's
+two **Genetic Circuits** modules:
+
+- **[Week 6 — *Genetic Circuits Part I: Assembly Technologies*](https://2026a.htgaa.org/2026a/course-pages/weeks/week-06/index.html)**
+  (Doug Densmore, Traci Haddock): the molecular toolkit for *building* circuits — PCR, Gibson
+  assembly, restriction digests — and circuit design/simulation on the Asimov Kernel platform; the
+  assignment includes **recreating the repressilator**.
+- **[Week 7 — *Genetic Circuits Part II: Neuromorphic Circuits*](https://2026a.htgaa.org/2026a/course-pages/weeks/week-07/index.html)**
+  (Ron Weiss): genetic circuits that *compute and learn* — intracellular artificial neural networks
+  / perceptrons implemented in cells.
+
+Lab 0.5 below is the **computational companion to Week 6** — same repressilator (and Hill kinetics,
+toggle switch, linear stability), in this course's Python toolchain, and then it shows you what to
+do *after* you've recreated it: linearize it and *control* it. The hypergraph-neural-network strand
+of this track (Labs 1 & 4) is the conceptual sibling of **Week 7** — Week 7 builds neural networks
+*as* gene circuits; this track runs neural networks and control theory *on* gene networks. The full
+dependency chain: **Elowitz & Bois, *Biological Circuit Design*** (the dynamical-systems
+foundations, see below) → HTGAA Weeks 6–7 (assembling, then computing with, genetic circuits) →
+**this track** (regulomes as hypergraphs → hypergraph neural networks → modularity/identifiability
+metrics → network control / the *anatomical compiler*) → **wet-lab synthetic morphology**
+(bioprinting, synthetic morphogenesis).
 
 ## What's here now
 
@@ -78,6 +89,44 @@ but narrow — it lives almost entirely at the small-circuit end (the repressila
 switch, Hill-ODE GRNs in the `jaxctrl` examples), and where it overlaps, *Biological Circuit Design*
 goes deeper on the dynamics and noise while this track goes further toward inference, control, and
 tissue scale.
+
+## Ecosystem & complementary platforms
+
+This course is one node in a larger systems-/synthetic-biology computing ecosystem; students should
+know the rest of it.
+
+- **Model standards & repositories.** [**SBML**](https://sbml.org) is the lingua franca for
+  exchanging kinetic models, and [**BioModels**](https://biomodels.org) is the large, curated
+  repository of them — the shared library that the simulators below (and tools like COPASI,
+  Tellurium / libRoadRunner) read and write. Most of the small-circuit and signaling ODEs in
+  *Biological Circuit Design* (and the MAPK / p53–Mdm2 / NF-κB / cell-cycle models referenced in the
+  whitepaper's outlook) live there as SBML — pull one, import it into `diffrax`, and you have a Lab.
+- **Cell-based ("virtual tissue") simulators** — the *spatial / mechanics / reaction–diffusion* side
+  this track deliberately does not cover: [**CompuCell3D**](https://compucell3d.org) (Cellular-Potts;
+  see its [Workshop series](https://compucell3d.org/Workshop26) and the
+  [nanoHub-hosted model library](https://compucell3d.org/Models-nanoHub) — the de-facto student
+  on-ramp), [**Morpheus**](https://morpheus.gitlab.io) (Cellular-Potts + reaction–diffusion, GUI,
+  SBML import), **PhysiCell** (3-D agent-based, tumor microenvironments), **Chaste** ("Cancer, Heart
+  and Soft Tissue Environment"). They simulate cells *moving, adhering, dividing, signaling in space*;
+  this track is the **regulome / control complement** (`hgx` hypergraph neural networks + `jaxctrl`
+  control on inferred genome-scale regulomes). A full virtual-tissue curriculum pairs them: CC3D /
+  Morpheus for the morphogenesis-and-mechanics labs, this track for "the regulatory program and how
+  to steer it" — and the whitepaper's forward programme (§4.3) is exactly where the two meet (a
+  bioprinting / synNotch / optogenetic actuation, a CC3D-style mechanical readout, an `hgx`/`jaxctrl`
+  regulatory readout, all in one model-in-the-loop design cycle).
+
+> **A note on "identifiability."** This course uses the word in the *modular-structure* sense — the
+> Hodge-Laplacian **Module Identifiability Index** (Lab 3) asks whether a regulome *decomposes* into
+> stable, distinct modules. That is **not** the same as the **structural identifiability** of
+> dynamic-model parameters — "can these rate constants / Hill coefficients be recovered from the
+> measured outputs, even with perfect data?" — which is decided *symbolically*, before any fitting,
+> by differential-algebra / power-series methods (Bellman & Åström 1970; the program of J. DiStefano
+> III and collaborators at UCLA, e.g. the COMBOS web tool — [biocyb0.cs.ucla.edu](http://biocyb0.cs.ucla.edu/wp/)).
+> The numerical, local counterpart is the *observability* rank condition, which `jaxctrl` exposes
+> directly (`is_observable`, `observability_matrix`, `observability_gramian`). A structural-ID check
+> belongs **before** fitting any mechanistic reduced model (the Hill-ODE GRN in the `jaxctrl` IRMA
+> example; the linear surrogate in `scripts/benchmark_anatomical_compiler.py`) — see Lab 5's notes —
+> and the *practical* (finite/noisy-data) version is the SBI / profile-likelihood story of Lab 6.
 
 ## Planned sequence (a 6–8 session course)
 
