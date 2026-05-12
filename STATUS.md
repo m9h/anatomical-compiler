@@ -8,7 +8,7 @@ networks from Fleck et al. 2023 (Nature, doi:10.1038/s41586-022-05279-8).
 
 ## Infrastructure
 
-- **GitHub repos**: m9h/hgx (core), m9h/devograph (extensions), m9h/organoid-hgx-benchmark
+- **GitHub repos**: m9h/hgx (core), m9h/devograph (extensions), m9h/anatomical-compiler
 - **Compute**: DGX Spark GB10 (128GB unified, CUDA 13.1) via NGC PyTorch 26.02 container
 - **Alternative**: Google Colab A100 (notebook at notebooks/organoid_hgx_colab.ipynb)
 - **JAX**: 0.9.1 with CUDA on Spark; version varies on Colab

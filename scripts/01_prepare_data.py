@@ -697,7 +697,7 @@ def generate_synthetic_data(data_dir: Path, seed: int) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Prepare data for the organoid-hgx-benchmark.",
+        description="Prepare data for the anatomical-compiler.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"

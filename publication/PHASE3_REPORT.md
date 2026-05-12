@@ -1,7 +1,7 @@
 # Phase 3 Research Report: Cross-Dataset GRN Validation
 
 **Date**: 2026-03-26
-**Project**: organoid-hgx-benchmark
+**Project**: anatomical-compiler
 
 ## Executive Summary
 

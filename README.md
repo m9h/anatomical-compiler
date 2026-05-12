@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧬 organoid-hgx-benchmark
+# 🧬 anatomical-compiler
 
 ### A higher-order network instrument for **synthetic morphology** & **synthetic multicellularity**
 
@@ -186,12 +186,12 @@ Forward: hgx Hypergraph Neural ODEs simulate TF knockouts. Inverse: [CellFlow](h
 <summary><b>GPU server (DGX Spark / A100) — the compute pipeline</b></summary>
 
 ```bash
-git clone https://github.com/m9h/organoid-hgx-benchmark.git
+git clone https://github.com/m9h/anatomical-compiler.git
 git clone https://github.com/m9h/hgx.git
 git clone https://github.com/m9h/devograph.git
 pip install -e hgx -e devograph
 pip install "jax[cuda12]" equinox diffrax optax scanpy anndata ripser
-cd organoid-hgx-benchmark
+cd anatomical-compiler
 # download data from Zenodo — see DATA_PREPROCESSING.md
 python scripts/00_preprocess.py        # PPCA features, pseudotime bins, fate probs (~13 s)
 python scripts/generate_figures.py     # 8 publication figures on GPU (~175 s)
@@ -220,7 +220,7 @@ tectonic publication/paper.tex          # → publication/paper.pdf
 <details>
 <summary><b>Google Colab</b></summary>
 
-Open [`notebooks/organoid_hgx_colab.ipynb`](https://colab.research.google.com/github/m9h/organoid-hgx-benchmark/blob/master/notebooks/organoid_hgx_colab.ipynb) with an A100 runtime.
+Open [`notebooks/organoid_hgx_colab.ipynb`](https://colab.research.google.com/github/m9h/anatomical-compiler/blob/master/notebooks/organoid_hgx_colab.ipynb) with an A100 runtime.
 </details>
 
 ---

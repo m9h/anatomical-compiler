@@ -46,7 +46,7 @@
     "npc",
     "neuron"
   ],
-  "data_dir": "/home/mhough/dev/organoid-hgx-benchmark/data",
+  "data_dir": "/home/mhough/dev/anatomical-compiler/data",
   "grn_genes_total": 2792,
   "grn_expression_intersection": 2792,
   "n_tfs_total": 720,

@@ -1,5 +1,5 @@
 """
-data_loader.py — Shared data loading module for organoid-hgx-benchmark analyses.
+data_loader.py — Shared data loading module for anatomical-compiler analyses.
 
 Loads the Fleck et al. 2023 cerebral organoid data from Zenodo processed files.
 All analysis scripts should import from this module rather than loading data directly.

@@ -1,6 +1,6 @@
 # References
 
-Master bibliography for the organoid-HGX benchmark. Cited from [MANUSCRIPT.md](MANUSCRIPT.md), [FOUNDATIONS.md](FOUNDATIONS.md), and `publication/manuscript.tex`. Grouped by theme; within a group, roughly chronological.
+Master (human-readable) bibliography for the **anatomical-compiler** project — the whitepaper *"Engineering Fully-Biologic Tissue Systems."* The same entries are reproduced in the `thebibliography` block of [`publication/paper.Rnw`](publication/paper.Rnw) (the canonical source). Grouped by theme; within a group, roughly chronological.
 
 ## Synthetic morphology / morphogenetic engineering
 
@@ -153,7 +153,7 @@ Master bibliography for the organoid-HGX benchmark. Cited from [MANUSCRIPT.md](M
 
 100. **hgx** — JAX/Equinox hypergraph neural networks. github.com/m9h/hgx
 101. **devograph** — developmental-neurobiology extensions. github.com/m9h/devograph
-102. **organoid-hgx-benchmark** — this repository. github.com/m9h/organoid-hgx-benchmark
+102. **anatomical-compiler** — this repository. github.com/m9h/anatomical-compiler
 103. **NITMB** — National Institute for Theory and Mathematics in Biology (Northwestern University & University of Chicago). nitmb.org *(Module Identifiability Index framing.)*
 
 ---

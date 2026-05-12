@@ -821,7 +821,7 @@ contributes the instrument; the programme above is what we propose to do with it
 %==============================================================================
 \hgx: \url{https://github.com/m9h/hgx}. \devograph: \url{https://github.com/m9h/devograph}.
 Benchmark code, preprocessing pipelines, and per-dataset result files:
-\url{https://github.com/m9h/organoid-hgx-benchmark}. Organoid GRN: Zenodo
+\url{https://github.com/m9h/anatomical-compiler}. Organoid GRN: Zenodo
 \href{https://doi.org/10.5281/zenodo.5242913}{10.5281/zenodo.5242913}. Neocortex Atlas:
 NeMO Analytics (\url{https://nemoanalytics.org/landing/neocortex/}); SJD
 (\url{https://github.com/CHuanSite/SJD}); projectR (Bioconductor). A Colab notebook

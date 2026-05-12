@@ -1,5 +1,5 @@
 def main():
-    print("Hello from organoid-hgx-benchmark!")
+    print("Hello from anatomical-compiler!")
 
 
 if __name__ == "__main__":

@@ -170,6 +170,71 @@ wheels = [
 ]
 
 [[package]]
+name = "anatomical-compiler"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "anndata" },
+    { name = "cellxgene-census" },
+    { name = "devograph" },
+    { name = "dhg" },
+    { name = "diffrax" },
+    { name = "hgx" },
+    { name = "huggingface-hub" },
+    { name = "leidenalg" },
+    { name = "lightning" },
+    { name = "matplotlib" },
+    { name = "optax" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "pyreadr" },
+    { name = "pytorch-lightning" },
+    { name = "pytorch-tabnet" },
+    { name = "rdata" },
+    { name = "ripser" },
+    { name = "rpy2" },
+    { name = "scanpy" },
+    { name = "scipy" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anndata", specifier = ">=0.12.10" },
+    { name = "cellxgene-census", specifier = ">=1.17.0" },
+    { name = "devograph", git = "https://github.com/m9h/devograph.git" },
+    { name = "dhg", git = "https://github.com/iMoonLab/DeepHypergraph?rev=b36d98c" },
+    { name = "diffrax", specifier = ">=0.7.2" },
+    { name = "hgx", directory = "../hgx" },
+    { name = "huggingface-hub", specifier = ">=1.13.0" },
+    { name = "leidenalg", specifier = ">=0.11.0" },
+    { name = "lightning", specifier = ">=2.6.1" },
+    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "optax", specifier = ">=0.2.5" },
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "pyarrow", specifier = ">=24.0.0" },
+    { name = "pyreadr", specifier = ">=0.5.6" },
+    { name = "pytorch-lightning", specifier = ">=2.6.1" },
+    { name = "pytorch-tabnet", specifier = ">=4.1.0" },
+    { name = "rdata", specifier = ">=1.0.0" },
+    { name = "ripser", specifier = ">=0.6.14" },
+    { name = "rpy2", specifier = ">=3.6.7" },
+    { name = "scanpy", specifier = ">=1.12" },
+    { name = "scipy", specifier = ">=1.17.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+]
+
+[[package]]
 name = "anndata"
 version = "0.12.11"
 source = { registry = "https://pypi.org/simple" }
@@ -2125,71 +2190,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/bf/9b/62f120fb2ecbc4338bee70c5a3671c8e561714f3aa1a046b897ff142050e/optuna-4.8.0.tar.gz", hash = "sha256:6f7043e9f8ecb5e607af86a7eb00fb5ec2be26c3b08c201209a73d36aff37a38", size = 482603, upload-time = "2026-03-16T04:59:58.659Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ac/24/7c731839566d30dc70556d9824ef17692d896c15e3df627bce8c16f753e1/optuna-4.8.0-py3-none-any.whl", hash = "sha256:c57a7682679c36bfc9bca0da430698179e513874074b71bebedb0334964ab930", size = 419456, upload-time = "2026-03-16T04:59:56.977Z" },
-]
-
-[[package]]
-name = "organoid-hgx-benchmark"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "anndata" },
-    { name = "cellxgene-census" },
-    { name = "devograph" },
-    { name = "dhg" },
-    { name = "diffrax" },
-    { name = "hgx" },
-    { name = "huggingface-hub" },
-    { name = "leidenalg" },
-    { name = "lightning" },
-    { name = "matplotlib" },
-    { name = "optax" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "pyreadr" },
-    { name = "pytorch-lightning" },
-    { name = "pytorch-tabnet" },
-    { name = "rdata" },
-    { name = "ripser" },
-    { name = "rpy2" },
-    { name = "scanpy" },
-    { name = "scipy" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "anndata", specifier = ">=0.12.10" },
-    { name = "cellxgene-census", specifier = ">=1.17.0" },
-    { name = "devograph", git = "https://github.com/m9h/devograph.git" },
-    { name = "dhg", git = "https://github.com/iMoonLab/DeepHypergraph?rev=b36d98c" },
-    { name = "diffrax", specifier = ">=0.7.2" },
-    { name = "hgx", directory = "../hgx" },
-    { name = "huggingface-hub", specifier = ">=1.13.0" },
-    { name = "leidenalg", specifier = ">=0.11.0" },
-    { name = "lightning", specifier = ">=2.6.1" },
-    { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "optax", specifier = ">=0.2.5" },
-    { name = "pandas", specifier = ">=2.3.3" },
-    { name = "pyarrow", specifier = ">=24.0.0" },
-    { name = "pyreadr", specifier = ">=0.5.6" },
-    { name = "pytorch-lightning", specifier = ">=2.6.1" },
-    { name = "pytorch-tabnet", specifier = ">=4.1.0" },
-    { name = "rdata", specifier = ">=1.0.0" },
-    { name = "ripser", specifier = ">=0.6.14" },
-    { name = "rpy2", specifier = ">=3.6.7" },
-    { name = "scanpy", specifier = ">=1.12" },
-    { name = "scipy", specifier = ">=1.17.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-cov", specifier = ">=7.1.0" },
 ]
 
 [[package]]
