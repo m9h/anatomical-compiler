@@ -7,8 +7,26 @@ that each notebook is a self-contained lab session, building on the last, ending
 exercise; together they cover the methods in `publication/paper.Rnw` and the experimental
 programme in its §4.
 
+## Context: Biopunk Lab × HTGAA 2026a
+
+This educational track is run out of **Biopunk Lab**, the **West Coast node** of
+[*How to Grow Almost Anything (HTGAA) 2026a*](https://2026a.htgaa.org), and supports two of the
+course's modules — including **Week 7, *Genetic Circuits Part II: Neuromorphic Circuits*** (Ron
+Weiss; intracellular artificial neural networks / perceptrons implemented in genetic systems
+— [week-07](https://2026a.htgaa.org/2026a/course-pages/weeks/week-07/index.html)). The dependency
+chain reads cleanly: **Elowitz & Bois, *Biological Circuit Design*** (the dynamical-systems
+foundations, see below) → HTGAA's genetic-circuits weeks (incl. neuromorphic circuits) → **this
+track** (regulomes as hypergraphs → hypergraph neural networks → modularity/identifiability metrics
+→ network control / the *anatomical compiler*) → **wet-lab synthetic morphology** (bioprinting,
+synthetic morphogenesis). HTGAA Week 7 is "gene networks *as* neural networks"; this track is
+"neural networks and control theory *on* gene networks" — adjacent halves of the same idea.
+
 ## What's here now
 
+- **`00b_gene_circuit_dynamics.ipynb`** — **Lab 0.5** (the bridge from *Biological Circuit Design*):
+  Hill functions, negative autoregulation (response-time), the toggle switch & bistability (via
+  `jax.jacfwd`), the repressilator + the "linearize then LQR-control it" move — all in this course's
+  toolchain (`diffrax`, `jax.jacfwd`/`jax.grad`, `jaxctrl`) rather than SciPy/Bokeh. Self-contained.
 - **`01_regulomes_and_hypergraphs.ipynb`** — **Lab 1**: what a regulome is; load the Fleck
   incidence matrix; why a regulon is a *hyperedge*, not a clique (the clique-expansion blow-up
   *and* aliasing, worked on a toy example + the full regulome); `hgx` basics (`from_incidence`,
@@ -63,6 +81,12 @@ tissue scale.
 
 ## Planned sequence (a 6–8 session course)
 
+0.5. **Gene-circuit dynamics in a nutshell** *(bridge from* Biological Circuit Design*)*. Hill
+   functions; negative autoregulation and response time; the toggle switch & bistability; the
+   repressilator and linear stability — restated in this course's toolchain (`diffrax`,
+   `jax.jacfwd`/`jax.grad`, `jaxctrl`), ending in the "linearize a circuit, then LQR-control it"
+   move that Lab 5 scales up. *(`notebooks/00b_gene_circuit_dynamics.ipynb`; refs: Elowitz & Bois;
+   Alon; Gardner et al. 2000; Elowitz & Leibler 2000.)*
 1. **Regulomes and hypergraphs.** Gene regulatory networks; why a regulon is a *hyperedge*, not
    a clique. Build the Fleck incidence matrix; basic hypergraph operations in `hgx`. *(Refs: Davidson;
    Fleck et al. 2023; the §1.4 / §2.2 material.)*

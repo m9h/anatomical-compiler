@@ -159,8 +159,13 @@ A planned course (~6–8 lab sessions) walking students through the project: reg
 → fidelity benchmarking → modularity/identifiability → Hypergraph Neural ODEs → control theory on
 cellular dynamics (jaxctrl) → the anatomical compiler → synthetic morphology in the wet lab →
 (stretch) cancer as loss of module identifiability. See `notebooks/README.md` for the sequence.
-Seed material: `notebooks/organoid_hgx_colab.ipynb` + the three `jaxctrl/examples/*.ipynb/.py`.
+Run out of **Biopunk Lab** (the West Coast node of [HTGAA 2026a](https://2026a.htgaa.org)); supports
+two HTGAA modules incl. Week 7 (*Genetic Circuits II: Neuromorphic Circuits*, Ron Weiss). Upstream:
+Elowitz & Bois, *Biological Circuit Design* (biocircuits.github.io). Seed material:
+`notebooks/00b_gene_circuit_dynamics.ipynb`, `notebooks/01_regulomes_and_hypergraphs.ipynb`,
+`notebooks/organoid_hgx_colab.ipynb`, the three `jaxctrl/examples/*.{ipynb,py}`.
 
+- [x] Notebook 0.5 — gene-circuit dynamics in a nutshell (`notebooks/00b_gene_circuit_dynamics.ipynb`): Hill functions, negative autoregulation, the toggle switch & bistability (`jax.jacfwd`), the repressilator + linearize→LQR — the bridge from *Biological Circuit Design* into this course's toolchain
 - [x] Notebook 1 — regulomes and hypergraphs (`notebooks/01_regulomes_and_hypergraphs.ipynb`): the Fleck incidence; why a regulon is a hyperedge not a clique; `hgx` basics; the Laplacian spectrum; exercises
 - [ ] Notebook 2 — benchmarking fidelity (organoid → primary CRISPRi; cross-species)
 - [ ] Notebook 3 — modularity & identifiability (Hodge Laplacian; the Module Identifiability Index)
