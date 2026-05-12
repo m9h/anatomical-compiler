@@ -98,7 +98,12 @@ The point of the survey-plus-tool is the **programme it enables** (whitepaper §
 | (v) | **Bioelectric control layer** — perturb Vmem / gap-junctional coupling | shift in Identifiability Index & ODE driver set | bioelectric reprogramming |
 | (vi) | **Cancer-as-loss-of-module-identifiability assay** — primary → organoid → tumour organoid → cancer line | Index falls, driver set collapses, unicellular↔multicellular gene balance shifts | tissue-organization / atavism / attractor views, operationalised |
 
-A first transcriptome-only pass at the control layer ships now: `scripts/benchmark_network_control.py` uses `jaxctrl` on the Pando TF co-regulation graph to compute Kalman/structural controllability from the master-regulator set, per-TF control-leverage (single-input Gramians), and a steer-to-target (early→late pseudotime) energy + LQR law — and finds the regulome is steerable with broad actuation but *not* from the master regulators alone (the static co-regulation graph collapses most directions into a slow, weakly-actuated subspace; the master TFs are the privileged handles of the *nonlinear* flow, not the linearisation), which is exactly why the anatomical-compiler experiments above optimise on the Hypergraph Neural ODE. Output: `figures/network_control{,_results.json}` (read live by `paper.Rnw` §3). For the smallest possible worked example, see [`jaxctrl/examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py) — linearise a 3-gene oscillator → controllability → LQR → quench the nonlinear oscillation → `jax.grad` the cost w.r.t. the Hill coefficient.
+Two passes at the control layer ship now (`jaxctrl` is a `uv sync` dependency):
+
+- **Linear warm-up** — `scripts/benchmark_network_control.py`: `jaxctrl` on the Pando TF co-regulation graph — Kalman/structural controllability from the master-regulator set, per-TF control-leverage (single-input Gramians), a steer-to-target (early→late pseudotime) energy + LQR law. Finding: the regulome is steerable with *broad* actuation but **not** from the master regulators alone (the static graph collapses most directions into a slow, weakly-actuated subspace; the master TFs are the privileged handles of the *nonlinear* flow, not the linearisation) → so the real control problem is on the Hypergraph Neural ODE. Output: `figures/network_control{,_results.json}`.
+- **The anatomical compiler, end-to-end** — `scripts/benchmark_anatomical_compiler.py`: fit a Hypergraph Neural ODE to the kidney injury-repair timecourse, then — by direct shooting through that learned ODE (`diffrax` adjoints + Adam, `jaxctrl` LQR on a linear surrogate as warm-start) — compute the TF-actuation schedule that drives the early-injury state to the recovered state. The optimised schedule cuts the distance to the target on the actuated TFs by ~73%. *Learned tissue-dynamics model + target state → explicit intervention schedule, all differentiable* — the minimal proof of the loop. Output: `figures/anatomical_compiler{,_results.json}`.
+
+Both are read live by `paper.Rnw` §3. For the smallest standalone worked examples see jaxctrl's [`examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py) (quench a 3-gene oscillator), [`examples/irma_sindy_lqr.ipynb`](https://github.com/m9h/jaxctrl/blob/main/examples/irma_sindy_lqr.ipynb) (SINDy → LQR on an IRMA-topology GRN), and [`examples/grn_hypergraph_drivers.ipynb`](https://github.com/m9h/jaxctrl/blob/main/examples/grn_hypergraph_drivers.ipynb) (minimum driver TFs / control-energy on a GRN-as-hypergraph).
 
 The bioprinting lineage behind (i): **Feinberg lab** FRESH freeform collagen printing → **Shiwarski** open-source bioprinting hardware (CHIPS/VAPOR) → **Skylar-Scott lab** SWIFT & the $250 open-source PRINTESS → **model-guided synthetic vasculature** fed straight to the printer. (Citations in [`REFERENCES.md`](REFERENCES.md) / `paper.Rnw`.)
 
@@ -210,7 +215,8 @@ python scripts/benchmark_anthrobot_fidelity.py     # embodied self-assembly
 python scripts/benchmark_vorganoid_crosstalk.py    # vascularization / metabolic wall
 python scripts/benchmark_regenerative_flow.py      # kidney IRI Hypergraph Neural ODE
 python scripts/test_nitmb_modularity.py            # Module Identifiability Index
-python scripts/benchmark_network_control.py        # controllability / steer-to-target (jaxctrl — a `uv sync` dependency)
+python scripts/benchmark_network_control.py        # linear controllability / steer-to-target (jaxctrl — a `uv sync` dependency)
+python scripts/benchmark_anatomical_compiler.py    # nonlinear optimal control on the learned Hypergraph Neural ODE (the anatomical compiler)
 ```
 </details>
 
@@ -248,7 +254,8 @@ scripts/
   accuracy_ablation.py      ← LR/depth/hidden/dropout sweep × 4 tasks
   benchmark_*.py            ← synthetic-multicellularity tracks (Toda, Anthrobot, vOrganoid, regenerative flow, learning regulome, disease enrichment, bioprinting, ...)
   test_nitmb_modularity.py  ← Hodge-Laplacian Module Identifiability Index
-  benchmark_network_control.py ← network controllability + steer-to-target (jaxctrl; the anatomical-compiler layer)
+  benchmark_network_control.py     ← linear network controllability + steer-to-target (jaxctrl)
+  benchmark_anatomical_compiler.py ← nonlinear optimal control on the learned Hypergraph Neural ODE (the anatomical compiler)
 figures/
   *_results.json            ← per-dataset artifacts (consumed live by paper.Rnw)
   *.png                     ← per-track figures

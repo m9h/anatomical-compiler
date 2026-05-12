@@ -110,7 +110,8 @@ J <- list(
   anthro    = load_json(fig("anthrobot_results.json")),
   atlas     = load_json(fig("neocortex_atlas_results.json")),
   learn     = load_json(fig("learning_regulome_results.json")),
-  control   = load_json(fig("network_control_results.json"))
+  control   = load_json(fig("network_control_results.json")),
+  anacomp   = load_json(fig("anatomical_compiler_results.json"))
 )
 ## small accessors with literal fallbacks (so the prose still reads if a file is absent)
 g  <- function(x, default) if (is.null(x) || (length(x) == 1 && is.na(x))) default else x
@@ -705,6 +706,33 @@ if (is.null(nc) || isFALSE(nc$jaxctrl) || identical(nc$status, "jaxctrl_unavaila
 }
 @
 
+\subsection{Steering a learned regulome to a target: optimal control on the Hypergraph Neural ODE}\label{sec:results-anacomp}
+
+The nonlinear counterpart of the previous section, and the prototype of the anatomical compiler:
+fit a Hypergraph Neural ODE to the kidney injury-repair timecourse (\S\ref{sec:results-regen}),
+then --- treating that learned ODE as the plant --- compute, by direct shooting through the ODE
+(\texttt{diffrax} adjoints + Adam, with the \texttt{jaxctrl} LQR on a linear surrogate as the
+warm-start), the actuation schedule on the regenerative-driver TFs that drives the early-injury
+state to the recovered (Day-14) state.
+
+<<anatomical-compiler>>=
+ac <- J$anacomp
+if (is.null(ac)) ac <- load_json(fig("anatomical_compiler_results.json"))
+if (is.null(ac) || !identical(ac$status, "ok")) {
+  cat("\\noindent ", if (is.null(ac)) "" else "(\\texttt{benchmark\\_anatomical\\_compiler.py} did not complete --- needs hgx + diffrax + jaxctrl + a multi-timepoint h5ad.) ")
+  if (is.null(ac)) note_missing("anatomical-compiler optimal control")
+} else {
+  sc <- ac$surrogate_control; oc <- ac$optimal_control
+  tfs <- paste(oc$actuated_tfs, collapse=", ")
+  cat(sprintf("On the %d-TF kidney injury panel, the learned ODE's best-fit (regenerative-driver) TFs are \\{%s\\}; we actuate exactly these. A linear surrogate of the learned dynamics nearly interpolates the %s sampled timepoints (relative residual $%.2f$) but is dynamically unstable (max $\\mathrm{Re}\\,\\lambda \\approx %.0f$), so it serves only to warm-start the gain --- the controller is then optimised directly on the nonlinear Hypergraph Neural ODE (a %d-segment piecewise-constant input). The optimised schedule cuts the distance to the target state from %.2f (uncontrolled free rollout) to %.2f overall, and from %.2f to %.2f on the actuated TFs --- a %.0f\\%% reduction on the directly steerable subspace (Fig.~\\texttt{anatomical\\_compiler.png}).\n\n",
+              sc$n, tfs, length(ac$timepoints), sc$linear_surrogate_rel_residual, sc$max_re_eig_A,
+              oc$n_segments, oc$uncontrolled_final_err, oc$controlled_final_err,
+              oc$uncontrolled_final_err_actuated, oc$controlled_final_err_actuated,
+              100 * oc$error_reduction_frac_actuated))
+  cat("\\noindent This is, deliberately, a minimal proof of the loop: a learned tissue-dynamics model + a target state $\\rightarrow$ an explicit intervention schedule, all differentiable. The same loop with a richer plant (a larger regulome, more timepoints, mechanistically-constrained drift) and richer actuation (the bioprinting / optogenetic / dose handles of \\S\\ref{sec:concl-forward}) is the anatomical-compiler programme. (\\texttt{figures/anatomical\\_compiler\\_results.json}; \\texttt{scripts/benchmark\\_anatomical\\_compiler.py}.)")
+}
+@
+
 \subsection{Activity-dependent regulome (agency proxy)}\label{sec:results-learn}
 
 As a scRNA-seq proxy for activity-dependent plasticity (the Kagan DishBrain data being
@@ -814,10 +842,12 @@ configuration), find the actuation $u(t)$ --- print geometry, synNotch input, li
 microglia/vasculature dose, bioelectric set-point --- that drives $x_0 \to x_f$ with minimum
 cost, subject to what is physically actuatable. \texttt{jaxctrl}'s differentiable controllers
 (controllability Gramians, structural driver-node analysis, LQR, and MPC via \texttt{diffrax}
-adjoints) supply the solver; \S\ref{sec:methods-control}/\S\ref{sec:results-control} are the
-linear warm-up showing that the actuation must act on the nonlinear flow, not a linearisation.
-This is what Levin calls the \emph{anatomical compiler} \cite{pezzulo2016,levin2022tame}, and
-the experiments below are its first concrete targets. Concretely:
+adjoints) supply the solver; \S\ref{sec:results-control} is the linear warm-up (showing the
+actuation must act on the nonlinear flow, not a linearisation), and \S\ref{sec:results-anacomp}
+is the first end-to-end instance --- a learned regulome ODE plus a target state yielding an explicit
+TF-actuation schedule. This is what Levin calls the \emph{anatomical compiler}
+\cite{pezzulo2016,levin2022tame}, and the experiments below scale it up with richer plants and
+actuators. Concretely:
 
 \paragraph{(i) A 4D-bioprinting maturation assay with a model-in-the-loop.}
 The Gartner-style conformation sweep showed maturity scaling with print geometry; run a
