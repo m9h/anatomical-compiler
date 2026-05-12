@@ -95,25 +95,38 @@ tissue scale.
 This course is one node in a larger systems-/synthetic-biology computing ecosystem; students should
 know the rest of it.
 
-- **Model standards & repositories.** [**SBML**](https://sbml.org) is the lingua franca for
-  exchanging kinetic models, and [**BioModels**](https://biomodels.org) is the large, curated
-  repository of them — the shared library that the simulators below (and tools like COPASI,
-  Tellurium / libRoadRunner) read and write. Most of the small-circuit and signaling ODEs in
-  *Biological Circuit Design* (and the MAPK / p53–Mdm2 / NF-κB / cell-cycle models referenced in the
-  whitepaper's outlook) live there as SBML — pull one, import it into `diffrax`, and you have a Lab.
+- **Community standards & model repositories.** [**COMBINE**](https://co.mbine.org) is the umbrella
+  initiative; under it: [**SBML**](https://sbml.org) (the lingua franca for kinetic models), CellML,
+  SED-ML (simulation experiments), the COMBINE archive (bundle model + sim + results), MIRIAM
+  (annotation), and the multicellular extensions [**MultiCellML**](https://multicellml.org) and
+  **MorpheusML** (Morpheus's model format — its models are in BioModels too). The large curated
+  store is [**BioModels**](https://biomodels.org) — the shared library the simulators below (and
+  COPASI, Tellurium / libRoadRunner) read and write. Most of the small-circuit and signaling ODEs in
+  *Biological Circuit Design* (and the MAPK / p53–Mdm2 / NF-κB / cell-cycle models in the whitepaper's
+  outlook) live there as SBML — pull one, import it into `diffrax`, and you have a Lab.
 - **Cell-based ("virtual tissue") simulators** — the *spatial / mechanics / reaction–diffusion* side
-  this track deliberately does not cover: [**CompuCell3D**](https://compucell3d.org) (Cellular-Potts;
-  see its [Workshop series](https://compucell3d.org/Workshop26) and the
-  [nanoHub-hosted model library](https://compucell3d.org/Models-nanoHub) — the de-facto student
-  on-ramp), [**Morpheus**](https://morpheus.gitlab.io) (Cellular-Potts + reaction–diffusion, GUI,
-  SBML import), **PhysiCell** (3-D agent-based, tumor microenvironments), **Chaste** ("Cancer, Heart
-  and Soft Tissue Environment"). They simulate cells *moving, adhering, dividing, signaling in space*;
-  this track is the **regulome / control complement** (`hgx` hypergraph neural networks + `jaxctrl`
-  control on inferred genome-scale regulomes). A full virtual-tissue curriculum pairs them: CC3D /
-  Morpheus for the morphogenesis-and-mechanics labs, this track for "the regulatory program and how
-  to steer it" — and the whitepaper's forward programme (§4.3) is exactly where the two meet (a
-  bioprinting / synNotch / optogenetic actuation, a CC3D-style mechanical readout, an `hgx`/`jaxctrl`
-  regulatory readout, all in one model-in-the-loop design cycle).
+  this track deliberately does not cover. The community hub is [**OpenVT** (Open Virtual Tissue)](https://www.openvt.org)
+  — reproducibility/credibility standards for cell-based models, a curated
+  [framework-comparisons bibliography](https://www.openvt.org/pages/publications/framework-comparisons/publications-framework-comparisons-search-script-bib-json.html),
+  and the [2026 OpenVT × ECMTB/SMB workshop](https://www.openvt.org/pages/events/workshops/2026openvt-ecmtb-smb-workshop.html).
+  The simulators themselves: [**CompuCell3D**](https://compucell3d.org) (Cellular-Potts; its
+  [Workshop series](https://compucell3d.org/Workshop26) and [nanoHub-hosted model library](https://compucell3d.org/Models-nanoHub)
+  are the de-facto student on-ramp), [**Morpheus**](https://morpheus.gitlab.io) (Cellular-Potts +
+  reaction–diffusion, GUI, SBML/MorpheusML), **PhysiCell** (3-D agent-based, tumour microenvironments),
+  **Chaste** ("Cancer, Heart and Soft Tissue Environment"). They simulate cells *moving, adhering,
+  dividing, signalling in space*; this track is the **regulome / control complement** (`hgx`
+  hypergraph neural networks + `jaxctrl` control on inferred genome-scale regulomes), interoperating
+  with that world *via SBML* at the subcellular layer. A full virtual-tissue curriculum pairs them:
+  CC3D / Morpheus for the morphogenesis-and-mechanics labs, this track for "the regulatory program
+  and how to steer it" — and the whitepaper's forward programme (§4.3) is exactly where the two meet
+  (a bioprinting / synNotch / optogenetic actuation, a CC3D-style mechanical readout, an
+  `hgx`/`jaxctrl` regulatory readout, all in one model-in-the-loop design cycle).
+- **Bioelectric-layer simulators.** [**BETSE / BETSEE**](https://gitlab.com/betse/betse) (the
+  BioElectric Tissue Simulation Engine, Pietak & Levin) — finite-volume Vmem / gap-junction / ion-
+  channel dynamics over a cell cluster. This is where a "control the bioelectric layer" experiment
+  (§4.3(v) of the whitepaper) would actually be simulated; it is also a candidate for a serious
+  modernisation (a differentiable / JAX rewrite, the way `vpjax` modernises the hemodynamics in
+  `vbjax`) — a natural Biopunk-Lab project, and a good capstone for this course.
 
 > **A note on "identifiability."** This course uses the word in the *modular-structure* sense — the
 > Hodge-Laplacian **Module Identifiability Index** (Lab 3) asks whether a regulome *decomposes* into

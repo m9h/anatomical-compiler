@@ -215,16 +215,20 @@ adult human airway epithelial cells, given the right environment, self-construct
 motile multiciliated biobots with no genome editing or synthetic circuit at all
 \cite{gumuskaya2024}. Underneath several of these sits a putative \emph{control layer}:
 endogenous bioelectric networks that store patterning information above transcription and
-can be read and rewritten \cite{levin2014,levin2018bioelectriccode,pezzulo2016,levin2021bioelectric}. In silico, the
-same systems are simulated in cellular-Potts \cite{graner1992,compucell3d,morpheus2014},
-agent-based \cite{physicell2018,chaste2020}, and whole-cell \cite{karr2012} frameworks ---
-the substrate a synthetic-morphology design loop runs inside, exchanged through community
-standards and repositories (SBML \cite{hucka2003sbml}; the curated BioModels database
-\cite{malik2020biomodels}; the CompuCell3D \cite{compucell3d} and Morpheus \cite{morpheus2014}
-ecosystems, which also serve as the main student-facing on-ramps to cell-based tissue modelling).
-The framework presented here is the \emph{higher-order-network / control} complement to those
-cell-based simulators --- it operates on the inferred genome-scale regulome, not on a hand-built
-spatial circuit --- and the two meet in the model-in-the-loop design cycle of \S\ref{sec:concl-forward}.
+can be read and rewritten \cite{levin2014,levin2018bioelectriccode,pezzulo2016,levin2021bioelectric}
+--- and simulated, over a cell cluster, by finite-volume bioelectric solvers (BETSE/BETSEE
+\cite{pietak2016betse}). In silico, the same systems are simulated in cellular-Potts
+\cite{graner1992,compucell3d,morpheus2014}, agent-based \cite{physicell2018,chaste2020}, and
+whole-cell \cite{karr2012} frameworks --- the substrate a synthetic-morphology design loop runs
+inside, exchanged through the COMBINE family of community standards and repositories (SBML
+\cite{hucka2003sbml}; the curated BioModels database \cite{malik2020biomodels}; the multicellular
+markup languages MultiCellML/MorpheusML; and the Open Virtual Tissue community \cite{openvt2024}
+around CompuCell3D \cite{compucell3d}, Morpheus \cite{morpheus2014} and the rest, which also serve
+as the main student-facing on-ramps to cell-based tissue modelling). The framework presented here
+is the \emph{higher-order-network / control} complement to those cell-based simulators --- it
+operates on the inferred genome-scale regulome, not on a hand-built spatial circuit, interoperating
+via SBML at the subcellular layer --- and the two meet in the model-in-the-loop design cycle of
+\S\ref{sec:concl-forward}.
 
 \subsection{Regulomes: the developmental software made concrete}\label{sec:intro-regulome}
 
@@ -992,6 +996,7 @@ and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
 \bibitem{levin2018bioelectriccode} Levin M, Martyniuk CJ. The bioelectric code: an ancient computational medium for dynamic control of growth and form. \textit{Biosystems} 164:76--93, 2018. doi:10.1016/j.biosystems.2017.08.009
 \bibitem{pezzulo2016} Pezzulo G, Levin M. Top-down models in biology: explanation and control of complex living systems above the molecular level. \textit{J R Soc Interface} 13(124):20160555, 2016. doi:10.1098/rsif.2016.0555
 \bibitem{levin2021bioelectric} Levin M. Bioelectric signaling: Reprogrammable circuits underlying embryogenesis, regeneration, and cancer. \textit{Cell} 184(8):1971--1989, 2021. doi:10.1016/j.cell.2021.02.034
+\bibitem{pietak2016betse} Pietak A, Levin M. Exploring instructive physiological signaling with the bioelectric tissue simulation engine (BETSE). \textit{Front Bioeng Biotechnol} 4:55, 2016. doi:10.3389/fbioe.2016.00055. (Code: \url{https://gitlab.com/betse/betse}, \url{https://gitlab.com/betse/betsee}.)
 
 % --- Regulomes & gene regulatory network theory / inference ---
 \bibitem{garcia2020} Garcia HG, Berrocal A, Kim YJ, Martini G, Zhao J. Lighting up the central dogma for predictive developmental biology. \textit{Curr Top Dev Biol} 137:1--35, 2020. doi:10.1016/bs.ctdb.2019.10.010
@@ -1053,6 +1058,7 @@ and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
 \bibitem{chaste2020} Cooper FR, Baker RE, Bernabeu MO, et al. Chaste: Cancer, Heart and Soft Tissue Environment. \textit{J Open Source Softw} 5(47):1848, 2020. doi:10.21105/joss.01848
 \bibitem{hucka2003sbml} Hucka M, Finney A, Sauro HM, et al. The systems biology markup language (SBML): a medium for representation and exchange of biochemical network models. \textit{Bioinformatics} 19(4):524--531, 2003. doi:10.1093/bioinformatics/btg015
 \bibitem{malik2020biomodels} Malik-Sheriff RS, Glont M, Nguyen TVN, et al. BioModels --- 15 years of sharing computational models in life science. \textit{Nucleic Acids Res} 48(D1):D407--D415, 2020. doi:10.1093/nar/gkz1055
+\bibitem{openvt2024} Open Virtual Tissue (OpenVT) community. Reproducibility, credibility, and framework-comparison resources for cell-based virtual-tissue modelling. \url{https://www.openvt.org} (incl.\ the framework-comparisons bibliography and the 2026 OpenVT\,$\times$\,ECMTB/SMB workshop). See also COMBINE community standards, \url{https://co.mbine.org}.
 
 % --- Synthetic multicellularity: synthesis ---
 \bibitem{sole2016} Sol\'e R. Synthetic transitions: towards a new synthesis. \textit{Phil Trans R Soc B} 371(1701):20150438, 2016. doi:10.1098/rstb.2015.0438
