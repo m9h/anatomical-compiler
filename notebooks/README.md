@@ -102,6 +102,28 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   + `figures/{learning_regulome,regenerative_flow}_results.json`; synthetic toggle-switch fallback.
   Pipeline: `scripts/04_temporal_dynamics.py` (the `diffrax` + `hgx.LatentHypergraphODE` + SDE +
   Poincaré version), `scripts/benchmark_learning_regulome.py`, `scripts/benchmark_regenerative_flow.py`.
+- **`05_control_theory.ipynb`** — **Lab 5**: turns the regulome into a steerable plant $\dot x = Ax +
+  Bu$ (a linear TF co-regulation network on the top-200 Pando regulons) and runs the network-control
+  toolkit — implemented in pure JAX/SciPy so it runs without `jaxctrl`: the controllability matrix &
+  **Kalman rank**, the **controllability Gramian** (average vs modal controllability — Gu et al.
+  2015), **minimum-energy control**, **LQR** (Riccati), and the **minimum driver-node** count
+  (Liu–Slotine–Barabási matching). Headline (the *control* mirror of Lab 5.5's *observability*
+  result, by duality): **the curated master regulators don't control the network** — Kalman rank ≪
+  200 from the 7 key TFs (≈9 at float32 tol, ≈30 at float64 — reproduces the committed
+  `network_control_results.json` 9/200); **control leverage ≠ identity** — the highest-leverage
+  single TFs (FOXC2/PRDM6/FOXC1, reproduced exactly) are *not* the developmental masters (only EOMES
+  in the top 20); a single TF's modal controllability ≈ 0 (need a *set*); the early→late
+  steer-to-target costs $E^\star\approx586$ / LQR cost-to-go ≈ 101 with full actuation, effectively
+  uncontrollable from the masters alone (Gramian $\lambda_{\min}\approx0$). Notes structural ≠ exact
+  controllability (LSB's generic $N_D\approx1$ vs the real rank — our $A$ is a Laplacian, non-generic
+  weights). § on the three `jaxctrl` worked examples (`repressilator_control_demo.py`,
+  `irma_sindy_lqr.ipynb`, `grn_hypergraph_drivers.ipynb` — the nonlinear / SINDy-surrogate /
+  hypergraph-driver versions); exercises (linearise the Lab-4 ODE + control it; the SINDy/Koopman
+  surrogate route; the unreachable subspace vs Lab 3's diffuse modules & Lab 5.5's unobservable
+  directions; min-driver-nodes on the hypergraph; the control–robustness trade-off — Yan et al.
+  2017). Self-contained — reads `data/processed/{incidence,tf_names,gene_names,tf_gene_indices,
+  key_tf_indices,temporal_expression}.*` + `figures/network_control_results.json`; tiny synthetic
+  2-state fallback. Pipeline: `scripts/benchmark_network_control.py`; the `jaxctrl` example notebooks.
 - **`05b_structural_identifiability.ipynb`** — **Lab 5.5**: a `sympy` structural-identifiability
   check (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s
   linear `is_observable`/`observability_gramian`). Textbook sanity checks (one-pool ✓; Bellman &
@@ -253,8 +275,13 @@ know the rest of it.
    (the *flow*, not the parameters). *(`notebooks/04_hypergraph_neural_odes.ipynb`;
    `scripts/04_temporal_dynamics.py`, `scripts/benchmark_learning_regulome.py`,
    `scripts/benchmark_regenerative_flow.py`; Kauffman; Huang et al. 2009; §2.4 / §3 regenerative-flow.)*
-5. **Control theory on cellular dynamics (`jaxctrl`).** Identify a surrogate (SINDy/Koopman) →
-   controllability → LQR → driver nodes on a hypergraph. Use the three jaxctrl example notebooks.
+5. **Control theory on cellular dynamics (`jaxctrl`).** The regulome as a steerable plant
+   $\dot x=Ax+Bu$: controllability (Kalman rank — the masters don't control it, dual of Lab 5.5),
+   Gramians (average vs modal controllability), minimum-energy control, LQR, minimum driver nodes;
+   steer-to-target (the linear "anatomical compiler"); pointers to the three `jaxctrl` example
+   notebooks (SINDy surrogate, hypergraph drivers, repressilator quench).
+   *(`notebooks/05_control_theory.ipynb`; `scripts/benchmark_network_control.py`;
+   Liu–Slotine–Barabási 2011; Gu et al. 2015; Yan et al. 2017; Pezzulo & Levin 2016.)*
 5.5. **Is the model even identifiable?** A symbolic *structural* identifiability check in `sympy`
    (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s linear
    `is_observable`): before you fit a mechanistic model, can its parameters be recovered from what
