@@ -212,11 +212,26 @@ know the rest of it.
   (a bioprinting / synNotch / optogenetic actuation, a CC3D-style mechanical readout, an
   `hgx`/`jaxctrl` regulatory readout, all in one model-in-the-loop design cycle).
 - **Bioelectric-layer simulators.** [**BETSE / BETSEE**](https://gitlab.com/betse/betse) (the
-  BioElectric Tissue Simulation Engine, Pietak & Levin) — finite-volume Vmem / gap-junction / ion-
-  channel dynamics over a cell cluster. This is where a "control the bioelectric layer" experiment
-  (§4.3(v) of the whitepaper) would actually be simulated; it is also a candidate for a serious
-  modernisation (a differentiable / JAX rewrite, the way `vpjax` modernises the hemodynamics in
-  `vbjax`) — a natural Biopunk-Lab project, and a good capstone for this course.
+  BioElectric Tissue Simulation Engine, Pietak & Levin 2016/2017) — finite-volume Vmem / gap-junction
+  / ion-channel dynamics over a cell cluster. This is where a "control the bioelectric layer"
+  experiment (§4.3(v) of the whitepaper) is actually simulated, and a **differentiable / JAX refactor
+  of BETSE/BETSEE is now an active Biopunk-Lab project** (the way `vpjax` modernises `vbjax`'s
+  haemodynamics) — the bioelectric-layer companion to `hgx` (regulome) and `jaxctrl` (control). The
+  refactor's point is to follow the Levin Lab / Mafe-group post-2018 shift *from passive simulation
+  to agential design*: (i) **inverse bioelectric design** — define a target shape/behaviour and use
+  `jax.grad` to find the ion-channel conductances or gap-junction connectivity that reach it (the
+  xenobot move — Kriegman et al. 2020/2021 — done by gradient descent rather than evolution); (ii)
+  **bioelectric prepatterning** — a simulation that first establishes a Vmem gradient which then
+  *triggers* a secondary GRN or morphological change (Pietak & Levin 2017's Vmem↔transcription
+  coupling; Cervera/Levin/Mafe 2024–2026's "top-down" perspective); (iii) **morphoceutical
+  intervention timelines** — a drug-cocktail schedule (cf. BETSE's `physiology_2018` example) tuned
+  to a regenerating-limb ion-channel profile, driving macro-scale regrowth (Murugan et al. 2022;
+  Pio-Lopez & Levin 2023); (iv) **large-scale pattern integration** — information flow across a 2-D
+  mesh as the embryonic-brain bioelectric prepattern (Manicka, Pai & Levin 2023). Abstractly each of
+  these is, again, one optimal-control problem on a differentiable plant — the bioelectric set-point
+  added to the §4.3 actuator menu (print geometry · synNotch / synthetic morphogens · light/dose ·
+  **Vmem / gap-junction state**), now with a real solver behind it. Refs 39a–39e in `REFERENCES.md`;
+  the "manifesto" is Levin 2021 (Cell, ref 38).
 - **Cellular-engineering research programmes** — the *wet-lab* communities this computational track
   is in dialogue with. The [**Center for Cellular Construction (CCC)**](https://centerforcellularconstruction.org)
   — an NSF Science and Technology Center headquartered at UCSF with the California Academy of Sciences
@@ -303,8 +318,10 @@ know the rest of it.
    target tissue state, compute an actuation schedule (`diffrax` adjoints). *(§3 anatomical-compiler;
    `scripts/benchmark_anatomical_compiler.py`; Levin 2022.)*
 7. **Synthetic morphology in the wet lab.** Bioprinting (FRESH/SWIFT/PRINTESS), synthetic-morphogen
-   circuits, optogenetic morphogenesis, bioelectric control — the forward programme of §4.3, framed
-   as control problems with the model in the loop.
+   circuits (synNotch — Lim/Morsut), optogenetic morphogenesis, **bioelectric control** (the active
+   JAX/`diffrax` refactor of BETSE/BETSEE — inverse bioelectric design, Vmem↔GRN prepatterning,
+   morphoceutical timelines; refs 38, 39a–39e) — the forward programme of §4.3, framed as
+   control problems with the model in the loop.
 8. *(stretch)* **Cancer as loss of module identifiability.** Run the metrics down a
    primary → organoid → tumour-organoid → cancer-line gradient. *(Soto & Sonnenschein; Trigos et al.;
    §1.6 / §4.3(vi).)*
