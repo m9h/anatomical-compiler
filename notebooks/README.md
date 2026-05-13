@@ -136,6 +136,31 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   minimal output set; a COMBOS compartmental example; the SBI loss-valley). Distinguishes the
   *structural*, *practical*, and *module* senses of "identifiability". Self-contained. (One cell —
   the 6-unknown repressilator — takes ~2–3 min.)
+- **`06_anatomical_compiler.ipynb`** — **Lab 6** (the one Labs 1–5 build toward): Levin's **anatomical
+  compiler** — *target tissue state in → actuation schedule out* — assembled at the level of a learned
+  regulome surrogate. The four-stage stack: **plant** = a learned Neural ODE on the organoid timecourse
+  (Lab 4, reused — hand-rolled RK4 + `jax.grad`, no `diffrax`); **system-ID** = a linear surrogate
+  $\dot z\approx Az+c$ fit by least-squares on the rollout (the SINDy/Koopman slot) — which turns out
+  *unstable* (max Re $\lambda\!\approx\!+9$; the committed kidney-IRI run +31.8, `surrogate_reliable=false`):
+  a developmental trajectory linearised is a transient, not a stable plant — the *practical* face of
+  Lab 5.5, and why Lab 5 had to *choose* $A=-L_{\rm sym}$; **controller** = an LQR warm-start on the
+  clamped surrogate, then **direct optimal control on the *nonlinear* plant** — a piecewise-constant
+  $u(t)$ on a chosen actuator set, minimise $\lVert x(T)-x_{\rm target}\rVert^2 + \lambda\lVert u\rVert^2$,
+  Adam *through* the rollout; **validation** = re-integrate the learned ODE under $u^\star$. Demonstrated
+  as a **knockout-rescue** (in-silico knock down FOXG1 at $t_0$ → the free rollout drifts off → compute
+  the actuation that returns it to the wild-type endpoint): final-state error ↓ ~100% on the actuated
+  TFs, ↓ ~39% overall — "you steer what you actuate" (Lab 5's controllability gap, again; the committed
+  kidney-IRI run: ↓73% actuated, ↓21% all). § on what the compiler is/isn't (it's a *regulome state*,
+  not an anatomy — the regulome↔form gap, where the cell-based simulators and the bioelectric layer come
+  in; it's the *flow* you control, not $\theta$; the linear surrogate is a warm-start, not the controller;
+  the objective/constraints are modelling choices) + "the arc — Labs 1→6 in one line each"; exercises
+  (target a *fate basin* not a state vector — a toggle-switch fate-switch starter that crosses the
+  separatrix; a SINDy/Koopman surrogate; MPC vs open-loop; couple the bioelectric layer via BETSE-JAX's
+  `optimize_pattern`; actuator-set selection). Self-contained — reads `data/processed/{temporal_expression,
+  pseudotime_centers}.npy` + key-TF metadata + `figures/anatomical_compiler_results.json`; synthetic
+  toggle-switch fallback. Pipeline: `scripts/benchmark_anatomical_compiler.py` (the `hgx` + `diffrax`-adjoint
+  + `jaxctrl` production version) and `scripts/benchmark_network_control.py` (the linear warm-up, Lab 5);
+  the `jaxctrl` example notebooks; the bioelectric companion at `~/Workspace/betse-unified` (`betse.science.jax.inverse`).
 - **`organoid_hgx_colab.ipynb`** — "Lab 0 / the benchmark": the GPU/Colab notebook running `hgx`
   on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → figures → the
   5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark).
@@ -318,9 +343,12 @@ know the rest of it.
    distinguished from *module* identifiability (Lab 3) and *practical* identifiability (Lab 6).
    *(`notebooks/05b_structural_identifiability.ipynb`; Bellman & Åström 1970; DiStefano III / COMBOS;
    §2 of the whitepaper.)*
-6. **The anatomical compiler.** Optimal control on the *learned* Hypergraph Neural ODE: given a
-   target tissue state, compute an actuation schedule (`diffrax` adjoints). *(§3 anatomical-compiler;
-   `scripts/benchmark_anatomical_compiler.py`; Levin 2022.)*
+6. **The anatomical compiler.** The four-stage stack — learned plant (Lab 4) → linear surrogate /
+   system-ID (Lab 5/5.5; it's *unstable* — a warm-start, not the controller) → LQR warm-start →
+   **direct optimal control on the nonlinear plant** ($u(t)$ minimising state-error + control-cost,
+   gradient through the ODE solve) → closed-loop validation. Demonstrated as a knockout-rescue ("you
+   steer what you actuate"); + "the arc, Labs 1→6". *(`notebooks/06_anatomical_compiler.ipynb`;
+   `scripts/benchmark_anatomical_compiler.py`; Pezzulo & Levin 2016; Levin 2022; `jaxctrl`.)*
 7. **Synthetic morphology in the wet lab.** Bioprinting (FRESH/SWIFT/PRINTESS), synthetic-morphogen
    circuits (synNotch — Lim/Morsut), optogenetic morphogenesis, **bioelectric control** (the active
    JAX/`diffrax` refactor of BETSE/BETSEE — inverse bioelectric design, Vmem↔GRN prepatterning,
