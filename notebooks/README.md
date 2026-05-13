@@ -79,6 +79,29 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   `data/processed/`, `figures/{kidney_modularity,nitmb_modularity}*.json`; synthetic "blocky"
   fallback. Pipeline: `scripts/benchmark_kidney_modularity.py`, `scripts/test_nitmb_modularity.py`,
   `scripts/06_topology.py`.
+- **`04_hypergraph_neural_odes.ipynb`** — **Lab 4**: a cell type is a *stable state of the dynamics
+  the regulome runs* (Kauffman / Huang — attractors = cell types; Waddington's landscape made
+  literal). Fits a **Neural ODE** ($\dot x = f_\theta(x)$, $f_\theta$ a small MLP — a hand-rolled
+  RK4 + `jax.grad` + `optax`, so no `diffrax` needed) on the organoid pseudotime timecourse in ~0.4 s;
+  uses **per-gene rollout MSE** as a functional classifier — **stable structural drivers** (on the
+  slow, identity-defining manifold — low MSE; the fate TFs cluster there) vs **transient stress
+  responders** (off-manifold spikes — high MSE; the IEGs Fos/Jun/Egr1 in systems that have them) —
+  with the committed kidney-IRI fit (`regenerative_flow_results.json`: Lhx1/Cdh1/Pax8 ≈ 0.05–0.11 vs
+  Fos 4.4, Jun 1.5, Cd44 0.93, Atf3 0.80) and the activity-induced IEG timecourse
+  (`learning_regulome_results.json`: peak-at-1 h) as the clean illustrations; the **Waddington
+  picture** via a bistable toggle-switch demo (two basins, a separatrix, a "knockout" that crosses it
+  → switched fate) + the organoid data's own version (`fate_probabilities.npy` along pseudotime;
+  `perturbation_fates.npy` — FOXG1 and DLX2 are the biggest single-TF "landscape tilts"); ties to
+  Lab 3 (modules dissolve ⇒ driver set shrinks) and Lab 2 (well-fit drivers ⇒ transferable KO
+  directions) and forward to Lab 5/6 (control on the *learned* flow); what a Hypergraph Neural ODE is
+  and isn't (it's the *flow*, not the parameters — deliberately structurally non-identifiable;
+  the "hypergraph" is a weight-sharing *prior*, `hgx.LatentHypergraphODE`); exercises (ODE→SDE +
+  CellRank fate entropy; Poincaré/hyperbolic latent space + Gromov δ; finer time T∈{20,50}; the hgx
+  regulon-structured field; close the loop with `jaxctrl`). Self-contained — reads
+  `data/processed/{temporal_expression,pseudotime_centers,fate_probabilities,perturbation_fates}.npy`
+  + `figures/{learning_regulome,regenerative_flow}_results.json`; synthetic toggle-switch fallback.
+  Pipeline: `scripts/04_temporal_dynamics.py` (the `diffrax` + `hgx.LatentHypergraphODE` + SDE +
+  Poincaré version), `scripts/benchmark_learning_regulome.py`, `scripts/benchmark_regenerative_flow.py`.
 - **`05b_structural_identifiability.ipynb`** — **Lab 5.5**: a `sympy` structural-identifiability
   check (the Taylor-series / observability-rank test — the symbolic generalisation of `jaxctrl`'s
   linear `is_observable`/`observability_gramian`). Textbook sanity checks (one-pool ✓; Bellman &
@@ -223,9 +246,13 @@ know the rest of it.
    pseudotime; what module identifiability is *not* (≠ structural/practical ID, ≠ fidelity).
    *(`notebooks/03_modularity_identifiability.ipynb`; `scripts/benchmark_kidney_modularity.py`,
    `scripts/test_nitmb_modularity.py`, `scripts/06_topology.py`; Hartwell 1999; NITMB framing; §2.3 / §3.x.)*
-4. **Dynamics: Hypergraph Neural ODEs.** Fit a latent ODE on a timecourse; separate stable
-   structural drivers from transient stress responders; the attractor view of cell identity.
-   *(Kauffman; Huang et al. 2009; §2.4 / §3 regenerative-flow.)*
+4. **Dynamics: Hypergraph Neural ODEs.** Fit a Neural ODE on the pseudotime timecourse (bare-metal
+   RK4 + `jax.grad` + `optax`); per-gene rollout MSE as a classifier — stable structural drivers vs
+   transient stress responders; the Waddington/attractor view (a toggle-switch bistability demo +
+   `fate_probabilities.npy` / `perturbation_fates.npy`); what a Hypergraph Neural ODE is and isn't
+   (the *flow*, not the parameters). *(`notebooks/04_hypergraph_neural_odes.ipynb`;
+   `scripts/04_temporal_dynamics.py`, `scripts/benchmark_learning_regulome.py`,
+   `scripts/benchmark_regenerative_flow.py`; Kauffman; Huang et al. 2009; §2.4 / §3 regenerative-flow.)*
 5. **Control theory on cellular dynamics (`jaxctrl`).** Identify a surrogate (SINDy/Koopman) →
    controllability → LQR → driver nodes on a hypergraph. Use the three jaxctrl example notebooks.
 5.5. **Is the model even identifiable?** A symbolic *structural* identifiability check in `sympy`
