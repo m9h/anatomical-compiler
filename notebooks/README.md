@@ -161,6 +161,26 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   toggle-switch fallback. Pipeline: `scripts/benchmark_anatomical_compiler.py` (the `hgx` + `diffrax`-adjoint
   + `jaxctrl` production version) and `scripts/benchmark_network_control.py` (the linear warm-up, Lab 5);
   the `jaxctrl` example notebooks; the bioelectric companion at `~/Workspace/betse-unified` (`betse.science.jax.inverse`).
+- **`07_synthetic_morphology_wetlab.ipynb`** — **Lab 7** *(stretch)*: the §4.3 wet-lab forward
+  programme, reframed so **every modality is one optimal-control problem on the Hypergraph Neural ODE**
+  (Lab 6) — what changes is the actuator $B$ and the readout layer: *programmed* (synNotch / synthetic
+  morphogens — Morsut 2016, Toda 2018/2020; Lim Lab; readout = the committed `toda_results.json`
+  projection), *printed* (conformation / 4-D bioprinting — Feinberg/Lewis/Skylar-Scott/Gartner; readout
+  = `gartner_results.json` man/r0/r40 → lineage maturity, and `system_maturity_results.json`),
+  *bioelectric* ($V_{\rm mem}$ prepattern — Levin/Mafe; the active BETSE-JAX refactor, `optimize_pattern`),
+  *agential* (xenobots/anthrobots — Levin/Bongard; Gumuskaya 2024; readout = `anthrobot_results.json`).
+  Demonstrates the control side with one shared bistable plant (the Lab-0.5/4/6 toggle, used four ways
+  — a synNotch input that flips the fate; a static "print-geometry" parameter that biases which
+  attractor it self-organises into; a toy $V_{\rm mem}$→GRN two-layer steer; a minimal-sender-fraction
+  synNotch-circuit starter) and the readout side with the committed benchmark panels; the
+  **model-in-the-loop design cycle** (design → simulate → optimise → build → read out → refine; the
+  whitepaper §4.3) and what's real (the readouts) vs aspirational (closing the loop; the regulome↔form
+  gap). Exercises (end-to-end synNotch circuit design + minimal sender fraction; multi-dim print
+  geometry → target lineage mixture; the full two-layer bioelectric→GRN compiler via BETSE-JAX; a
+  cross-system "readiness" score from the fidelity triple + MII + driver stability; the closed loop on
+  a real dataset). Self-contained — reads `figures/{toda,gartner,anthrobot,advanced_fidelity,
+  system_maturity}_results.json`; synthetic fallbacks. Pipeline: `scripts/benchmark_{toda_morphogenesis,
+  gartner_4d,anthrobot_fidelity,advanced_fidelity,system_maturity}.py`; `~/Workspace/betse-unified`.
 - **`organoid_hgx_colab.ipynb`** — "Lab 0 / the benchmark": the GPU/Colab notebook running `hgx`
   on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → figures → the
   5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark).
@@ -349,11 +369,15 @@ know the rest of it.
    gradient through the ODE solve) → closed-loop validation. Demonstrated as a knockout-rescue ("you
    steer what you actuate"); + "the arc, Labs 1→6". *(`notebooks/06_anatomical_compiler.ipynb`;
    `scripts/benchmark_anatomical_compiler.py`; Pezzulo & Levin 2016; Levin 2022; `jaxctrl`.)*
-7. **Synthetic morphology in the wet lab.** Bioprinting (FRESH/SWIFT/PRINTESS), synthetic-morphogen
-   circuits (synNotch — Lim/Morsut), optogenetic morphogenesis, **bioelectric control** (the active
-   JAX/`diffrax` refactor of BETSE/BETSEE — inverse bioelectric design, Vmem↔GRN prepatterning,
-   morphoceutical timelines; refs 38, 39a–39e) — the forward programme of §4.3, framed as
-   control problems with the model in the loop.
+7. *(stretch)* **Synthetic morphology in the wet lab.** The §4.3 forward programme — *programmed*
+   (synNotch / synthetic morphogens — Lim/Morsut/Toda), *printed* (conformation / 4-D bioprinting —
+   Feinberg/Lewis/Skylar-Scott/Gartner), *bioelectric* ($V_{\rm mem}$ prepattern — Levin/Mafe; the
+   active BETSE-JAX refactor — inverse bioelectric design, $V_{\rm mem}$↔GRN prepatterning,
+   morphoceutical timelines; refs 38, 39a–39e), *agential* (xenobots/anthrobots) — each reframed as
+   *one optimal-control problem on the Hypergraph Neural ODE*, differing only in the actuator $B$ and
+   the readout layer; the model-in-the-loop design cycle. *(`notebooks/07_synthetic_morphology_wetlab.ipynb`;
+   `scripts/benchmark_{toda_morphogenesis,gartner_4d,anthrobot_fidelity,...}.py`; `~/Workspace/betse-unified`;
+   Davies 2008; Solé et al. 2024.)*
 8. *(stretch)* **Cancer as loss of module identifiability.** Run the metrics down a
    primary → organoid → tumour-organoid → cancer-line gradient. *(Soto & Sonnenschein; Trigos et al.;
    §1.6 / §4.3(vi).)*
