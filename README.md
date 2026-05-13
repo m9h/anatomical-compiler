@@ -233,7 +233,7 @@ tectonic publication/paper.tex          # → publication/paper.pdf
 <details>
 <summary><b>Google Colab</b></summary>
 
-Open [`notebooks/organoid_hgx_colab.ipynb`](https://colab.research.google.com/github/m9h/anatomical-compiler/blob/master/notebooks/organoid_hgx_colab.ipynb) with an A100 runtime.
+Open [`scripts/organoid_hgx_colab.ipynb`](https://colab.research.google.com/github/m9h/anatomical-compiler/blob/master/scripts/organoid_hgx_colab.ipynb) with an A100 runtime.
 </details>
 
 ---

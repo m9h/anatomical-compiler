@@ -181,7 +181,7 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   morphogens — Morsut 2016, Toda 2018/2020; Lim Lab; readout = the committed `toda_results.json`
   projection), *printed* (conformation / 4-D bioprinting — Feinberg/Lewis/Skylar-Scott/Gartner; readout
   = `gartner_results.json` man/r0/r40 → lineage maturity, and `system_maturity_results.json`),
-  *bioelectric* ($V_{\rm mem}$ prepattern — Levin/Mafe; the active BETSE-JAX refactor, `optimize_pattern`),
+  *bioelectric* ($V_{\rm mem}$ prepattern — Levin/Mafe; the BETSE-JAX refactor, `optimize_pattern`),
   *agential* (xenobots/anthrobots — Levin/Bongard; Gumuskaya 2024; readout = `anthrobot_results.json`).
   Demonstrates the control side with one shared bistable plant (the Lab-1/4/6 toggle, used four ways
   — a synNotch input that flips the fate; a static "print-geometry" parameter that biases which
@@ -221,9 +221,7 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   synthetic fallbacks. Pipeline: `scripts/{benchmark_kidney_modularity,test_nitmb_modularity,
   benchmark_disease_enrichment,benchmark_tf_disease,benchmark_tang_bioprinting,validate_choose}.py`;
   `~/Workspace/betse-unified`.
-- **`organoid_hgx_colab.ipynb`** — *the GPU benchmark* (unnumbered, optional): the Colab notebook running `hgx`
-  on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → figures → the
-  5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark).
+*(Not a course lab — a reproduction/benchmark artifact, living in `scripts/`:* **`scripts/organoid_hgx_colab.ipynb`** *— the GPU/Colab notebook that runs `hgx` on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → the 7 publication figures → the 5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark). The labs reference it where they touch the real pipeline; it's the "run the whole thing once on a GPU" companion to `scripts/run_all_real.py`.)*
 
 Companion worked examples live in the **`jaxctrl`** repo (the control-theory layer):
 [`examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py)
@@ -304,30 +302,30 @@ know the rest of it.
   (a bioprinting / synNotch / optogenetic actuation, a CC3D-style mechanical readout, an
   `hgx`/`jaxctrl` regulatory readout, all in one model-in-the-loop design cycle).
 - **Bioelectric-layer simulators.** [**BETSE / BETSEE**](https://gitlab.com/betse/betse) (the
-  BioElectric Tissue Simulation Engine, Pietak & Levin 2016/2017) — finite-volume Vmem / gap-junction
-  / ion-channel dynamics over a cell cluster. This is where a "control the bioelectric layer"
-  experiment (§4.3(v) of the whitepaper) is actually simulated, and a **differentiable / JAX refactor
-  of BETSE/BETSEE is now an active Biopunk-Lab project** (the way `vpjax` modernises `vbjax`'s
-  haemodynamics) — the bioelectric-layer companion to `hgx` (regulome) and `jaxctrl` (control). The
-  refactor's point is to follow the Levin Lab / Mafe-group post-2018 shift *from passive simulation
-  to agential design*: (i) **inverse bioelectric design** — define a target shape/behaviour and use
-  `jax.grad` to find the ion-channel conductances or gap-junction connectivity that reach it (the
-  xenobot move — Kriegman et al. 2020/2021 — done by gradient descent rather than evolution).
-  *Prototype done & verified* (`betse.science.jax.inverse.optimize_pattern`): a 10-cell benchmark
-  discovers the transmembrane-current profile that drives resting tissue to an alternating
-  ±depolarisation pattern, loss 9e-4 → ~1.4e-10 (`BETSE_JAX=1 pytest …/test_jax_inverse.py`) — the
-  bioelectric "anatomical compiler" in miniature. Next: (ii)
-  **bioelectric prepatterning** — a simulation that first establishes a Vmem gradient which then
-  *triggers* a secondary GRN or morphological change (Pietak & Levin 2017's Vmem↔transcription
-  coupling; Cervera/Levin/Mafe 2024–2026's "top-down" perspective); (iii) **morphoceutical
-  intervention timelines** — a drug-cocktail schedule (cf. BETSE's `physiology_2018` example) tuned
-  to a regenerating-limb ion-channel profile, driving macro-scale regrowth (Murugan et al. 2022;
-  Pio-Lopez & Levin 2023); (iv) **large-scale pattern integration** — information flow across a 2-D
-  mesh as the embryonic-brain bioelectric prepattern (Manicka, Pai & Levin 2023). Abstractly each of
-  these is, again, one optimal-control problem on a differentiable plant — the bioelectric set-point
-  added to the §4.3 actuator menu (print geometry · synNotch / synthetic morphogens · light/dose ·
-  **Vmem / gap-junction state**), now with a real solver behind it. Refs 39a–39e in `REFERENCES.md`;
-  the "manifesto" is Levin 2021 (Cell, ref 38).
+  BioElectric Tissue Simulation Engine, Pietak & Levin 2016/2017) — finite-volume Vmem / gap-junction /
+  ion-channel dynamics over a cell cluster. The **differentiable JAX/`diffrax` refactor of BETSE/BETSEE
+  is done** (`betse.science.jax.*` at `~/Workspace/betse-unified`; the way `vpjax` modernises `vbjax`'s
+  haemodynamics) — the bioelectric-layer companion to `hgx` (regulome) and `jaxctrl` (control), built to
+  follow the Levin Lab / Mafe-group post-2018 shift *from passive simulation to agential / top-down
+  anatomical control*. All four "bridge" examples are implemented & verified (test files in parens):
+  **(i) inverse bioelectric design** (`betse.science.jax.inverse.optimize_pattern`; `test_jax_inverse.py`)
+  — target Vmem pattern in → required ion currents out; a 10-cell benchmark drives resting tissue to an
+  alternating ±depolarisation pattern, loss 9e-4 → ~1.4e-10 — the bioelectric "anatomical compiler" in
+  miniature; **(ii) xenobot motility** (`betse.science.jax.physics.motility`; `test_jax_xenobot.py`) —
+  bioelectric force → movement; the Kriegman et al. 2020/2021 design move done by `jax.grad` on the
+  cell-collective's force/motility goals rather than by an evolutionary search; **(iii) Vmem→GRN triggering**
+  (`betse.science.jax.physics.grn_trigger`; `test_jax_grn.py`) — a bioelectric prepattern biasing a
+  secondary transcriptional program (Pietak & Levin 2017; Cervera/Levin/Mafe 2024–2026 "top-down" Vmem↔transcription);
+  **(iv) morphoceutical intervention timelines** (`betse.science.jax.physics.intervention`; `test_jax_morphoceutical.py`)
+  — temporal drug schedules driving macro-scale regrowth (Murugan et al. 2022; Pio-Lopez & Levin 2023) —
+  plus large-scale pattern integration (100 cells, 1000 steps < 0.1 s), a whole-step JIT-fused `step_pure`
+  solver (~2.2 µs/step for 50 cells via `lax.scan`), a GPU-accelerated Poisson solver, and 100% test
+  coverage on the JAX modules (`docs/JAX_REFAC.md`). Abstractly each bridge is one optimal-control problem
+  on a differentiable plant — the bioelectric set-point added to the §4.3 actuator menu (print geometry ·
+  synNotch / synthetic morphogens · light/dose · **Vmem / gap-junction state**), now with a real
+  differentiable solver behind it. The course's hooks: Lab 8's exercise (d) (the two-layer bioelectric→GRN
+  compiler), Lab 9 §4 (bioelectric control) and §5 (biobots), Lab 10 §4 (the "normalise, don't kill"
+  reframing — morphoceuticals). Refs 39a–39e in `REFERENCES.md`; the "manifesto" is Levin 2021 (Cell, ref 38).
 - **Cellular-engineering research programmes** — the *wet-lab* communities this computational track
   is in dialogue with. The [**Center for Cellular Construction (CCC)**](https://centerforcellularconstruction.org)
   — an NSF Science and Technology Center headquartered at UCSF with the California Academy of Sciences
@@ -385,7 +383,7 @@ know the rest of it.
    fidelity *triple* (in-domain r / transfer direction / transfer r); regulon-screen overlap; direction-
    vs-magnitude transfer (raw signs ~60% vs a trained predictor ~83%; magnitude r ~0.13); per-cell-type
    disaggregation; what fidelity is *not*; cross-species conservation. *(`notebooks/03_benchmarking_fidelity.ipynb`;
-   builds on `organoid_hgx_colab.ipynb`; Pollen/Ding 2026; `scripts/compare_pollen.py`,
+   builds on `scripts/organoid_hgx_colab.ipynb`; Pollen/Ding 2026; `scripts/compare_pollen.py`,
    `scripts/benchmark_advanced_fidelity.py`; §3.1-3.3.)*
 4. **Modularity and identifiability.** The Hodge Laplacian (L0/L1) of the regulon hypergraph; the
    spectral gap -> the Module Identifiability Index (the project heuristic + a normalised relative eigengap);
@@ -419,7 +417,7 @@ know the rest of it.
    Pezzulo & Levin 2016; Levin 2022; `jaxctrl`.)*
 9. *(stretch)* **Synthetic morphology in the wet lab.** The §4.3 forward programme — *programmed* (synNotch
    / synthetic morphogens — Lim/Morsut/Toda), *printed* (conformation / 4-D bioprinting — Feinberg/Lewis/
-   Skylar-Scott/Gartner), *bioelectric* (V_mem prepattern — Levin/Mafe; the active BETSE-JAX refactor —
+   Skylar-Scott/Gartner), *bioelectric* (V_mem prepattern — Levin/Mafe; the BETSE-JAX refactor —
    inverse bioelectric design, V_mem<->GRN prepatterning, morphoceutical timelines; refs 38, 39a-39e),
    *agential* (xenobots/anthrobots) — each reframed as *one optimal-control problem on the Hypergraph Neural
    ODE*, differing only in the actuator B and the readout layer; the model-in-the-loop design cycle.
