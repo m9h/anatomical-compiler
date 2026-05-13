@@ -34,6 +34,20 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
 
 ## What's here now
 
+- **`00_orientation.ipynb`** — **Lab 0** (start here): the **map** (the arc 0 → 0.5 → 1 → … → 8, one
+  line each, with per-lab deps), the **prerequisites** (Python/numpy; **JAX — the differentiable-
+  programming mindset, the load-bearing one**; linear algebra / the graph Laplacian; ODEs & dynamical
+  systems / attractors; light mol-dev bio; Elowitz & Bois' *Biological Circuit Design* — with Lab 0.5
+  as the bridge — and HTGAA Weeks 6–7 for the wet-lab-circuits context), an **env check** (required:
+  `numpy`/`matplotlib`/`jax`/`scipy`; recommended/per-lab: `equinox`/`diffrax`/`optax`/`hgx`/`sympy`,
+  optional: `jaxctrl`/`scanpy` — soft-imported, the labs reimplement what they need), the **data
+  substrate** (loads the Fleck organoid regulome, or a synthetic fallback), **four toolchain hello-
+  worlds** (`jax.grad` incl. *through a loop*; the hypergraph / clique-expansion blow-up; a
+  differentiable ODE — RK4 + `jax.grad` through it; a 2-state plant — Kalman controllability + LQR via
+  `scipy.linalg.solve_continuous_are`), the **dependency map** + the **three "identifiabilities"**
+  disambiguation (module / structural / practical — and fidelity), and a starter exercise ("break one
+  hello-world on purpose; then go to Lab 0.5 or Lab 1"; + an optional pointer into the BETSE-JAX
+  companion at `~/Workspace/betse-unified`). Self-contained; runs in seconds.
 - **`00b_gene_circuit_dynamics.ipynb`** — **Lab 0.5** (the bridge from *Biological Circuit Design*):
   Hill functions, negative autoregulation (response-time), the toggle switch & bistability (via
   `jax.jacfwd`), the repressilator + the "linearize then LQR-control it" move — all in this course's
@@ -224,6 +238,13 @@ landscape, `HypergraphControlSystem` + LQR — "which TFs must I perturb to cont
 
 ## Recommended background — and how this differs from "Biological Circuit Design"
 
+*(The full, runnable version of this section — prerequisites, the env check, the toolchain hello-
+worlds, the dependency map — is **[Lab 0](00_orientation.ipynb)**. The short of it: you need Python +
+numpy/matplotlib, **JAX** (the differentiable-programming mindset — the one that really matters),
+linear algebra (the graph Laplacian), and ODEs / dynamical systems (attractors, linear stability);
+you do **not** need prior `hgx` / `jaxctrl` / `diffrax` / `sympy`. The gene-circuit-dynamics
+foundations are below.)*
+
 If you want the *dynamical-systems-of-gene-circuits* foundations this course leans on but does not
 re-derive — Hill kinetics and cooperativity, autoregulation, the toggle switch and bistability,
 feed-forward loops, the **repressilator**, ultrasensitivity, exact adaptation, stochastic gene
@@ -347,6 +368,11 @@ know the rest of it.
 
 ## Planned sequence (a 6–8 session course)
 
+0. **Orientation** — the map, the toolchain, the env check. Prerequisites; a runnable check of the
+   stack (`numpy`/`matplotlib`/`jax`/`scipy` required; `hgx`/`equinox`/`diffrax`/`optax`/`sympy`
+   recommended; `jaxctrl` optional); four hello-worlds (`jax.grad` incl. through a loop; the
+   hypergraph / clique-expansion blow-up; a differentiable ODE; a 2-state controllability + LQR);
+   the dependency map; the three "identifiabilities" disambiguation. *(`notebooks/00_orientation.ipynb`.)*
 0.5. **Gene-circuit dynamics in a nutshell** *(bridge from* Biological Circuit Design*)*. Hill
    functions; negative autoregulation and response time; the toggle switch & bistability; the
    repressilator and linear stability — restated in this course's toolchain (`diffrax`,
