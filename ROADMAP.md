@@ -1,6 +1,6 @@
 # Roadmap
 
-*Tracks **as-built** status (what's done / in progress) across the project. For the **forward survey** of computational approaches the project hasn't yet covered but should — foundation-model perturbation prediction, causal inference, active learning, differentiable Cellular Potts, etc. — see [`docs/computational-roadmap.md`](docs/computational-roadmap.md).*
+*Tracks **as-built** status (what's done / in progress) across the project. For the **forward survey** of computational approaches the project hasn't yet covered but should — foundation-model perturbation prediction, causal inference, active learning, differentiable Cellular Potts, etc. — see [`docs/computational-roadmap.md`](docs/computational-roadmap.md). Companion planning docs: [`docs/foundation-models.md`](docs/foundation-models.md) (UCSF/Stanford/Berkeley/Toronto catalogue + pipeline), [`docs/differentiable-cp.md`](docs/differentiable-cp.md) (cpjax sister-repo plan), [`docs/wetlab-program.md`](docs/wetlab-program.md) (Biopunk closed-loop cycles).*
 
 ## Phase 1: Validation (COMPLETE)
 
