@@ -1,0 +1,130 @@
+{
+  "config": {
+    "n_tfs": 30,
+    "n_genes": 200,
+    "n_cells": 50,
+    "edges_per_tf": 15,
+    "noise": 5.0,
+    "fpr": 0.05,
+    "fnr": 0.55,
+    "n_seeds": 5
+  },
+  "baseline_prior_rho": 0.5642269187986653,
+  "summary": [
+    {
+      "budget": 2,
+      "random_mean": 0.5748164627363737,
+      "random_std": 0.0796967778671437,
+      "greedy_mean": 0.5718798665183538,
+      "greedy_std": 0.09254060042673887,
+      "eig_magnitude_mean": 0.5884315906562847,
+      "eig_magnitude_std": 0.08195188504464897,
+      "eig_rank_mean": 0.6287430478309233,
+      "eig_rank_std": 0.06650702839961248
+    },
+    {
+      "budget": 5,
+      "random_mean": 0.640222469410456,
+      "random_std": 0.07477546037091919,
+      "greedy_mean": 0.6164627363737486,
+      "greedy_std": 0.07423361208236404,
+      "eig_magnitude_mean": 0.6292769744160178,
+      "eig_magnitude_std": 0.07602357554810864,
+      "eig_rank_mean": 0.6991323692992213,
+      "eig_rank_std": 0.07048954416581217
+    },
+    {
+      "budget": 8,
+      "random_mean": 0.6569521690767519,
+      "random_std": 0.09441010466481464,
+      "greedy_mean": 0.6486763070077866,
+      "greedy_std": 0.05762024728932213,
+      "eig_magnitude_mean": 0.6644271412680757,
+      "eig_magnitude_std": 0.07306616193875419,
+      "eig_rank_mean": 0.7283203559510567,
+      "eig_rank_std": 0.07490772009024423
+    },
+    {
+      "budget": 11,
+      "random_mean": 0.634349276974416,
+      "random_std": 0.0769110697571198,
+      "greedy_mean": 0.705539488320356,
+      "greedy_std": 0.09050952450578481,
+      "eig_magnitude_mean": 0.6988654060066739,
+      "eig_magnitude_std": 0.0737457875397301,
+      "eig_rank_mean": 0.7737931034482759,
+      "eig_rank_std": 0.07425313092193925
+    },
+    {
+      "budget": 14,
+      "random_mean": 0.7579532814238042,
+      "random_std": 0.03591403285251541,
+      "greedy_mean": 0.7535928809788655,
+      "greedy_std": 0.08702775860233472,
+      "eig_magnitude_mean": 0.722536151279199,
+      "eig_magnitude_std": 0.06229245192241471,
+      "eig_rank_mean": 0.7964849833147942,
+      "eig_rank_std": 0.05637611899149271
+    },
+    {
+      "budget": 17,
+      "random_mean": 0.7632035595105673,
+      "random_std": 0.056646426264072104,
+      "greedy_mean": 0.8011123470522804,
+      "greedy_std": 0.05505459449847727,
+      "eig_magnitude_mean": 0.7617797552836485,
+      "eig_magnitude_std": 0.05681267678000983,
+      "eig_rank_mean": 0.8298553948832035,
+      "eig_rank_std": 0.03455957570983629
+    },
+    {
+      "budget": 20,
+      "random_mean": 0.7964849833147942,
+      "random_std": 0.07372065633916652,
+      "greedy_mean": 0.851123470522803,
+      "greedy_std": 0.04944837950486066,
+      "eig_magnitude_mean": 0.8214905450500556,
+      "eig_magnitude_std": 0.043067136019553746,
+      "eig_rank_mean": 0.8634037819799778,
+      "eig_rank_std": 0.04153832162634372
+    },
+    {
+      "budget": 23,
+      "random_mean": 0.9183982202447163,
+      "random_std": 0.02584569912627064,
+      "greedy_mean": 0.9137708565072302,
+      "greedy_std": 0.036786943290187765,
+      "eig_magnitude_mean": 0.8532591768631812,
+      "eig_magnitude_std": 0.020310665236325725,
+      "eig_rank_mean": 0.9278309232480535,
+      "eig_rank_std": 0.023074099983732412
+    },
+    {
+      "budget": 26,
+      "random_mean": 0.9219577308120135,
+      "random_std": 0.048578354447641914,
+      "greedy_mean": 0.9250723025583982,
+      "greedy_std": 0.04214639385315074,
+      "eig_magnitude_mean": 0.9117241379310345,
+      "eig_magnitude_std": 0.017330010091693854,
+      "eig_rank_mean": 0.9733926585094549,
+      "eig_rank_std": 0.010583185760048757
+    },
+    {
+      "budget": 29,
+      "random_mean": 0.9585317018909899,
+      "random_std": 0.012988556024396105,
+      "greedy_mean": 0.9943937708565074,
+      "greedy_std": 0.007616645669065414,
+      "eig_magnitude_mean": 0.9999110122358175,
+      "eig_magnitude_std": 0.00017797552836484878,
+      "eig_rank_mean": 0.9889655172413793,
+      "eig_rank_std": 0.013070603260213648
+    }
+  ],
+  "median_budget": 17,
+  "headline_lift_best_eig_vs_random": 0.06665183537263619,
+  "headline_lift_best_eig_vs_greedy": 0.028743047830923074,
+  "best_eig_at_median": 0.8298553948832035,
+  "best_eig_strategy_at_median": "eig_rank"
+}

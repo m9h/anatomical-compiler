@@ -2,7 +2,7 @@
 
 *Setup notes for running [`scripts/fm_embed.py`](../scripts/fm_embed.py), [`scripts/fm_edges_seq.py`](../scripts/fm_edges_seq.py), and [`scripts/ablate_edge_priors.py`](../scripts/ablate_edge_priors.py) in **real mode** on the Biopunk DGX Spark (128 GB GPU). Written 2026-05-13.*
 
-The driver: [`scripts/run_fm_real_dgx.sh`](../scripts/run_fm_real_dgx.sh). One command runs all three node-feature models (UCE, Geneformer, scGPT) plus all three edge-prior models (motif, Evo, Borzoi) plus the ablation, sequentially, with per-step logs.
+The driver: [`scripts/run_fm_real_dgx.sh`](../scripts/run_fm_real_dgx.sh). One command runs all three node-feature models (UCE, Geneformer, scGPT) plus all three edge-prior models (motif, Evo, Borzoi) plus scGPT in-silico KD plus the two ablations (edge priors + perturbation EIG), sequentially, with per-step logs.
 
 ---
 
@@ -85,6 +85,7 @@ The driver takes three files on the command line:
 | `<h5ad>` | a single-cell expression matrix | `scanpy.read_h5ad` compatible; the project's Pollen brain-organoid h5ad fits, or any Biopunk wet-lab capstone output |
 | `<edges.csv>` | candidate regulome edges | `tf,target` columns; produced by Pando's output table, or by `scripts/02_pando_import.py` |
 | `<promoters.fa>` | FASTA of promoter sequences, keyed by gene symbol | `bedtools getfasta` on a ±2 kb window around each gene's TSS in your reference (hg38 / mm10) |
+| `<tfs.txt>` *(optional)* | one TF symbol per line, the candidates for step 4 | typically the unique TFs in `edges.csv` first column; `awk -F, 'NR>1 {print $1}' edges.csv \| sort -u > tfs.txt` |
 
 Promoter extraction one-liner (assumes hg38 + GENCODE GTF):
 
@@ -176,6 +177,8 @@ The honest test the project's been waiting on. Pick a target benchmark and re-ru
 | [Lab 3](../notebooks/03_benchmarking_fidelity.ipynb) fidelity-triple transfer-r ≈ 0.13 | use Geneformer + scGPT priors on the perturbation predictor | transfer-r on Pollen-test set |
 | [Lab 4](../notebooks/04_modularity_identifiability.ipynb) MII gap | rebuild the regulome graph with sequence-edge priors blended in | MII separation between organoid / blueprint / bioprinted |
 | [Lab 6](../notebooks/06_control_theory.ipynb) high-leverage TFs | combine scGPT in-silico KD prior with the controllability ranking | agreement on top-10 TFs across methods |
-| [`scripts/ablate_edge_priors.py`](../scripts/ablate_edge_priors.py) (now) | swap stub for real motif/Evo/Borzoi | F1 lift over Pando alone on the real Fleck edges |
+| [`scripts/ablate_edge_priors.py`](../scripts/ablate_edge_priors.py) | swap stub for real motif/Evo/Borzoi | F1 lift over Pando alone on the real Fleck edges |
+| [`scripts/ablate_perturb_eig.py`](../scripts/ablate_perturb_eig.py) | swap stub for real scGPT KD on a real perturbation dataset | Spearman ρ recovery vs known perturbation responses (e.g. CHOOSE / Replogle perturb-seq) |
+| [`docs/wetlab-program.md`](wetlab-program.md) capstone cycle | use the EIG-rank ranking from step 4 to pick the synNotch / KO cycle TFs | resolved ranking vs the wet-lab readout |
 
-These are the **measurements** that will answer "do FMs make a difference on the *project's* numbers" with real evidence — the stub-mode results in [`notebooks/11_foundation_model_pipeline.ipynb`](../notebooks/11_foundation_model_pipeline.ipynb) and [`figures/edge_prior_ablation.md`](../figures/edge_prior_ablation.md) are floors and sensitivities, not predictions.
+These are the **measurements** that will answer "do FMs make a difference on the *project's* numbers" with real evidence — the stub-mode results in [`notebooks/11_foundation_model_pipeline.ipynb`](../notebooks/11_foundation_model_pipeline.ipynb), [`figures/edge_prior_ablation.md`](../figures/edge_prior_ablation.md), and [`figures/perturb_eig_ablation.md`](../figures/perturb_eig_ablation.md) are floors / sensitivities, not predictions for the real benchmarks.

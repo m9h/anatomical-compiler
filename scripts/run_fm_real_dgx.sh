@@ -29,10 +29,11 @@
 
 set -euo pipefail
 
-H5AD="${1:?usage: run_fm_real_dgx.sh <h5ad> <edges.csv> <promoters.fa> [OUT_DIR]}"
+H5AD="${1:?usage: run_fm_real_dgx.sh <h5ad> <edges.csv> <promoters.fa> [TFS.txt] [OUT_DIR]}"
 EDGES="${2:?missing edges.csv}"
 PROMOTERS="${3:?missing promoters.fa}"
-OUT="${4:-cache/dgx_real_$(date +%Y%m%d-%H%M%S)}"
+TFS="${4:-}"  # optional; if absent, scGPT step is skipped
+OUT="${5:-cache/dgx_real_$(date +%Y%m%d-%H%M%S)}"
 
 mkdir -p "$OUT/logs"
 echo "fm-real-dgx: H5AD=$H5AD"
@@ -69,9 +70,19 @@ for model in motif evo borzoi; do
         --output "$OUT" --mode real
 done
 
-# Step 3b — ablation on whatever the run produced
-run_step "ablation" python3 "$PROJECT_ROOT/scripts/ablate_edge_priors.py" \
-    --output "$OUT/ablation"
+# Step 3b — edge-prior ablation
+run_step "ablation_edges" python3 "$PROJECT_ROOT/scripts/ablate_edge_priors.py" \
+    --output "$OUT/ablation_edges"
+
+# Step 4 — scGPT in-silico KD perturbation prior (if TFS provided)
+if [[ -n "$TFS" ]]; then
+    run_step "perturb_scgpt" python3 "$PROJECT_ROOT/scripts/fm_perturb_scgpt.py" \
+        --input "$H5AD" --tfs "$TFS" --output "$OUT" --mode real
+    run_step "ablation_perturb_eig" python3 "$PROJECT_ROOT/scripts/ablate_perturb_eig.py" \
+        --output "$OUT/ablation_perturb_eig"
+else
+    echo "skipping step 4 (no TFs file passed)"
+fi
 
 # Summary
 echo "── summary ──────────────────────────────────────"
