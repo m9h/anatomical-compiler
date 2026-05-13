@@ -890,6 +890,35 @@ transcription, the Identifiability Index and the ODE driver set should shift pre
 This is the cleanest available test of whether ``agential materials'' can be steered at the
 tissue level with a non-genetic knob.
 
+The \emph{computational} half of this experiment is now in hand. A differentiable
+JAX/\texttt{diffrax} refactor of BETSE/BETSEE \cite{pietak2016betse,pietak2017grn}, the
+bioelectric-layer companion to \hgx\ and \texttt{jaxctrl}, has been brought from
+\emph{passive} simulator to \emph{agential / top-down anatomical control} along the lines of
+\cite{levin2021bioelectric}: it implements and verifies the four bridge primitives this
+programme requires.
+(a) \textbf{Inverse bioelectric design.} The finite-volume $V_{\rm mem}$-/gap-junction-/ion-channel
+solver is now JIT-compatible and \texttt{jax.grad}-end-to-end; \texttt{optimize\_pattern}
+descends a per-cell ion-current profile to a target $V_{\rm mem}$ pattern, driving a 10-cell
+benchmark from rest to an alternating $\pm$depolarisation pattern with MSE $\to{\sim}10^{-10}$
+--- the bioelectric instance of the anatomical compiler (target pattern in $\to$ required
+inputs out).
+(b) \textbf{Xenobot motility.} Bioelectric force $\to$ collective movement, with the goals
+that an evolutionary algorithm produced in the original xenobot pipeline \cite{kriegman2020}
+now obtained by gradient descent on the same loss --- and three orders of magnitude faster
+per evaluation.
+(c) \textbf{$V_{\rm mem} \to$ GRN triggering.} The Pietak \& Levin coupling \cite{pietak2017grn}
+that puts the prepattern on the same differentiable stack as the regulome ODE: the bioelectric
+set-point biases the transcriptional layer's drift, and a single \texttt{jax.grad} backpropagates
+through both --- ``target fate in $\to$ bioelectric prescription out'' becomes one call.
+(d) \textbf{Morphoceutical intervention timelines} \cite{murugan2022,piolopez2023}: temporal
+drug schedules driving macro-scale regrowth, optimised through the same plant. Performance:
+100 cells $\times$ 1000 steps in $<0.1$\,s, whole-step JIT-fused stepping at ${\sim}2.2\,\mu$s
+per step for 50 cells. The bioelectric set-point thus joins the actuator menu of the
+anatomical compiler --- print geometry, synNotch input, light schedule, drug schedule,
+$V_{\rm mem}$/gap-junction state --- on the same footing, awaiting the matched wet-lab readout
+(organoid- or printed-construct-scale optogenetic / ionophore / pharmacological perturbations
+of bioelectric state) the experiment above proposes.
+
 \paragraph{(vi) A cancer-as-loss-of-module-identifiability assay.}
 Finally, the inverse experiment: take a graded series from primary tissue $\rightarrow$
 organoid $\rightarrow$ tumour organoid $\rightarrow$ established cancer line, and show that
@@ -915,9 +944,39 @@ Benchmark code, preprocessing pipelines, and per-dataset result files:
 \url{https://github.com/m9h/anatomical-compiler}. Organoid GRN: Zenodo
 \href{https://doi.org/10.5281/zenodo.5242913}{10.5281/zenodo.5242913}. Neocortex Atlas:
 NeMO Analytics (\url{https://nemoanalytics.org/landing/neocortex/}); SJD
-(\url{https://github.com/CHuanSite/SJD}); projectR (Bioconductor). A Colab notebook
-reproduces the core analyses (A100 runtime). NITMB: National Institute for Theory and
-Mathematics in Biology (Northwestern University \& University of Chicago).
+(\url{https://github.com/CHuanSite/SJD}); projectR (Bioconductor). The end-to-end pipeline
+on a GPU runtime is \texttt{scripts/organoid\_hgx\_colab.ipynb} (preprocessing $\to$ the seven
+publication figures $\to$ the five biological-validation checks $\to$ the \hgx-vs-DHG
+benchmark). NITMB: National Institute for Theory and Mathematics in Biology (Northwestern
+University \& University of Chicago).
+
+\paragraph{Educational track.}
+An accompanying notebook course (\texttt{notebooks/}) walks through the methods end-to-end for
+self-paced or classroom use: \textbf{Setup} (the map, the toolchain, an environment check, the
+three-senses-of-identifiability disambiguation) plus \textbf{Labs~1--10} --- gene-circuit
+dynamics (the bridge from Elowitz \& Bois' \emph{Biological Circuit Design}); regulomes \&
+hypergraphs; benchmarking fidelity (\S\ref{sec:results-fidelity}); modularity \& the Module
+Identifiability Index (\S\ref{sec:methods-mii}, \S\ref{sec:results-nitmb}); Hypergraph Neural
+ODEs (\S\ref{sec:results-regen}); control theory (\texttt{jaxctrl},
+\S\ref{sec:methods-control}, \S\ref{sec:results-control}); structural identifiability (the
+symbolic pre-condition --- Bellman--{\AA}str{\"o}m / DiStefano III \cite{bellman1970,distefano2014});
+the anatomical compiler (\S\ref{sec:results-anacomp}); the synthetic-morphology wet-lab
+programme (\S\ref{sec:concl-forward}); and cancer as loss of module identifiability
+(\S\ref{sec:concl-forward}(vi)). Each notebook is self-contained, reads the committed result
+JSONs and processed data, and falls back to a tiny synthetic example so every cell runs.
+
+\paragraph{Bioelectric-layer companion.}
+The differentiable JAX/\texttt{diffrax} refactor of BETSE/BETSEE (\S\ref{sec:concl-forward}(v))
+is the bioelectric companion to \hgx\ and \texttt{jaxctrl}; modules
+\texttt{betse.science.jax.\{inverse, physics.motility, physics.grn\_trigger, physics.intervention,
+physics.conc\_update, physics.gj\_update, solver.stepper\}}, with verified tests
+\texttt{test\_jax\_\{inverse, xenobot, grn, morphoceutical, conc, gj, integration, performance\}.py}
+and 100\% test coverage on the JAX modules. A whole-step JIT-fused \texttt{step\_pure}
+($\sim 2.2\,\mu$s/step for 50 cells via \texttt{lax.scan}) and a GPU-accelerated Poisson solver
+make the inverse-design loop sub-second on commodity hardware. Lab~8 \S6(d) of the educational
+track above ships a small self-contained two-layer (bioelectric $\to$ GRN) compiler that
+soft-imports \texttt{betse} and runs a faithful miniature of the pipeline if the package is
+absent.
 This manuscript is a knitr/Sweave document (\texttt{publication/paper.Rnw}); result tables
 and inline values are pulled live from \texttt{figures/*\_results.json} (Python/JAX analyses)
 and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
@@ -997,6 +1056,9 @@ and \texttt{data/cropseq/*.csv} (R/Seurat differential expression).
 \bibitem{pezzulo2016} Pezzulo G, Levin M. Top-down models in biology: explanation and control of complex living systems above the molecular level. \textit{J R Soc Interface} 13(124):20160555, 2016. doi:10.1098/rsif.2016.0555
 \bibitem{levin2021bioelectric} Levin M. Bioelectric signaling: Reprogrammable circuits underlying embryogenesis, regeneration, and cancer. \textit{Cell} 184(8):1971--1989, 2021. doi:10.1016/j.cell.2021.02.034
 \bibitem{pietak2016betse} Pietak A, Levin M. Exploring instructive physiological signaling with the bioelectric tissue simulation engine (BETSE). \textit{Front Bioeng Biotechnol} 4:55, 2016. doi:10.3389/fbioe.2016.00055. (Code: \url{https://gitlab.com/betse/betse}, \url{https://gitlab.com/betse/betsee}.)
+\bibitem{pietak2017grn} Pietak A, Levin M. Bioelectric gene and reaction networks: computational modelling of genetic, biochemical and bioelectrical dynamics in pattern regulation. \textit{J R Soc Interface} 14(134):20170425, 2017. doi:10.1098/rsif.2017.0425. ($V_{\rm mem} \leftrightarrow$ transcription coupling; the prototype of the ``$V_{\rm mem} \to$ GRN trigger'' actuator of \S\ref{sec:concl-forward}(v).)
+\bibitem{murugan2022} Murugan NJ, Vigran HJ, Miller KA, Golding A, Pham QL, Sperry MM, Rasmussen-Ivey C, Kane AW, Kaplan DL, Levin M. Acute multidrug delivery via a wearable bioreactor facilitates long-term limb regeneration and functional recovery in adult \textit{Xenopus laevis}. \textit{Sci Adv} 8(4):eabj2164, 2022. doi:10.1126/sciadv.abj2164. (``Morphoceutical'' intervention; the wet-lab template for the intervention-timeline bridge example.)
+\bibitem{piolopez2023} Pio-Lopez L, Levin M. Morphoceuticals: perspectives for discovery of drugs targeting anatomical control mechanisms in regenerative medicine, cancer and aging. \textit{Drug Discov Today} 28(6):103585, 2023. doi:10.1016/j.drudis.2023.103585.
 
 % --- Regulomes & gene regulatory network theory / inference ---
 \bibitem{garcia2020} Garcia HG, Berrocal A, Kim YJ, Martini G, Zhao J. Lighting up the central dogma for predictive developmental biology. \textit{Curr Top Dev Biol} 137:1--35, 2020. doi:10.1016/bs.ctdb.2019.10.010
