@@ -1,0 +1,38 @@
+{
+  "rows": [
+    {
+      "label": "Bioprinted Kidney (Lawlor 2021)",
+      "mii_baseline": 0.31123417615890503,
+      "mii_rmt": 0.343026727437973,
+      "dMII": 0.03179255127906799,
+      "fiedler_baseline": 7.916358470916748,
+      "fiedler_rmt": 7.915576934814453,
+      "rmt_n_signal": 37,
+      "rmt_sigma2": 0.09325798600912094
+    },
+    {
+      "label": "Brain Organoid (Fleck 2023 RNA)",
+      "mii_baseline": 0.3690308630466461,
+      "mii_rmt": 0.3522690534591675,
+      "dMII": -0.016761809587478638,
+      "fiedler_baseline": 9.818202018737793,
+      "fiedler_rmt": 5.0696563720703125,
+      "rmt_n_signal": 31,
+      "rmt_sigma2": 0.07037679105997086
+    },
+    {
+      "label": "Fetal Kidney (Ref)",
+      "mii_baseline": 0.22870269417762756,
+      "mii_rmt": 0.26437848806381226,
+      "dMII": 0.03567579388618469,
+      "fiedler_baseline": 9.764777183532715,
+      "fiedler_rmt": 9.661524772644043,
+      "rmt_n_signal": 57,
+      "rmt_sigma2": 0.13647566735744476
+    }
+  ],
+  "args": {
+    "n_cells": 1000,
+    "n_hvg": 100
+  }
+}
