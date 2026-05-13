@@ -1,5 +1,7 @@
 # Roadmap
 
+*Tracks **as-built** status (what's done / in progress) across the project. For the **forward survey** of computational approaches the project hasn't yet covered but should — foundation-model perturbation prediction, causal inference, active learning, differentiable Cellular Potts, etc. — see [`docs/computational-roadmap.md`](docs/computational-roadmap.md).*
+
 ## Phase 1: Validation (COMPLETE)
 
 ### 1A: Standard Benchmark Suite
