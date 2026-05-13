@@ -228,9 +228,19 @@ know the rest of it.
   that the whitepaper's §4 uses for "print geometry → lineage maturity". The natural complement: CCC /
   Gartner provide the *constructible substrate* and the assembly handles (DPAC, conformation control,
   4D matrices), this track provides the *regulatory readout and the controller* (`hgx` / `jaxctrl` on
-  the inferred regulome) — together, the §4.3 model-in-the-loop design cycle. (See also the Levin Lab
-  for the bioelectric layer, and the Lewis / Feinberg / Skylar-Scott labs for the bioprinting handles —
-  refs in `REFERENCES.md`.)
+  the inferred regulome) — together, the §4.3 model-in-the-loop design cycle. The
+  [**Lim Lab**](https://limlab.ucsf.edu) (UCSF — also part of UCSF's cell-design ecosystem) is the
+  **synNotch / synthetic-development / therapeutic-cell-engineering** node: customisable synthetic
+  receptors (Morsut 2016), self-organising multicellular structures and synthetic morphogens (Toda
+  2018/2020 — the Toda 2020 dataset is already a benchmark here, `scripts/benchmark_toda_morphogenesis.py`,
+  the whitepaper's §4.3 "hybrid programmed-plus-printed tissues"), AND-gate / combinatorial CAR-T
+  (Roybal 2016 — the cancer-immunotherapy angle, §1.6 / §4.3(vi)), and a "common molecular algorithms /
+  harnessing cellular modularity" framing that is the synthetic-biology sibling of this project's
+  modularity & Module-Identifiability-Index theme (Lab 3). So the actuator menu is concrete: print
+  geometry (Gartner/Feinberg/Lewis), synNotch / synthetic morphogens (Lim/Morsut), bioelectric
+  set-points (Levin), light/dose schedules (optogenetics) — and each is "one optimal-control problem on
+  the Hypergraph Neural ODE" (Lab 6). (See also the Levin Lab for the bioelectric layer, and the Lewis /
+  Feinberg / Skylar-Scott labs for the bioprinting handles — refs in `REFERENCES.md`.)
 
 > **A note on "identifiability."** This course uses the word in the *modular-structure* sense — the
 > Hodge-Laplacian **Module Identifiability Index** (Lab 3) asks whether a regulome *decomposes* into

@@ -171,8 +171,11 @@ virtual-tissue platforms (the *spatial/mechanics* side this track does not cover
 (morpheus.gitlab.io), PhysiCell, Chaste — Cellular-Potts / agent-based; this track is the *regulome
 / control* complement (`hgx`/`jaxctrl`). Cellular-engineering programmes on the *wet-lab* side:
 the **Center for Cellular Construction** (centerforcellularconstruction.org — NSF STC at UCSF + Cal
-Academy; Marshall/Gartner) and the **Gartner Lab** (gartnerlab.ucsf.edu — tissue self-organisation /
-DPAC; already a benchmark here: the conformation-controlled kidney data, `scripts/benchmark_gartner_4d.py`).
+Academy; Marshall/Gartner), the **Gartner Lab** (gartnerlab.ucsf.edu — tissue self-organisation /
+DPAC; already a benchmark: the conformation-controlled kidney data, `scripts/benchmark_gartner_4d.py`),
+and the **Lim Lab** (limlab.ucsf.edu — synNotch / synthetic development / therapeutic-cell engineering;
+Morsut 2016, Toda 2018/2020 — the Toda 2020 synNotch dataset is a benchmark, `benchmark_toda_morphogenesis.py`;
+its "harnessing cellular modularity" framing ↔ the Module Identifiability Index, Lab 3).
 Model standards/repositories the whole ecosystem shares:
 **SBML** (sbml.org) + **BioModels** (biomodels.org) — pull a curated SBML model, import it into
 `diffrax`, and you have a Lab. (Distinct thread — *structural* identifiability of model parameters:
