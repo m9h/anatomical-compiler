@@ -6,6 +6,8 @@ The labs already cover: static regulome topology ([Lab 4](../notebooks/04_modula
 
 The families below are the major *missing* ones. They aren't a critique of what's there — most are downstream of work already done.
 
+> **Update (2026-05-13) — wet-lab availability re-ranks this list.** Biopunk Lab now has wet-lab capacity to execute experiments from these simulations (see [`docs/wetlab-program.md`](wetlab-program.md)). That moves **§2 (active learning / Bayesian experimental design)** from "useful enrichment" to **urgent** — it's the math needed to decide which experiment to run next under a finite wet-lab budget. **§1 (foundation models + causal inference)** stays highest-leverage on the *prediction* side; the CRISPRi-style wet-lab arm is also natively interventional, ideal for the causal-discovery methods listed there. **§3 (differentiable Cellular Potts)** is **deferred** — model-side richer-plant work without an immediate wet-lab validation pathway; revisit once the loop is producing data. **§4 (information theory)** and **§7 (generative perturbation models — CellOT, flow-matching)** become newly relevant because the wet-lab arm needs channel-capacity specs (synNotch) and prior distributions for prediction (perturbation responses).
+
 ---
 
 ## 1 — Foundation models + causal inference for perturbation prediction *(highest leverage)*
