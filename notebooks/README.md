@@ -181,6 +181,32 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   a real dataset). Self-contained — reads `figures/{toda,gartner,anthrobot,advanced_fidelity,
   system_maturity}_results.json`; synthetic fallbacks. Pipeline: `scripts/benchmark_{toda_morphogenesis,
   gartner_4d,anthrobot_fidelity,advanced_fidelity,system_maturity}.py`; `~/Workspace/betse-unified`.
+- **`08_cancer_module_identifiability.ipynb`** — **Lab 8** *(stretch, final)*: the course's metrics
+  turned **diagnostic**. The TOFT / atavistic register of cancer (Soto & Sonnenschein; Trigos *et al.*;
+  Levin 2021 — alongside, not instead of, the mutational view): **cancer ⇒ the regulome's module
+  identifiability falls** (the Fiedler-region gap dissolves) and, dynamically, **the homeostatic
+  driver set comes loose while the transient/proliferative programs become persistent** — the
+  regeneration arrow of [Lab 4] reversed ("the wound that doesn't heal"; the atavistic stress/
+  proliferation machinery freed from multicellular constraint). Reuses Lab 3's MII machinery
+  (`mii_heuristic`, `relative_eigengap`) on the one real comparison we have (Lab 3's organoid >
+  blueprint > bioprinted trio — small differences, the metric is coarse) + a clearly-labelled
+  schematic of the spectral signature (clear-cliff → soft-cliff → ramp; the `relative_eigengap` tracks
+  it and ranks the cartoon in the predicted order, the coarse `mii_heuristic` doesn't — Lab 3's caveat
+  live) + the dynamical face (the committed kidney-IRI driver split, and a toy "cancer flip" of it) +
+  the **constructive flip** — the [anatomical compiler] reframing therapy as *steer the cell back into
+  a high-MII, differentiated attractor* ("normalise, don't (just) kill" — differentiation therapy;
+  the bioelectric instance, repolarisation / the BETSE-JAX `optimize_pattern`; the pharmacological
+  one, "morphoceuticals" — Pio-Lopez & Levin 2023) + the **diagnostic flip** (the readout that
+  certifies an engineered tissue, run in reverse, flags a diseased one — Davies's "know when you
+  have"). Exercises (run the *real* primary→organoid→tumour-organoid→cancer-line gradient — the
+  headline open question; which Hanahan–Weinberg hallmark predicts the MII drop; the bioelectric angle
+  — $V_{\rm mem}$ vs MII; the **normalisation control problem** — a working two-attractor "differentiated
+  ⇄ tumour" toggle + the dose to revert it, with Lab 6's machinery; atavism, spectrally — the
+  unreachable subspace vs the unicellular-ancestral gene set). Self-contained — reads
+  `figures/{kidney_modularity_results,nitmb_modularity_report,regenerative_flow_results}.json`;
+  synthetic fallbacks. Pipeline: `scripts/{benchmark_kidney_modularity,test_nitmb_modularity,
+  benchmark_disease_enrichment,benchmark_tf_disease,benchmark_tang_bioprinting,validate_choose}.py`;
+  `~/Workspace/betse-unified`.
 - **`organoid_hgx_colab.ipynb`** — "Lab 0 / the benchmark": the GPU/Colab notebook running `hgx`
   on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → figures → the
   5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark).
@@ -378,9 +404,14 @@ know the rest of it.
    the readout layer; the model-in-the-loop design cycle. *(`notebooks/07_synthetic_morphology_wetlab.ipynb`;
    `scripts/benchmark_{toda_morphogenesis,gartner_4d,anthrobot_fidelity,...}.py`; `~/Workspace/betse-unified`;
    Davies 2008; Solé et al. 2024.)*
-8. *(stretch)* **Cancer as loss of module identifiability.** Run the metrics down a
-   primary → organoid → tumour-organoid → cancer-line gradient. *(Soto & Sonnenschein; Trigos et al.;
-   §1.6 / §4.3(vi).)*
+8. *(stretch, final)* **Cancer as loss of module identifiability.** The TOFT / atavistic register —
+   cancer ⇒ the MII falls (the Fiedler-region gap dissolves) + the homeostatic driver set comes loose
+   (the regeneration arrow of Lab 4 reversed); the anatomical compiler (Lab 6) as the "normalise, don't
+   (just) kill" reframing; the diagnostic flip ("know when you have"). A schematic of the spectral
+   signature + the real cross-system comparison + a working "differentiated ⇄ tumour" normalisation
+   demo. *(`notebooks/08_cancer_module_identifiability.ipynb`; `scripts/{benchmark_kidney_modularity,
+   test_nitmb_modularity,benchmark_disease_enrichment,benchmark_tf_disease}.py`; `~/Workspace/betse-unified`;
+   Soto & Sonnenschein; Trigos et al.; Levin 2021; Pio-Lopez & Levin 2023; §1.6 / §4.3(vi).)*
 
 ## Contributing a notebook
 
