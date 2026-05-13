@@ -159,7 +159,7 @@ scoring activates automatically on DGX Spark.
   - [x] **bioelectric→GRN triggering** — `betse.science.jax.physics.grn_trigger` (Vmem → transcriptional bias); `test_jax_grn.py`. The §4.3(v) prepattern actuator (Pietak & Levin 2017; Cervera/Levin/Mafe 2024–2026).
   - [x] **morphoceutical intervention timelines** — `betse.science.jax.physics.intervention` (temporal drug schedules); `test_jax_morphoceutical.py`. Macro-scale regrowth from a drug-cocktail schedule (Murugan 2022; Pio-Lopez & Levin 2023).
   - [x] **large-scale pattern integration** — 100 cells, 1000 steps < 0.1 s (`test_jax_integration.py`, `test_jax_performance.py`).
-  - [ ] couple BETSE-JAX into a model-in-the-loop notebook exercise (the two-layer bioelectric→GRN compiler — currently the hook in Lab 8 ex (d) / Lab 9 ex (c)); a `notebooks/`-side worked example.
+  - [x] model-in-the-loop notebook worked example: Lab 8 §6(d) ships a self-contained two-layer bioelectric→GRN compiler — a tiny N-cell V_mem cluster, inverse-design of the injected currents via jax.grad (the optimize_pattern move at miniature fidelity), a V_mem→GRN-bias coupling (the grn_trigger move), the toggle regulome plant, and a sweep over the bioelectric set-point that crosses the regulome separatrix — soft-imports betse and prints the real-API pointer if present.  (A betse-coupled cell that actually calls optimize_pattern / grn_trigger would need betse as a dep of this repos env — left as a TODO.)
 
 ## Educational track (notebooks/)
 
