@@ -223,6 +223,24 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   `~/Workspace/betse-unified`.
 *(Not a course lab — a reproduction/benchmark artifact, living in `scripts/`:* **`scripts/organoid_hgx_colab.ipynb`** *— the GPU/Colab notebook that runs `hgx` on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → the 7 publication figures → the 5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark). The labs reference it where they touch the real pipeline; it's the "run the whole thing once on a GPU" companion to `scripts/run_all_real.py`.)*
 
+- **`11_foundation_model_pipeline.ipynb`** — **Lab 11** *(add-on, post-Lab-10)*: foundation-model priors for
+  perturbation prediction. Operationalises [`docs/foundation-models.md`](../docs/foundation-models.md) — the
+  catalogue across UCSF (Geneformer, Gladstone), Stanford/CZI/Arc (UCE, Evo 2, Borzoi), Berkeley (scVI
+  lineage), Toronto/Vector (scGPT). The integration contract: **extract once via
+  [`scripts/fm_embed.py`](../scripts/fm_embed.py), cache as `.npy`, consume downstream as numpy arrays** —
+  no fine-tuning, the notebook code is unchanged between `--mode stub` and `--mode real`. Headline
+  demonstration: held-out-gene perturbation-response prediction, one-hot baseline (transfer-r = 0,
+  zero signal on unseen genes by construction) vs Geneformer-style co-expression-aware embedding
+  (transfer-r ≈ +1.0 on the synthetic; the *floor* of what real Geneformer adds, since the stub is a
+  structure-matched random projection lacking the 30 M-cell pretraining). Plus a UCE-stub property
+  check on the cell-level arm (1280-d cell embedding contains the latent factor structure;
+  cross-batch / sparsity / novel-cell-type robustness are properties of the pretrained checkpoint
+  the stub can't simulate — flagged honestly). Self-contained — synthetic 4-factor regulome, no
+  GPU, runs in seconds. Pipeline: [`scripts/fm_embed.py`](../scripts/fm_embed.py) (CLI subcommands
+  `uce` / `geneformer` / `scgpt`; modes `real` / `stub` / `auto` with informative fallback).
+  Companion docs: [`docs/foundation-models.md`](../docs/foundation-models.md),
+  [`docs/computational-roadmap.md`](../docs/computational-roadmap.md) §1.
+
 Companion worked examples live in the **`jaxctrl`** repo (the control-theory layer):
 [`examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py)
 (quench a 3-gene oscillator: linearize → controllability → LQR → quench the nonlinear flow →

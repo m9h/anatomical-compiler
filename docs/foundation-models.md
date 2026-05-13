@@ -131,12 +131,13 @@ None of these requires fine-tuning. **Extract once, cache as `.npy`, then run th
 
 In priority order, each a focused PR:
 
-1. **Embedding-extractor utility** — `scripts/fm_embed.py` with subcommands `uce`, `geneformer`, `scgpt`, taking an h5ad in and writing `.npy` arrays out. ~1 day. Establishes the cache contract every downstream lab uses.
-2. **Lab 11 notebook** — load cached embeddings, swap them into the existing benchmarks (Lab 3 fidelity, Lab 4 modularity), show before/after on the project's canonical headline numbers. ~3 days. This is the empirical test of whether FMs actually help on *this* project's questions.
-3. **Sequence-edge prior** — Evo-2-or-Borzoi scoring of regulome edges; ablation on Pando edges vs Pando+sequence-prior edges. ~1 week. Tests the causal-grounding hypothesis.
-4. **scGPT in-silico KD as Lab 6 / Lab 8 prior** — score the project's "high-leverage TF" predictions (Lab 6) against scGPT's zero-shot KD predictions; use disagreement as an EIG signal for the [wetlab-program.md](wetlab-program.md) BO loop. ~1 week. Direct bridge to the wet-lab side.
+1. **Embedding-extractor utility** — [`scripts/fm_embed.py`](../scripts/fm_embed.py) with subcommands `uce`, `geneformer`, `scgpt`, taking an h5ad in and writing `.npy` arrays out. ~1 day. Establishes the cache contract every downstream lab uses. **✅ Landed 2026-05-13.** Three modes: `real` (lazy-load the HF checkpoint), `stub` (deterministic SVD projection at the correct dimensions, for tutorial / smoke-test / attribution-control use), `auto` (try real, fall back to stub with warning).
+2. **Lab 11 notebook** — load cached embeddings, swap them into a Lab-3-style benchmark, show before/after on the headline transfer-r. ~3 days. The empirical test of whether FMs help on *this* project's questions. **✅ Landed 2026-05-13** as [`notebooks/11_foundation_model_pipeline.ipynb`](../notebooks/11_foundation_model_pipeline.ipynb). Stub-mode demonstration is now reproducible in seconds; real-mode is one flag away. Headline result on the synthetic: one-hot baseline transfer-r = 0.000 (zero signal on held-out genes), Geneformer-stub transfer-r ≈ +0.999 — the *floor* of what real Geneformer adds, since the stub is a structure-matched projection lacking the 30 M-cell pretraining.
+3. **Sequence-edge prior** — Evo-2-or-Borzoi scoring of regulome edges; ablation on Pando edges vs Pando+sequence-prior edges. ~1 week. Tests the causal-grounding hypothesis. **Pending.**
+4. **scGPT in-silico KD as Lab 6 / Lab 8 prior** — score the project's "high-leverage TF" predictions (Lab 6) against scGPT's zero-shot KD predictions; use disagreement as an EIG signal for the [wetlab-program.md](wetlab-program.md) BO loop. ~1 week. Direct bridge to the wet-lab side. **Pending.**
+5. **Real-mode validation on a Lab 3 dataset** — point [`scripts/fm_embed.py`](../scripts/fm_embed.py) at the Pollen brain-organoid or fetal-kidney h5ad with `--mode real`, install the `geneformer` / `scgpt` / `uce` packages + GPU, re-run the Lab 11 panel to measure the *true* lift on the project's fidelity-triple. ~1 A100-day per dataset. **Decision-triggered:** when a wet-lab cycle ([`docs/wetlab-program.md`](wetlab-program.md)) or a real-data analysis is queued.
 
-Total: **~2 weeks** for steps 1–2 (the empirical test), **~1 month** if (3) and (4) also land.
+Steps 1–2 are done; steps 3–5 remain. **~2 weeks** for steps 3–4 if pursued together; step 5 is gated on real-data need.
 
 ---
 
