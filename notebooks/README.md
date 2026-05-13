@@ -220,7 +220,11 @@ know the rest of it.
   refactor's point is to follow the Levin Lab / Mafe-group post-2018 shift *from passive simulation
   to agential design*: (i) **inverse bioelectric design** — define a target shape/behaviour and use
   `jax.grad` to find the ion-channel conductances or gap-junction connectivity that reach it (the
-  xenobot move — Kriegman et al. 2020/2021 — done by gradient descent rather than evolution); (ii)
+  xenobot move — Kriegman et al. 2020/2021 — done by gradient descent rather than evolution).
+  *Prototype done & verified* (`betse.science.jax.inverse.optimize_pattern`): a 10-cell benchmark
+  discovers the transmembrane-current profile that drives resting tissue to an alternating
+  ±depolarisation pattern, loss 9e-4 → ~1.4e-10 (`BETSE_JAX=1 pytest …/test_jax_inverse.py`) — the
+  bioelectric "anatomical compiler" in miniature. Next: (ii)
   **bioelectric prepatterning** — a simulation that first establishes a Vmem gradient which then
   *triggers* a secondary GRN or morphological change (Pietak & Levin 2017's Vmem↔transcription
   coupling; Cervera/Levin/Mafe 2024–2026's "top-down" perspective); (iii) **morphoceutical
