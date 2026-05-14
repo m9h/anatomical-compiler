@@ -51,6 +51,7 @@ class Circuit:
     name: str
     title: str            # human-readable
     citation: str         # canonical reference
+    pubmed_id: str | None  # for MIRIAM bqmodel:isDescribedBy (audit item 4)
     initial: dict[str, float]
     parameters: dict[str, float]
     rate_rules: dict[str, str]  # species → rate expression in Antimony syntax
@@ -63,6 +64,7 @@ CIRCUITS = [
         name="negative_autoregulation",
         title="Negative autoregulation (NAR)",
         citation="Becskei & Serrano 2000, Nature 405:590 — also Lab 1 §2 (Elowitz & Bois).",
+        pubmed_id="10864324",  # Becskei & Serrano 2000
         initial={"x": 0.01},
         parameters={"beta": 5.0, "K": 1.0, "n": 2.0, "gam": 1.0},
         rate_rules={
@@ -80,6 +82,7 @@ CIRCUITS = [
         name="toggle_switch",
         title="Toggle switch (Gardner-Cantor-Collins)",
         citation="Gardner, Cantor & Collins 2000, Nature 403:339 — also Lab 1 §3.",
+        pubmed_id="10659857",  # Gardner, Cantor & Collins 2000
         initial={"u": 0.2, "v": 1.5},
         parameters={"alpha": 4.0, "n": 3.0},
         rate_rules={
@@ -98,6 +101,7 @@ CIRCUITS = [
         name="repressilator",
         title="Repressilator",
         citation="Elowitz & Leibler 2000, Nature 403:335 — also Lab 1 §4.",
+        pubmed_id="10659856",  # Elowitz & Leibler 2000
         initial={"p0": 2.5, "p1": 1.5, "p2": 3.0},
         parameters={"alpha": 10.0, "alpha0": 0.1, "n": 3.0, "gam": 1.0},
         rate_rules={
@@ -118,7 +122,8 @@ CIRCUITS = [
     Circuit(
         name="positive_autoregulation",
         title="Positive autoregulation (bistability)",
-        citation="Elowitz & Bois — Lab 1 §5 exercise (a).",
+        citation="Becskei, Séraphin & Serrano 2001, EMBO J 20(10):2528-35 — Lab 1 §5 exercise (a).",
+        pubmed_id="11350942",  # Becskei et al. 2001
         initial={"x": 0.5},
         # The β parameter is swept in the lab to find a saddle-node bifurcation;
         # we export with β = 4.0, which sits in the bistable regime.
@@ -202,6 +207,188 @@ def emit_antimony(circuit: Circuit) -> str:
 
 
 # ----------------------------------------------------------------------------
+# SBO + MIRIAM annotation (CURE-audit item 4)
+# ----------------------------------------------------------------------------
+
+# Canonical SBO terms used here.
+SBO_POLYPEPTIDE_CHAIN = 252        # Per-species: each Lab-1 species is a protein concentration.
+SBO_BIOCHEMICAL_REACTION = 176     # Per-reaction: the combined production-degradation rate
+                                   # is a biochemical reaction (generic but accurate for the
+                                   # Hill-rate ODE formulation Lab 1 uses).
+
+
+def annotate_sbml(sbml_string: str, circuit: "Circuit") -> str:
+    """Add MIRIAM + SBO annotations to an SBML string via libsbml.
+
+    Model-level: ``bqmodel:isDescribedBy → https://identifiers.org/pubmed/<id>``
+    Species-level: ``SBO:0000252`` (polypeptide chain)
+    Reaction-level: ``SBO:0000176`` (biochemical reaction)
+
+    The MIRIAM annotation lets BioSimulations, COPASI, VCell, BiVeS and the
+    rest of the COMBINE ecosystem resolve the citation automatically; the
+    SBO terms give downstream tools semantically-typed access to species
+    and reactions.
+    """
+    import libsbml as ls
+
+    reader = ls.SBMLReader()
+    doc = reader.readSBMLFromString(sbml_string)
+    if doc.getNumErrors() > 0:
+        # Non-fatal warnings are fine; only fail on hard errors.
+        for i in range(doc.getNumErrors()):
+            err = doc.getError(i)
+            if err.getSeverity() >= ls.LIBSBML_SEV_ERROR:
+                raise RuntimeError(f"SBML parse error: {err.getMessage()}")
+    model = doc.getModel()
+
+    # Model-level MIRIAM: link to the PubMed citation if available.
+    if circuit.pubmed_id is not None:
+        if not model.isSetMetaId():
+            model.setMetaId(f"meta_{model.getId() or 'model'}")
+        cv = ls.CVTerm(ls.MODEL_QUALIFIER)
+        cv.setModelQualifierType(ls.BQM_IS_DESCRIBED_BY)
+        cv.addResource(f"https://identifiers.org/pubmed/{circuit.pubmed_id}")
+        model.addCVTerm(cv)
+
+    # Per-species: SBO:0000252 (polypeptide chain). These models are abstract
+    # protein concentrations, not specific gene products, so we don't add
+    # bqbiol:is → UniProt/Ensembl — that would be a false claim.
+    for i in range(model.getNumSpecies()):
+        sp = model.getSpecies(i)
+        sp.setSBOTerm(SBO_POLYPEPTIDE_CHAIN)
+
+    # Per-reaction: SBO:0000176 (biochemical reaction).
+    for i in range(model.getNumReactions()):
+        rxn = model.getReaction(i)
+        rxn.setSBOTerm(SBO_BIOCHEMICAL_REACTION)
+
+    writer = ls.SBMLWriter()
+    return writer.writeSBMLToString(doc)
+
+
+# ----------------------------------------------------------------------------
+# SED-ML simulation descriptor (CURE-audit item 5 prerequisite)
+# ----------------------------------------------------------------------------
+
+
+def emit_sedml(circuit: "Circuit", sbml_filename: str, t_final: float, n_points: int) -> str:
+    """Emit a minimal SED-ML L1V4 descriptor for the circuit's simulation.
+
+    The SED-ML records: which model file to load, a uniform-time-course task
+    over ``[0, t_final]`` with ``n_points`` outputs, a data-generator per
+    species, and a Report. This is what VCell / BioSimulations / Tellurium
+    consume to reproduce the Lab 1 simulation experiment in their own engine.
+    """
+    import libsedml
+
+    doc = libsedml.SedDocument(1, 4)
+    # Model: reference the SBML file by name (resolved within the OMEX archive).
+    sed_model = doc.createModel()
+    sed_model.setId(f"model_{circuit.name}")
+    sed_model.setName(circuit.title)
+    sed_model.setSource(sbml_filename)
+    sed_model.setLanguage("urn:sedml:language:sbml.level-3.version-2")
+
+    # Simulation: uniform time course.
+    sim = doc.createUniformTimeCourse()
+    sim.setId(f"sim_{circuit.name}")
+    sim.setInitialTime(0.0)
+    sim.setOutputStartTime(0.0)
+    sim.setOutputEndTime(t_final)
+    sim.setNumberOfPoints(n_points - 1)  # SED-ML counts intervals
+    alg = sim.createAlgorithm()
+    alg.setKisaoID("KISAO:0000019")  # CVODE — what libRoadRunner uses by default
+
+    # Task: link model + sim.
+    task = doc.createTask()
+    task.setId(f"task_{circuit.name}")
+    task.setModelReference(sed_model.getId())
+    task.setSimulationReference(sim.getId())
+
+    # Time data generator.
+    dg_time = doc.createDataGenerator()
+    dg_time.setId("dg_time")
+    var_t = dg_time.createVariable()
+    var_t.setId("var_time")
+    var_t.setTaskReference(task.getId())
+    var_t.setSymbol("urn:sedml:symbol:time")
+    dg_time.setMath(libsedml.parseFormula("var_time"))
+
+    # One data generator per species.
+    report = doc.createReport()
+    report.setId(f"report_{circuit.name}")
+    set_time = report.createDataSet()
+    set_time.setId("ds_time")
+    set_time.setLabel("time")
+    set_time.setDataReference(dg_time.getId())
+
+    for sp_name in circuit.rate_rules.keys():
+        dg = doc.createDataGenerator()
+        dg.setId(f"dg_{sp_name}")
+        var = dg.createVariable()
+        var.setId(f"var_{sp_name}")
+        var.setTaskReference(task.getId())
+        var.setTarget(
+            f"/sbml:sbml/sbml:model/sbml:listOfSpecies/sbml:species[@id='{sp_name}']"
+        )
+        dg.setMath(libsedml.parseFormula(f"var_{sp_name}"))
+        ds = report.createDataSet()
+        ds.setId(f"ds_{sp_name}")
+        ds.setLabel(sp_name)
+        ds.setDataReference(dg.getId())
+
+    writer = libsedml.SedWriter()
+    return writer.writeSedMLToString(doc)
+
+
+# ----------------------------------------------------------------------------
+# OMEX / COMBINE archive bundling (CURE-audit item 5)
+# ----------------------------------------------------------------------------
+
+
+def write_omex_archive(
+    omex_path: Path,
+    sbml_path: Path,
+    sedml_path: Path,
+    description: str,
+) -> None:
+    """Bundle an SBML model + SED-ML descriptor into a COMBINE/OMEX archive.
+
+    The .omex file is a zip with a manifest.xml listing every component
+    and its format URI. libcombine handles the manifest; we just register
+    the entries and call writeToFile. BioSimulations, VCell, COPASI, and
+    Tellurium all consume this format directly.
+    """
+    import libcombine as lc
+
+    if omex_path.exists():
+        omex_path.unlink()
+    archive = lc.CombineArchive()
+    # Add the SBML model as the primary entry (master=True).
+    archive.addFile(
+        str(sbml_path),
+        sbml_path.name,
+        lc.KnownFormats.lookupFormat("sbml"),
+        False,
+    )
+    # Add the SED-ML descriptor as the master simulation experiment.
+    archive.addFile(
+        str(sedml_path),
+        sedml_path.name,
+        lc.KnownFormats.lookupFormat("sed-ml"),
+        True,  # master — this is what VCell / BioSimulations executes
+    )
+    # Top-level metadata (description) on the archive itself.
+    meta = lc.OmexDescription()
+    meta.setAbout(".")
+    meta.setDescription(description)
+    meta.setCreated(lc.OmexDescription.getCurrentDateAndTime())
+    archive.addMetadata(".", meta)
+
+    archive.writeToFile(str(omex_path))
+
+
+# ----------------------------------------------------------------------------
 # Index README
 # ----------------------------------------------------------------------------
 
@@ -217,25 +404,67 @@ def emit_readme(circuits: list[Circuit]) -> str:
     )
     lines.append("")
     lines.append(
-        "Each `.ant` file is an [Antimony](https://tellurium.readthedocs.io/en/latest/antimony.html) "
-        "model that round-trips to SBML L3v2 via "
-        "[Tellurium](https://tellurium.readthedocs.io) / [libRoadRunner](https://www.libroadrunner.org). "
-        "They are the canonical, BioModels-submittable representations of Lab 1's gene circuits."
+        "Each circuit ships in four formats per the CURE-Reproducible + Understandable + "
+        "Credible-annotation pillars (Sauro et al. 2025, ref. 99a):"
+    )
+    lines.append("")
+    lines.append(
+        "- **`.ant`** — [Antimony](https://tellurium.readthedocs.io/en/latest/antimony.html) "
+        "source-of-truth; auto-generated by the exporter from the `Circuit` dataclass."
+    )
+    lines.append(
+        "- **`.sbml`** — SBML L3v2 round-tripped via Tellurium + annotated via libsbml with "
+        "MIRIAM (`bqmodel:isDescribedBy` → PubMed) + SBO terms (species: 0000252 polypeptide "
+        "chain; reactions: 0000176 biochemical reaction)."
+    )
+    lines.append(
+        "- **`.sedml`** — SED-ML L1V4 simulation experiment descriptor (uniform time course, "
+        "CVODE algorithm KISAO:0000019, one data generator per species)."
+    )
+    lines.append(
+        "- **`.omex`** — COMBINE/OMEX archive bundling SBML + SED-ML + metadata.rdf. "
+        "Master entry is the SED-ML; this is what VCell, BioSimulations, COPASI, and "
+        "Tellurium each execute directly."
+    )
+    lines.append("")
+    lines.append(
+        "Plus **`regulome_provenance.json`** — the MIRIAM-style manifest for the project's "
+        "Pando-on-CHOOSE regulome substrate (different model class, not SBML-shaped). "
+        "Re-emit with `python scripts/emit_regulome_provenance.py`."
     )
     lines.append("")
     lines.append("## What's here")
     lines.append("")
-    lines.append("| file | circuit | Lab 1 cell | canonical reference |")
-    lines.append("|---|---|---:|---|")
+    lines.append("| circuit | Antimony | SBML | SED-ML | OMEX | Lab 1 cell | canonical reference |")
+    lines.append("|---|---|---|---|---|---:|---|")
     for c in circuits:
         lines.append(
-            f"| [`lab1_{c.name}.ant`](lab1_{c.name}.ant) | {c.title} | "
-            f"[cell {c.lab1_cell}](../notebooks/01_gene_circuit_dynamics.ipynb) | {c.citation} |"
+            f"| {c.title} | "
+            f"[`.ant`](lab1_{c.name}.ant) | "
+            f"[`.sbml`](lab1_{c.name}.sbml) | "
+            f"[`.sedml`](lab1_{c.name}.sedml) | "
+            f"[`.omex`](lab1_{c.name}.omex) | "
+            f"[cell {c.lab1_cell}](../notebooks/01_gene_circuit_dynamics.ipynb) | "
+            f"{c.citation} |"
         )
     lines.append("")
     lines.append("## How to consume")
     lines.append("")
-    lines.append("**Verify any model round-trips through Tellurium + matches Lab 1's JAX simulation:**")
+    lines.append("**Submit an OMEX archive to BioSimulations (any of their bundled simulators):**")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("curl -X POST https://api.biosimulations.org/runs \\")
+    lines.append("     -F 'simulator=tellurium' \\")
+    lines.append("     -F 'file=@models/lab1_repressilator.omex'")
+    lines.append("```")
+    lines.append("")
+    lines.append("**Submit to VCell directly via vcell-cli:**")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("vcell-cli execute --archive models/lab1_repressilator.omex --out-dir results/")
+    lines.append("```")
+    lines.append("")
+    lines.append("**Verify any model round-trips through Tellurium + COPASI + matches Lab 1's JAX simulation:**")
     lines.append("")
     lines.append("```bash")
     lines.append("uv pip install tellurium     # ~150 MB; pulls libsbml + libRoadRunner + scipy")
@@ -303,19 +532,39 @@ def main(argv=None):
         action="store_true",
         help="skip the Tellurium-driven SBML round-trip (only emit .ant)",
     )
+    p.add_argument(
+        "--no-omex",
+        action="store_true",
+        help="skip SED-ML + OMEX bundling (item 5); only emit .ant + .sbml",
+    )
     args = p.parse_args(argv)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"export_lab1_sbml: writing to {out_dir}/")
-    # Try Tellurium for the optional SBML round-trip emission. If absent, the
-    # .ant files alone are the committed artifact and SBML is on-demand.
+    # The pipeline: Antimony (text) → SBML (via Tellurium) → MIRIAM/SBO-
+    # annotated SBML (via libsbml) → SED-ML descriptor (via libsedml) →
+    # OMEX archive (via libcombine). Tellurium drags in libsbml + libsedml
+    # + libcombine, so the full chain runs from a single uv pip install.
     try:
         import tellurium as te  # noqa: F401
         have_tellurium = True
     except ImportError:
         have_tellurium = False
+
+    # SED-ML / OMEX use libsedml + libcombine which ship with tellurium.
+    have_omex = have_tellurium
+    if have_omex:
+        try:
+            import libsedml  # noqa: F401
+            import libcombine  # noqa: F401
+        except ImportError:
+            have_omex = False
+
+    # Default simulation horizon for the SED-ML descriptor.
+    sedml_t_final = 10.0
+    sedml_n_points = 501
 
     for c in CIRCUITS:
         ant_path = out_dir / f"lab1_{c.name}.ant"
@@ -326,18 +575,43 @@ def main(argv=None):
         if have_tellurium and not args.no_sbml:
             sbml_path = out_dir / f"lab1_{c.name}.sbml"
             sbml_text = te.antimonyToSBML(text)  # type: ignore[name-defined]
+            # Add MIRIAM (PubMed) + SBO (polypeptide chain / biochemical reaction)
+            # annotations via libsbml — CURE-audit item 4.
+            sbml_text = annotate_sbml(sbml_text, c)
             sbml_path.write_text(sbml_text, encoding="utf-8")
-            print(f"  wrote {sbml_path}  ({len(sbml_text)} bytes)")
+            print(f"  wrote {sbml_path}  ({len(sbml_text)} bytes, MIRIAM+SBO annotated)")
+
+            if have_omex and not args.no_omex:
+                # Per-circuit SED-ML descriptor — what BioSimulations / VCell run.
+                t_final = 6.0 if c.name == "repressilator" else sedml_t_final
+                sedml_path = out_dir / f"lab1_{c.name}.sedml"
+                sedml_text = emit_sedml(c, sbml_path.name, t_final, sedml_n_points)
+                sedml_path.write_text(sedml_text, encoding="utf-8")
+                print(f"  wrote {sedml_path}  ({len(sedml_text)} bytes)")
+
+                # Bundle SBML + SED-ML into a COMBINE archive — CURE-audit item 5.
+                omex_path = out_dir / f"lab1_{c.name}.omex"
+                description = (
+                    f"{c.title}. {c.citation} "
+                    f"Source: anatomical-compiler/notebooks/01_gene_circuit_dynamics.ipynb "
+                    f"cell {c.lab1_cell}. "
+                    f"OMEX archive auto-generated by scripts/export_lab1_sbml.py."
+                )
+                write_omex_archive(omex_path, sbml_path, sedml_path, description)
+                print(f"  wrote {omex_path}  ({omex_path.stat().st_size} bytes)")
 
     if not args.no_readme:
         readme_path = out_dir / "README.md"
         readme_path.write_text(emit_readme(CIRCUITS), encoding="utf-8")
         print(f"  wrote {readme_path}")
 
-    print(
-        f"done — {len(CIRCUITS)} circuits exported"
-        f"{' (Antimony + SBML)' if have_tellurium and not args.no_sbml else ' (Antimony only — install tellurium for SBML round-trip)'}."
-    )
+    if have_omex and not args.no_omex:
+        formats = "(Antimony + MIRIAM/SBO-annotated SBML + SED-ML + OMEX)"
+    elif have_tellurium and not args.no_sbml:
+        formats = "(Antimony + SBML; install libsedml+libcombine for OMEX bundling)"
+    else:
+        formats = "(Antimony only — install tellurium for SBML/SED-ML/OMEX)"
+    print(f"done — {len(CIRCUITS)} circuits exported {formats}.")
     return 0
 
 

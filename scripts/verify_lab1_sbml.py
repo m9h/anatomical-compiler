@@ -237,21 +237,64 @@ def _simulate_copasi(
 def _simulate_vcell(
     circuit: Circuit, ant_path: Path, t_final: float, n_points: int
 ) -> SimResult:
+    """VCell via vcell-cli on a pre-built OMEX archive (CURE-audit item 5 unblocks this).
+
+    Once `vcell-cli` is on PATH and the OMEX archive exists, this backend
+    invokes `vcell-cli execute --archive <omex> --out-dir <tmp>` and parses
+    the per-task CSV that VCell writes into the temp directory.
+    """
+    omex_path = ant_path.parent / f"lab1_{circuit.name}.omex"
+    if not omex_path.exists():
+        raise SimSkip(
+            f"OMEX archive missing at {omex_path}. Run "
+            "`python scripts/export_lab1_sbml.py` to emit it."
+        )
     if shutil.which("vcell-cli") is None:
         raise SimSkip(
-            "vcell-cli not on PATH. Install one of: "
-            "(a) `docker pull ghcr.io/virtualcell/vcell-cli` then alias `vcell-cli` to the entrypoint, "
-            "(b) the VCell CLI release from github.com/virtualcell/vcell-cli/releases, or "
-            "(c) submit via the BioSimulations REST API. "
-            "VCell consumes OMEX archives, which is also CURE-audit item 5 — once OMEX bundling "
-            "lands the VCell leg drops in by setting --simulator vcell on vcell-cli."
+            f"vcell-cli not on PATH (OMEX archive ready at {omex_path}). "
+            "Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` and alias "
+            "`vcell-cli` to the container entrypoint, (b) the release binary from "
+            "https://github.com/virtualcell/vcell-cli/releases, or (c) submit to "
+            "https://api.biosimulations.org with simulator=vcell."
         )
-    # When this path becomes live: hand vcell-cli an OMEX archive, parse the
-    # CSV / HDF5 result it emits. Deferred until OMEX bundling (item 5).
-    raise SimSkip(
-        "vcell-cli is on PATH but the OMEX-bundling integration (CURE-audit item 5) "
-        "isn't wired yet; VCell leg deferred until that lands."
-    )
+
+    import subprocess
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        td_path = Path(td)
+        cmd = ["vcell-cli", "execute", "--archive", str(omex_path), "--out-dir", str(td_path)]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"vcell-cli timed out after 180s") from e
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"vcell-cli failed (exit {result.returncode}): {result.stderr[:500]}"
+            )
+        csv_files = list(td_path.rglob("*.csv"))
+        if not csv_files:
+            raise RuntimeError(f"vcell-cli produced no CSV output in {td_path}")
+        import pandas as pd
+
+        df = pd.read_csv(csv_files[0])
+        # SED-ML reports typically write 'time' + one column per species data-set label.
+        time_col = next((c for c in df.columns if c.lower() in ("time", "time_")), df.columns[0])
+        species_cols = [c for c in df.columns if c != time_col]
+        try:
+            # Try a vcell-cli --version probe for the manifest; non-fatal.
+            v = subprocess.run(
+                ["vcell-cli", "--version"], capture_output=True, text=True, timeout=10
+            ).stdout.strip() or "unknown"
+        except Exception:
+            v = "unknown"
+        return SimResult(
+            times=df[time_col].to_numpy(),
+            traj=df[species_cols].to_numpy(),
+            species_names=species_cols,
+            backend="vcell_cli",
+            backend_version=v,
+        )
 
 
 # ----------------------------------------------------------------------------
@@ -263,19 +306,51 @@ def _simulate_vcell(
 def _simulate_opencor(
     circuit: Circuit, ant_path: Path, t_final: float, n_points: int
 ) -> SimResult:
+    """OpenCOR (Hunter lab Auckland) Python module run on the SBML file.
+
+    OpenCOR's Python API can simulate SBML models directly via libCellML's
+    SBML import path — so this leg activates as soon as the OpenCOR Python
+    module is on PYTHONPATH; no separate CellML emission step is needed.
+    """
+    sbml_path = ant_path.parent / f"lab1_{circuit.name}.sbml"
+    if not sbml_path.exists():
+        raise SimSkip(
+            f"SBML missing at {sbml_path}. Run "
+            "`python scripts/export_lab1_sbml.py` to emit it."
+        )
     try:
-        import OpenCOR  # type: ignore  # noqa: F401
+        import OpenCOR  # type: ignore
     except ImportError as e:
         raise SimSkip(
-            "OpenCOR Python module not importable. Install OpenCOR from https://opencor.ws "
-            "(downloadable binary; the Python module is bundled). On Linux: download the .tar.gz, "
-            "extract, and add the OpenCOR directory to PYTHONPATH. OpenCOR prefers CellML over "
-            "SBML; full integration also requires a CellML emission step in scripts/export_lab1_sbml.py "
-            "(item 4 of the CURE audit)."
+            f"OpenCOR Python module not importable (SBML ready at {sbml_path}). "
+            "Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), "
+            "extract, and add `<install_dir>/python` to PYTHONPATH. The Python module "
+            "bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
         ) from e
-    raise SimSkip(
-        "OpenCOR is importable but the CellML emission path (CURE-audit item 4) isn't wired yet; "
-        "OpenCOR leg deferred until that lands."
+
+    sim = OpenCOR.openSimulation(str(sbml_path))  # type: ignore[attr-defined]
+    sim_data = sim.data()
+    sim_data.setStartingPoint(0.0)
+    sim_data.setEndingPoint(float(t_final))
+    sim_data.setPointInterval(t_final / (n_points - 1))
+    sim.run()
+    results = sim.results()
+    times = results.points().values()
+    species_names = list(circuit.rate_rules.keys())
+    traj = []
+    for name in species_names:
+        states = results.states()
+        if name in states:
+            traj.append(states[name].values())
+        else:
+            algebraics = results.algebraic()
+            traj.append(algebraics[name].values())
+    return SimResult(
+        times=np.asarray(times),
+        traj=np.asarray(traj).T,  # shape (T, n_species)
+        species_names=species_names,
+        backend="opencor",
+        backend_version=getattr(OpenCOR, "version", lambda: "?")(),
     )
 
 

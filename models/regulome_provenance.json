@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0",
+  "substrate": {
+    "name": "Pando-on-CHOOSE",
+    "description": "Gene regulatory network inferred via Pando (Fleck et al. 2023, Nature) on the CHOOSE single-cell brain-organoid screening dataset (Li, Fleck, Martins-Costa et al. 2023, Nature 621:373). The substrate underlying this project's Hypergraph Neural ODE (Lab 5), MII diagnostic (Lab 4), fidelity-triple predictor (Lab 3), high-leverage TF ranking (Lab 6), foundation-model prior caches (scripts/fm_*.py), and cancer-as-loss-of-MII signature (Lab 10).",
+    "kind": "directed-bipartite-hypergraph",
+    "scale": "genome (~30 k TF + target genes; ~10 k high-confidence regulatory edges)",
+    "sbml_compatible": false,
+    "sbml_compatibility_note": "The regulome is a learned 50 k-parameter graph, not a symbolic kinetic model. SBML / CellML are not the right representations; the CURE-aligned response is to document the substrate at the manifest level (this file) and to emit Lab 8's *output* in a standards-compliant format \u2014 PhysiCell grammar (Johnson et al. 2025, REFERENCES.md ref. 77c) is the candidate target. See docs/cure-audit.md \u00a7'structural non-compliance' for the honest framing."
+  },
+  "species": {
+    "scientific_name": "Homo sapiens",
+    "common_name": "human",
+    "ncbi_taxon_id": "9606",
+    "miriam_uri": "https://identifiers.org/taxonomy/9606"
+  },
+  "reference_genome": {
+    "assembly_accession": "GCA_000001405.15",
+    "assembly_name": "GRCh38",
+    "common_name": "hg38",
+    "annotation_source": "GENCODE",
+    "annotation_version": "v45",
+    "ensembl_release": "110",
+    "miriam_uri": "https://identifiers.org/grch38"
+  },
+  "citations": {
+    "data_source": {
+      "title": "Single-cell brain organoid screening identifies developmental defects in autism (CHOOSE)",
+      "authors": [
+        "Li C",
+        "Fleck JS",
+        "Martins-Costa C",
+        "et al."
+      ],
+      "journal": "Nature",
+      "year": 2023,
+      "volume_pages": "621:373-380",
+      "doi": "10.1038/s41586-023-06473-y",
+      "pubmed": "37468635",
+      "miriam_uri": "https://identifiers.org/pubmed/37468635",
+      "references_md_entry": "ref. 86"
+    },
+    "inference_method": {
+      "title": "Inferring and perturbing cell fate regulomes in human brain organoids",
+      "authors": [
+        "Fleck JS",
+        "Jovanovska M",
+        "Camp JG",
+        "Treutlein B"
+      ],
+      "journal": "Nature",
+      "year": 2023,
+      "doi": "10.1038/s41586-022-05279-8",
+      "method_name": "Pando",
+      "method_url": "https://github.com/quadbio/Pando",
+      "miriam_uri": "https://identifiers.org/doi/10.1038/s41586-022-05279-8"
+    },
+    "modelling_guidelines": {
+      "title": "From FAIR to CURE: Guidelines for Computational Models of Biological Systems",
+      "authors": [
+        "Sauro HM",
+        "Agmon E",
+        "Blinov ML",
+        "Gennari JH",
+        "Hellerstein J",
+        "et al."
+      ],
+      "arxiv": "2502.15597",
+      "year": 2025,
+      "miriam_uri": "https://identifiers.org/arxiv:2502.15597",
+      "references_md_entry": "ref. 99a",
+      "applicable_pillar": "CURE-Credible (annotation), CURE-Understandable"
+    }
+  },
+  "downstream_consumers": [
+    {
+      "artifact": "Hypergraph Neural ODE",
+      "lab": "notebooks/05_hypergraph_neural_odes.ipynb",
+      "uses_substrate_for": "node features + hyperedge topology"
+    },
+    {
+      "artifact": "MII regulome diagnostic",
+      "lab": "notebooks/04_modularity_identifiability.ipynb",
+      "uses_substrate_for": "Hodge L0/L1 Laplacian spectrum"
+    },
+    {
+      "artifact": "Fidelity-triple predictor",
+      "lab": "notebooks/03_benchmarking_fidelity.ipynb",
+      "uses_substrate_for": "perturbation-response training set"
+    },
+    {
+      "artifact": "High-leverage TF ranking",
+      "lab": "notebooks/06_control_theory.ipynb",
+      "uses_substrate_for": "linearised plant for controllability + LQR"
+    },
+    {
+      "artifact": "FM-prior caches",
+      "lab": "scripts/fm_embed.py, fm_edges_seq.py, fm_perturb_scgpt.py",
+      "uses_substrate_for": "node + edge + perturbation priors"
+    },
+    {
+      "artifact": "Cancer-as-loss-of-MII diagnostic",
+      "lab": "notebooks/10_cancer_module_identifiability.ipynb",
+      "uses_substrate_for": "MII baseline vs the tumor-organoid trio"
+    }
+  ],
+  "cure_alignment": {
+    "pillars_satisfied": [
+      "Credible (annotation)",
+      "Understandable (standards reference)"
+    ],
+    "explicitly_not_applicable": "SBML/CellML (substrate is a learned graph, not a kinetic model)",
+    "see_also": [
+      "docs/cure-audit.md",
+      "REFERENCES.md (refs 86, 99a)",
+      "docs/foundation-models.md",
+      "models/README.md"
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sedML xmlns="http://sed-ml.org/sed-ml/level1/version4" level="1" version="4">
+  <listOfModels>
+    <model id="model_toggle_switch" name="Toggle switch (Gardner-Cantor-Collins)" language="urn:sedml:language:sbml.level-3.version-2" source="lab1_toggle_switch.sbml"/>
+  </listOfModels>
+  <listOfSimulations>
+    <uniformTimeCourse id="sim_toggle_switch" initialTime="0" outputStartTime="0" outputEndTime="10" numberOfSteps="500">
+      <algorithm name="CVODE" kisaoID="KISAO:0000019"/>
+    </uniformTimeCourse>
+  </listOfSimulations>
+  <listOfTasks>
+    <task id="task_toggle_switch" modelReference="model_toggle_switch" simulationReference="sim_toggle_switch"/>
+  </listOfTasks>
+  <listOfDataGenerators>
+    <dataGenerator id="dg_time">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <ci> var_time </ci>
+      </math>
+      <listOfVariables>
+        <variable id="var_time" symbol="urn:sedml:symbol:time" taskReference="task_toggle_switch"/>
+      </listOfVariables>
+    </dataGenerator>
+    <dataGenerator id="dg_u">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <ci> var_u </ci>
+      </math>
+      <listOfVariables>
+        <variable id="var_u" target="/sbml:sbml/sbml:model/sbml:listOfSpecies/sbml:species[@id=&apos;u&apos;]" taskReference="task_toggle_switch"/>
+      </listOfVariables>
+    </dataGenerator>
+    <dataGenerator id="dg_v">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <ci> var_v </ci>
+      </math>
+      <listOfVariables>
+        <variable id="var_v" target="/sbml:sbml/sbml:model/sbml:listOfSpecies/sbml:species[@id=&apos;v&apos;]" taskReference="task_toggle_switch"/>
+      </listOfVariables>
+    </dataGenerator>
+  </listOfDataGenerators>
+  <listOfOutputs>
+    <report id="report_toggle_switch">
+      <listOfDataSets>
+        <dataSet id="ds_time" label="time" dataReference="dg_time"/>
+        <dataSet id="ds_u" label="u" dataReference="dg_u"/>
+        <dataSet id="ds_v" label="v" dataReference="dg_v"/>
+      </listOfDataSets>
+    </report>
+  </listOfOutputs>
+</sedML>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sedML xmlns="http://sed-ml.org/sed-ml/level1/version4" level="1" version="4">
+  <listOfModels>
+    <model id="model_negative_autoregulation" name="Negative autoregulation (NAR)" language="urn:sedml:language:sbml.level-3.version-2" source="lab1_negative_autoregulation.sbml"/>
+  </listOfModels>
+  <listOfSimulations>
+    <uniformTimeCourse id="sim_negative_autoregulation" initialTime="0" outputStartTime="0" outputEndTime="10" numberOfSteps="500">
+      <algorithm name="CVODE" kisaoID="KISAO:0000019"/>
+    </uniformTimeCourse>
+  </listOfSimulations>
+  <listOfTasks>
+    <task id="task_negative_autoregulation" modelReference="model_negative_autoregulation" simulationReference="sim_negative_autoregulation"/>
+  </listOfTasks>
+  <listOfDataGenerators>
+    <dataGenerator id="dg_time">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <ci> var_time </ci>
+      </math>
+      <listOfVariables>
+        <variable id="var_time" symbol="urn:sedml:symbol:time" taskReference="task_negative_autoregulation"/>
+      </listOfVariables>
+    </dataGenerator>
+    <dataGenerator id="dg_x">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <ci> var_x </ci>
+      </math>
+      <listOfVariables>
+        <variable id="var_x" target="/sbml:sbml/sbml:model/sbml:listOfSpecies/sbml:species[@id=&apos;x&apos;]" taskReference="task_negative_autoregulation"/>
+      </listOfVariables>
+    </dataGenerator>
+  </listOfDataGenerators>
+  <listOfOutputs>
+    <report id="report_negative_autoregulation">
+      <listOfDataSets>
+        <dataSet id="ds_time" label="time" dataReference="dg_time"/>
+        <dataSet id="ds_x" label="x" dataReference="dg_x"/>
+      </listOfDataSets>
+    </report>
+  </listOfOutputs>
+</sedML>

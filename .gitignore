@@ -38,12 +38,17 @@ data/Sonthalia_Table3.xlsx
 # Use `models/*` (not `models/`) so the un-ignore patterns below can re-include
 # specific files — git won't re-include from a wholly-excluded directory.
 models/*
-# …except hand-curated source-of-truth model files (Antimony / SBML / CellML
-# / MorpheusML — small text, intentional commit artifacts per docs/cure-audit.md).
+# …except hand-curated / generated source-of-truth model files (Antimony /
+# SBML / CellML / MorpheusML, plus SED-ML descriptors, OMEX archives, and
+# the regulome-provenance manifest — small artifacts committed per
+# docs/cure-audit.md items 4 + 5).
 !models/*.ant
 !models/*.sbml
 !models/*.xml
 !models/*.cellml
+!models/*.sedml
+!models/*.omex
+!models/regulome_provenance.json
 !models/README.md
 
 # OS / coverage / scratch

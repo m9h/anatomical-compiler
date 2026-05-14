@@ -71,6 +71,7 @@ ENV PATH="/workspace/anatomical-compiler/.venv/bin:${PATH}"
 # guarantee from docs/cure-audit.md.
 RUN python3 scripts/ablate_edge_priors.py --output /tmp/dockersmoke_edges \
  && python3 scripts/ablate_perturb_eig.py --output /tmp/dockersmoke_eig \
+ && python3 scripts/emit_regulome_provenance.py --check \
  && python3 scripts/verify_lab1_sbml.py --output /tmp/dockersmoke_sbml \
  && rm -rf /tmp/dockersmoke_*
 

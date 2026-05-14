@@ -53,11 +53,11 @@
         },
         "vcell": {
           "status": "skipped",
-          "reason": "vcell-cli not on PATH. Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` then alias `vcell-cli` to the entrypoint, (b) the VCell CLI release from github.com/virtualcell/vcell-cli/releases, or (c) submit via the BioSimulations REST API. VCell consumes OMEX archives, which is also CURE-audit item 5 \u2014 once OMEX bundling lands the VCell leg drops in by setting --simulator vcell on vcell-cli."
+          "reason": "vcell-cli not on PATH (OMEX archive ready at models/lab1_negative_autoregulation.omex). Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` and alias `vcell-cli` to the container entrypoint, (b) the release binary from https://github.com/virtualcell/vcell-cli/releases, or (c) submit to https://api.biosimulations.org with simulator=vcell."
         },
         "opencor": {
           "status": "skipped",
-          "reason": "OpenCOR Python module not importable. Install OpenCOR from https://opencor.ws (downloadable binary; the Python module is bundled). On Linux: download the .tar.gz, extract, and add the OpenCOR directory to PYTHONPATH. OpenCOR prefers CellML over SBML; full integration also requires a CellML emission step in scripts/export_lab1_sbml.py (item 4 of the CURE audit)."
+          "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_negative_autoregulation.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
         }
       }
     },
@@ -112,11 +112,11 @@
         },
         "vcell": {
           "status": "skipped",
-          "reason": "vcell-cli not on PATH. Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` then alias `vcell-cli` to the entrypoint, (b) the VCell CLI release from github.com/virtualcell/vcell-cli/releases, or (c) submit via the BioSimulations REST API. VCell consumes OMEX archives, which is also CURE-audit item 5 \u2014 once OMEX bundling lands the VCell leg drops in by setting --simulator vcell on vcell-cli."
+          "reason": "vcell-cli not on PATH (OMEX archive ready at models/lab1_toggle_switch.omex). Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` and alias `vcell-cli` to the container entrypoint, (b) the release binary from https://github.com/virtualcell/vcell-cli/releases, or (c) submit to https://api.biosimulations.org with simulator=vcell."
         },
         "opencor": {
           "status": "skipped",
-          "reason": "OpenCOR Python module not importable. Install OpenCOR from https://opencor.ws (downloadable binary; the Python module is bundled). On Linux: download the .tar.gz, extract, and add the OpenCOR directory to PYTHONPATH. OpenCOR prefers CellML over SBML; full integration also requires a CellML emission step in scripts/export_lab1_sbml.py (item 4 of the CURE audit)."
+          "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_toggle_switch.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
         }
       }
     },
@@ -179,11 +179,11 @@
         },
         "vcell": {
           "status": "skipped",
-          "reason": "vcell-cli not on PATH. Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` then alias `vcell-cli` to the entrypoint, (b) the VCell CLI release from github.com/virtualcell/vcell-cli/releases, or (c) submit via the BioSimulations REST API. VCell consumes OMEX archives, which is also CURE-audit item 5 \u2014 once OMEX bundling lands the VCell leg drops in by setting --simulator vcell on vcell-cli."
+          "reason": "vcell-cli not on PATH (OMEX archive ready at models/lab1_repressilator.omex). Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` and alias `vcell-cli` to the container entrypoint, (b) the release binary from https://github.com/virtualcell/vcell-cli/releases, or (c) submit to https://api.biosimulations.org with simulator=vcell."
         },
         "opencor": {
           "status": "skipped",
-          "reason": "OpenCOR Python module not importable. Install OpenCOR from https://opencor.ws (downloadable binary; the Python module is bundled). On Linux: download the .tar.gz, extract, and add the OpenCOR directory to PYTHONPATH. OpenCOR prefers CellML over SBML; full integration also requires a CellML emission step in scripts/export_lab1_sbml.py (item 4 of the CURE audit)."
+          "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_repressilator.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
         }
       }
     },
@@ -230,11 +230,11 @@
         },
         "vcell": {
           "status": "skipped",
-          "reason": "vcell-cli not on PATH. Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` then alias `vcell-cli` to the entrypoint, (b) the VCell CLI release from github.com/virtualcell/vcell-cli/releases, or (c) submit via the BioSimulations REST API. VCell consumes OMEX archives, which is also CURE-audit item 5 \u2014 once OMEX bundling lands the VCell leg drops in by setting --simulator vcell on vcell-cli."
+          "reason": "vcell-cli not on PATH (OMEX archive ready at models/lab1_positive_autoregulation.omex). Install one of: (a) `docker pull ghcr.io/virtualcell/vcell-cli` and alias `vcell-cli` to the container entrypoint, (b) the release binary from https://github.com/virtualcell/vcell-cli/releases, or (c) submit to https://api.biosimulations.org with simulator=vcell."
         },
         "opencor": {
           "status": "skipped",
-          "reason": "OpenCOR Python module not importable. Install OpenCOR from https://opencor.ws (downloadable binary; the Python module is bundled). On Linux: download the .tar.gz, extract, and add the OpenCOR directory to PYTHONPATH. OpenCOR prefers CellML over SBML; full integration also requires a CellML emission step in scripts/export_lab1_sbml.py (item 4 of the CURE audit)."
+          "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_positive_autoregulation.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
         }
       }
     }
