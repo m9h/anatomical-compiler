@@ -83,6 +83,17 @@ Rscript -e 'knitr::knit("publication/paper.Rnw", output="publication/paper.tex")
 
 > 📚 The background review, the synthetic-morphogenesis primer, and the manuscript prose are all **in `paper.Rnw`** (they used to be separate `FOUNDATIONS.md` / `SYNTHETIC_MORPHOGENESIS.md` / `MANUSCRIPT.md` files — now consolidated). The human-readable master bibliography is kept alongside it at **[`REFERENCES.md`](REFERENCES.md)**.
 
+## 🧾 Provenance & CURE alignment
+
+- **[`MODEL_CARD.md`](MODEL_CARD.md)** — index of the project's 8 major computational artifacts (Hypergraph Neural ODE, MII, fidelity-triple predictor, Lab-6 controllability, anatomical compiler, FM-prior caches, BETSE-JAX, cpjax) with intended use / source data / metrics / limitations / references per Mitchell et al. 2019.
+- **[`docs/cure-audit.md`](docs/cure-audit.md)** — compliance audit against [Sauro et al. 2025 (FAIR → CURE)](https://arxiv.org/abs/2502.15597), the COMBINE-community guidelines for **C**redible / **U**nderstandable / **R**eproducible / **E**xtensible computational biology models (ref. 99a). Includes the priority list of remaining gap-closure actions.
+- **[`Dockerfile`](Dockerfile)** — two-stage reproducible container:
+  ```bash
+  docker build -t anatomical-compiler:baseline .              # CPU, stub-mode + all ablations
+  docker build --target fm -t anatomical-compiler:fm .        # adds Geneformer/scGPT/UCE/Evo/Borzoi + JASPAR
+  ```
+  The baseline image runs the full educational track + ablations in stub mode without a GPU; the `fm` target is the DGX Spark / real-mode build per [`docs/dgx-spark-setup.md`](docs/dgx-spark-setup.md). Build-time smoke tests (`ablate_edge_priors.py` + `ablate_perturb_eig.py`) bake into the image so a broken environment fails the build.
+
 ---
 
 ## 🧫 From measurement to experiments

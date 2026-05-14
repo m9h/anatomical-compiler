@@ -1,0 +1,31 @@
+# Keep the Docker build context tight.
+.git/
+.venv/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.ipynb_checkpoints/
+# Build outputs
+publication/paper.pdf
+publication/*.aux
+publication/*.log
+publication/*.toc
+publication/*.out
+# Large data caches that don't belong in the image
+cache/
+data/
+SIMS/
+RESULTS/
+INITS/
+*.npy
+*.npz
+*.h5ad
+*.zarr/
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+# Stray
+press

@@ -103,18 +103,16 @@ The project's design — `hgx` (regulome substrate) + `jaxctrl` (control) + `bet
 
 Ranked by leverage / cost:
 
-| # | action | effort | CURE pillar | gain |
-|---|---|---|---|---|
-| 1 | **Dockerfile** with the project's full env (incl. real-mode FM deps) | half a day | R (containerization) | reproducibility on any machine + DGX Spark + cloud |
-| 2 | **`scripts/export_lab1_sbml.py`** — Antimony / SBML export of the Hill ODEs and the repressilator demo + a `scripts/verify_against_biosimulations.py` round-trip test | 1 day | C (verification) + U (standards) | demonstrates the project *can* speak SBML when the model is closed-form; "Lab 1 is BioModels-submittable" is a meaningful claim |
-| 3 | **`MODEL_CARD.md`** at repo root — index of the major artifacts with intended-use / limitations / metrics | half a day | U (understandability) + E (reuse) | the missing summary table |
-| 4 | **MIRIAM / SBO annotations** on the `hgx` regulomes — at least the gene-symbol → Ensembl + species → NCBI taxon mappings | 1 day | C (annotation) | makes the regulome substrate semantically queryable |
-| 5 | **OMEX / COMBINE-archive bundling** for the published benchmarks — Pollen-fidelity, kidney-modularity, edge-prior ablation each packed as an OMEX | 1 day | R (community standards) | submittable to BioModels for the closed-form parts |
-| 6 | **Cross-simulator verification** for Lab 1 — round-trip through Tellurium + VCell + openCOR, confirm trajectories match within numerical tolerance | 1–2 days | C (verification) | the strongest credibility claim available |
+| # | action | effort | CURE pillar | gain | status |
+|---|---|---|---|---|---|
+| 1 | **Dockerfile** with the project's full env (incl. real-mode FM deps) | half a day | R (containerization) | reproducibility on any machine + DGX Spark + cloud | **✅ landed 2026-05-13** as [`Dockerfile`](../Dockerfile) (two-stage: `baseline` CPU-only + `fm` for DGX), [`.dockerignore`](../.dockerignore); baked-in build-time smoke test runs `ablate_edge_priors.py` + `ablate_perturb_eig.py` so a broken image fails to build |
+| 2 | **`scripts/export_lab1_sbml.py`** — Antimony / SBML export of the Hill ODEs and the repressilator demo + a `scripts/verify_against_biosimulations.py` round-trip test | 1 day | C (verification) + U (standards) | demonstrates the project *can* speak SBML when the model is closed-form; "Lab 1 is BioModels-submittable" is a meaningful claim | pending |
+| 3 | **`MODEL_CARD.md`** at repo root — index of the major artifacts with intended-use / limitations / metrics | half a day | U (understandability) + E (reuse) | the missing summary table | **✅ landed 2026-05-13** as [`MODEL_CARD.md`](../MODEL_CARD.md); 8 cards (Hypergraph Neural ODE / MII / fidelity-triple predictor / Lab-6 controllability / anatomical compiler / FM-prior caches / BETSE-JAX / cpjax) with intended-use / training data / metrics / limitations / references each |
+| 4 | **MIRIAM / SBO annotations** on the `hgx` regulomes — at least the gene-symbol → Ensembl + species → NCBI taxon mappings | 1 day | C (annotation) | makes the regulome substrate semantically queryable | pending |
+| 5 | **OMEX / COMBINE-archive bundling** for the published benchmarks — Pollen-fidelity, kidney-modularity, edge-prior ablation each packed as an OMEX | 1 day | R (community standards) | submittable to BioModels for the closed-form parts | pending |
+| 6 | **Cross-simulator verification** for Lab 1 — round-trip through Tellurium + VCell + openCOR, confirm trajectories match within numerical tolerance | 1–2 days | C (verification) | the strongest credibility claim available | pending |
 
-Items 1, 2, 3 are the cheapest and most universally useful — half-day / one-day each, three days total, immediate CURE alignment for the parts of the project that are *amenable* to it.
-
-Items 4, 5, 6 are progressively more invasive but each remains scoped to a single artifact.
+Items 1 and 3 are done (the half-day each); items 2, 4, 5, 6 are progressively more invasive but each remains scoped to a single artifact.
 
 ---
 
