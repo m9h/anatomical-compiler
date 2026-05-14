@@ -223,6 +223,22 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   `~/Workspace/betse-unified`.
 *(Not a course lab — a reproduction/benchmark artifact, living in `scripts/`:* **`scripts/organoid_hgx_colab.ipynb`** *— the GPU/Colab notebook that runs `hgx` on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → the 7 publication figures → the 5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark). The labs reference it where they touch the real pipeline; it's the "run the whole thing once on a GPU" companion to `scripts/run_all_real.py`.)*
 
+- **`05_5_disentangled_neural_ode.ipynb`** — **Lab 5.5** *(add-on, between Lab 5 and Lab 6)*: the DeepMind
+  face-patch analogue applied to cell-state. The question: does an unsupervised representation
+  learner recover axis-aligned, separable factors of variation in the regulome's latent space,
+  or does it entangle them across dimensions? Trains a vanilla AE and a β-VAE on the same
+  4-factor synthetic, computes per-(latent-dim, true-factor) |Pearson r| under Hungarian
+  permutation alignment, reports the disentanglement gap. β-VAE gives a *modest* gain on
+  the clean linear synthetic (≈+0.06 in the diag-vs-off-diag metric) — the lab is honest
+  about why (linear AEs settle into PCA-like bases from random init; β is a tiebreaker on
+  this regime, not a transformer). The big wins live on nonlinear / sparse-loading / high-dim
+  data — the exercises invite the student to find them. Architecturally: a β·KL term on
+  Lab 5's `hgx` Hypergraph Neural ODE latent would give an interpretable coordinate system
+  for Lab 6's controllability + Lab 8's anatomical compiler. Adds a **fourth identifiability**
+  to the project's diagnostic vocabulary (latent-level, distinct from structural / module /
+  practical — all three of which concern the *system*'s recoverability from data, where this
+  one concerns the *model*'s representation choice on top of it).
+
 - **`11_foundation_model_pipeline.ipynb`** — **Lab 11** *(add-on, post-Lab-10)*: foundation-model priors for
   perturbation prediction. Operationalises [`docs/foundation-models.md`](../docs/foundation-models.md) — the
   catalogue across UCSF (Geneformer, Gladstone), Stanford/CZI/Arc (UCE, Evo 2, Borzoi), Berkeley (scVI
