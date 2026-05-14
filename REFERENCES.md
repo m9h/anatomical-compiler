@@ -160,6 +160,10 @@ Master (human-readable) bibliography for the **anatomical-compiler** project —
 
 99. Fischer F, Fischer DS, Biederstedt E, et al. **scTab: scaling cross-tissue single-cell annotation models.** Theis Lab, 2024. *(cell-type anchoring across datasets.)*
 
+## Modelling guidelines / community standards
+
+99a. Sauro HM, Agmon E, Blinov ML, Gennari JH, Hellerstein J, et al. (42 authors total, COMBINE community). **From FAIR to CURE: Guidelines for Computational Models of Biological Systems.** *arXiv*:2502.15597, 2025. doi:10.48550/arXiv.2502.15597 *(the COMBINE-community position paper on **C**redible, **U**nderstandable, **R**eproducible, **E**xtensible mechanistic models — the standards layer above FAIR. Lead institutions: University of Washington (Sauro / Agmon / Blinov / Gennari), University of Auckland (Hunter), University of Toronto (Bader), Heidelberg University (Bergmann). This project's CURE audit is in [`docs/cure-audit.md`](docs/cure-audit.md); the extractor-manifest pattern in `scripts/fm_*.py` and the [`cpjax`](README.md#bioelectric-layer-companion) Phase-0 `provenance.toml` + SHA-256-manifested trajectory caches are the project's CURE-Reproducible compliance pieces.)*
+
 ## Tools (this work)
 
 100. **hgx** — JAX/Equinox hypergraph neural networks. github.com/m9h/hgx
