@@ -10,13 +10,19 @@ RUN pip install --no-cache-dir \
     'biopython>=1.83'
 
 # Geneformer is HuggingFace-hosted (not on PyPI). The HF git endpoint doesn't
-# work with pip's partial-clone, so we do it in two steps: clone with LFS
-# smudge disabled (skips ~GB of model weights), then pip install the package
-# code. Model weights are fetched at runtime via HF_HOME / snapshot_download.
+# work with pip's partial-clone, so we clone explicitly. LFS handling:
+#   - skip-smudge during clone so we don't pull GB of model weights eagerly,
+#   - then targeted `git lfs pull --include "*.pkl"` to fetch the small dict
+#     files (gene median dict, token dict, Ensembl mapping ~50 MB total)
+#     that geneformer.TranscriptomeTokenizer loads at construction time.
+# Large model weights remain LFS pointers; runtime resolves them via HF_HOME
+# / snapshot_download as usual.
 RUN apt-get update && apt-get install -y --no-install-recommends git git-lfs \
  && git lfs install --skip-smudge \
  && git clone https://huggingface.co/ctheodoris/Geneformer /opt/geneformer \
- && cd /opt/geneformer && pip install --no-cache-dir .
+ && cd /opt/geneformer \
+ && git lfs pull --include "*.pkl" \
+ && pip install --no-cache-dir .
 
 # Evo 1 (Arc Institute) — DNA LM. PyPI has evo-model up to 0.5; the
 # `>=1.1` figure in docs/dgx-spark-setup.md was aspirational for Evo 2,

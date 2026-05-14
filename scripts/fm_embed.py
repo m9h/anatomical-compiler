@@ -72,8 +72,10 @@ MODELS = {
         "checkpoint": "chanzuckerberg/uce",  # HF handle
     },
     "geneformer": {
-        "dim": 512,
-        "axis": "genes",
+        # V2-104M's hidden size is 1152; V1-10M was 512. Real-mode output
+        # follows whichever checkpoint loads — manifest reports actual shape.
+        "dim": 1152,
+        "axis": "cells",  # emb_mode="cls" returns cell-level; "gene" returns gene-level
         "citation": "Theodoris et al. 2023, Nature (Gladstone/UCSF)",
         "checkpoint": "ctheodoris/Geneformer",
     },
