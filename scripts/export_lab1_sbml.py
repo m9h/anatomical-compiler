@@ -298,24 +298,46 @@ def main(argv=None):
     p.add_argument(
         "--no-readme", action="store_true", help="skip emitting the models/README.md index"
     )
+    p.add_argument(
+        "--no-sbml",
+        action="store_true",
+        help="skip the Tellurium-driven SBML round-trip (only emit .ant)",
+    )
     args = p.parse_args(argv)
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"export_lab1_sbml: writing to {out_dir}/")
+    # Try Tellurium for the optional SBML round-trip emission. If absent, the
+    # .ant files alone are the committed artifact and SBML is on-demand.
+    try:
+        import tellurium as te  # noqa: F401
+        have_tellurium = True
+    except ImportError:
+        have_tellurium = False
+
     for c in CIRCUITS:
-        path = out_dir / f"lab1_{c.name}.ant"
+        ant_path = out_dir / f"lab1_{c.name}.ant"
         text = emit_antimony(c)
-        path.write_text(text)
-        print(f"  wrote {path}  ({len(text)} bytes)")
+        ant_path.write_text(text, encoding="utf-8")
+        print(f"  wrote {ant_path}  ({len(text)} bytes)")
+
+        if have_tellurium and not args.no_sbml:
+            sbml_path = out_dir / f"lab1_{c.name}.sbml"
+            sbml_text = te.antimonyToSBML(text)  # type: ignore[name-defined]
+            sbml_path.write_text(sbml_text, encoding="utf-8")
+            print(f"  wrote {sbml_path}  ({len(sbml_text)} bytes)")
 
     if not args.no_readme:
         readme_path = out_dir / "README.md"
-        readme_path.write_text(emit_readme(CIRCUITS))
+        readme_path.write_text(emit_readme(CIRCUITS), encoding="utf-8")
         print(f"  wrote {readme_path}")
 
-    print(f"done — {len(CIRCUITS)} circuits exported.")
+    print(
+        f"done — {len(CIRCUITS)} circuits exported"
+        f"{' (Antimony + SBML)' if have_tellurium and not args.no_sbml else ' (Antimony only — install tellurium for SBML round-trip)'}."
+    )
     return 0
 
 

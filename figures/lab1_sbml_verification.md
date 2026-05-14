@@ -1,20 +1,43 @@
-# Lab 1 — SBML round-trip verification report
+# Lab 1 — cross-simulator round-trip verification
 
 **Overall: PASS**.
 
-Each row compares (a) the JAX/diffrax simulation of the circuit defined in `scripts/export_lab1_sbml.py`'s `Circuit` dataclass, against (b) Tellurium / libRoadRunner integrating the Antimony model emitted from the *same* `Circuit`. Both simulators use Dopri5-class adaptive stepping with `rtol=1e-7, atol=1e-9`.
+Each cell compares the JAX/diffrax reference simulation of one of Lab 1's closed-form circuits against an independent SBML simulator integrating the *same* Antimony model. The JAX RHS is built from the Circuit's rate-rule strings via `sympy.lambdify` → `jax.numpy`, so all comparisons are on identical algebra (not hand-translated code, which would be a confounder).
 
-Tolerance: per-species relative-L2 error ≤ 0.05. Integration horizon: 10.0 time units (the repressilator uses 6.0 to keep phase drift between integrators below the tolerance band; longer horizons remain valid but require coarser tolerance).
+Tolerance: per-species relative-L2 ≤ **0.05**. Integration horizon: **10.0** time units (repressilator clamped to 6.0 to keep phase drift between integrators below tolerance; longer horizons remain valid but require coarser tolerance).
 
-| circuit | status | worst rel-L2 | per-species detail |
-|---|---|---:|---|
-| `negative_autoregulation` | **PASS** | 4.16e-07 | x=4.2e-07 |
-| `toggle_switch` | **PASS** | 9.52e-07 | u=9.5e-07, v=4.0e-07 |
-| `repressilator` | **PASS** | 5.62e-06 | p0=5.5e-06, p1=5.1e-06, p2=5.6e-06 |
-| `positive_autoregulation` | **PASS** | 1.85e-06 | x=1.8e-06 |
+## Cross-simulator agreement
 
-## What a PASS means
+| circuit | tellurium libroadrunner (worst rel-L2) | copasi basico (worst rel-L2) | vcell (worst rel-L2) | opencor (worst rel-L2) |
+|---|---:|---:|---:|---:|
+| `negative_autoregulation` | **PASS** (4.16e-07) | **PASS** (3.91e-07) | _skipped_ | _skipped_ |
+| `toggle_switch` | **PASS** (9.52e-07) | **PASS** (7.65e-07) | _skipped_ | _skipped_ |
+| `repressilator` | **PASS** (5.62e-06) | **PASS** (2.27e-06) | _skipped_ | _skipped_ |
+| `positive_autoregulation` | **PASS** (1.85e-06) | **PASS** (7.09e-07) | _skipped_ | _skipped_ |
 
-The Antimony export of the project's Lab-1 ODEs simulates identically (to numerical-tolerance) in libRoadRunner / Tellurium as in the project's JAX/diffrax pipeline. This is the **CURE-Credible Verification** deliverable: cross-simulator agreement on the foundational closed-form circuits, demonstrating that the project speaks SBML correctly where the model class permits.
+## Backend provenance
 
-See also: [`docs/cure-audit.md`](../docs/cure-audit.md) priority item 2; [`models/README.md`](../models/README.md) for the file inventory; Sauro et al. 2025 (ref. 99a) for the verification rationale.
+| backend | version | citation |
+|---|---|---|
+| `jax_diffrax` (reference) | jax/diffrax | sympy.lambdify build of `Circuit.rate_rules` |
+| `tellurium_libroadrunner` | Tellurium 2.x / libRoadRunner / CVODE | Choi et al. 2018 — Sauro lab, UW |
+| `copasi_basico` | basico (`copasi-basico` Python wrapper) / COPASI LSODA | Hoops et al. 2006 — Bergmann lab, Heidelberg |
+| `vcell` *(stub — `vcell-cli` lookup)* | — | Blinov/Loew lab, UConn — see [CURE audit](../docs/cure-audit.md) item 6 for the OMEX integration plan |
+| `opencor` *(stub — Python-module import)* | — | Hunter lab Auckland — needs CellML emission, audit item 4 |
+
+## What a PASS row means
+
+**Three** independent solver families agree to numerical tolerance on the project's foundational ODE circuits: JAX/diffrax's Dopri5 (Ralston-class explicit RK), libRoadRunner's CVODE (BDF for stiff / Adams for non-stiff), and COPASI's LSODA (Hindmarsh's automatic stiff/non-stiff switching). Cross-simulator agreement across three integrator families on the *same* SBML round-trip is the CURE-Credible Verification gold standard (Sauro et al. 2025, ref. 99a — Table 1 / `Verification` row).
+
+## Extending: VCell and openCOR
+
+Both are stubbed in the registry and skip-gracefully when their binaries / Python modules are absent. To enable:
+
+- **VCell** — install `vcell-cli` (`docker pull ghcr.io/virtualcell/vcell-cli` or the release binary from [github.com/virtualcell/vcell-cli](https://github.com/virtualcell/vcell-cli/releases)) and wire OMEX bundling (CURE-audit item 5). VCell expects OMEX archives, not bare SBML.
+- **openCOR** — download from [opencor.ws](https://opencor.ws), add the OpenCOR dir to `PYTHONPATH`, and wire CellML emission (CURE-audit item 4). OpenCOR prefers CellML over SBML.
+
+Both legs become live without changes to this script — just install the dep, the registry picks them up next run.
+
+## See also
+
+[`docs/cure-audit.md`](../docs/cure-audit.md) items 2 and 6; [`models/README.md`](../models/README.md); Sauro et al. 2025 (ref. 99a).

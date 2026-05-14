@@ -55,14 +55,23 @@ RUN uv sync --frozen --no-install-project
 COPY . .
 RUN uv sync --frozen
 
+# CURE-verification stack: Tellurium / libRoadRunner + COPASI / basico, the two
+# pip-installable independent SBML simulators we use for cross-simulator
+# verification of the Lab-1 closed-form circuits. Adding these to baseline
+# means the verification can run as a Docker build-time smoke test, so a
+# broken Antimony / SBML round-trip fails the image build.
+RUN uv pip install --system tellurium copasi-basico
+
 # Convenience: every script + notebook expects `python3` to mean `uv run python3`.
 ENV PATH="/workspace/anatomical-compiler/.venv/bin:${PATH}"
 
-# Sanity check baked into the build: the project's headline ablation must run
-# clean. If it doesn't, the image is broken and the build fails — which is
-# exactly the kind of CURE-Reproducible guarantee the audit doc calls for.
+# Sanity check baked into the build: the project's headline ablations + the
+# CURE cross-simulator verification must all run clean. If any fails the
+# image is broken and the build fails — that's the CURE-Reproducible
+# guarantee from docs/cure-audit.md.
 RUN python3 scripts/ablate_edge_priors.py --output /tmp/dockersmoke_edges \
  && python3 scripts/ablate_perturb_eig.py --output /tmp/dockersmoke_eig \
+ && python3 scripts/verify_lab1_sbml.py --output /tmp/dockersmoke_sbml \
  && rm -rf /tmp/dockersmoke_*
 
 CMD ["bash"]

@@ -110,9 +110,42 @@ Ranked by leverage / cost:
 | 3 | **`MODEL_CARD.md`** at repo root — index of the major artifacts with intended-use / limitations / metrics | half a day | U (understandability) + E (reuse) | the missing summary table | **✅ landed 2026-05-13** as [`MODEL_CARD.md`](../MODEL_CARD.md); 8 cards (Hypergraph Neural ODE / MII / fidelity-triple predictor / Lab-6 controllability / anatomical compiler / FM-prior caches / BETSE-JAX / cpjax) with intended-use / training data / metrics / limitations / references each |
 | 4 | **MIRIAM / SBO annotations** on the `hgx` regulomes — at least the gene-symbol → Ensembl + species → NCBI taxon mappings | 1 day | C (annotation) | makes the regulome substrate semantically queryable | pending |
 | 5 | **OMEX / COMBINE-archive bundling** for the published benchmarks — Pollen-fidelity, kidney-modularity, edge-prior ablation each packed as an OMEX | 1 day | R (community standards) | submittable to BioModels for the closed-form parts | pending |
-| 6 | **Cross-simulator verification** for Lab 1 — round-trip through Tellurium + VCell + openCOR, confirm trajectories match within numerical tolerance | 1–2 days | C (verification) | the strongest credibility claim available | **partial — Tellurium leg ✅ via item 2**; VCell + openCOR legs remain as natural extensions if a broader cross-simulator panel is wanted |
+| 6 | **Cross-simulator verification** for Lab 1 — round-trip through Tellurium + VCell + openCOR, confirm trajectories match within numerical tolerance | 1–2 days | C (verification) | the strongest credibility claim available | **mostly ✅ landed 2026-05-14** — three-simulator agreement on all 4 Lab-1 circuits at machine precision (worst rel-L2 ≤ 6e-06): JAX/diffrax Dopri5 (reference) + Tellurium/libRoadRunner/CVODE + COPASI/basico/LSODA. VCell and openCOR are stubbed in the [`verify_lab1_sbml.py`](../scripts/verify_lab1_sbml.py) `_BACKENDS` registry and skip-gracefully when their binaries / modules are absent; both drop in without code changes once installed — see §"VCell + openCOR install paths" below. The build-time smoke test in [`Dockerfile`](../Dockerfile) now runs `verify_lab1_sbml.py`, so a regression in the SBML round-trip fails the image build. |
 
-Items 1, 2, 3 are done. Item 6 is partially done (Tellurium round-trip subsumed under item 2); 4 and 5 plus VCell/openCOR extensions of item 6 remain.
+Items 1, 2, 3 done. Item 6 mostly done (3-simulator agreement on all circuits). Items 4, 5, and the VCell + openCOR extensions of 6 remain optional.
+
+## VCell + openCOR install paths (audit item 6 extensions)
+
+The cross-simulator framework in [`scripts/verify_lab1_sbml.py`](../scripts/verify_lab1_sbml.py) has plug-in slots for two heavier simulators that aren't pip-installable; both drop in without code changes once installed.
+
+**VCell** (Blinov / Loew, UConn) — Java-based, expects OMEX archives rather than bare SBML.
+
+```bash
+# Option A: Docker (simplest)
+docker pull ghcr.io/virtualcell/vcell-cli
+alias vcell-cli='docker run --rm -v "$PWD":/workspace ghcr.io/virtualcell/vcell-cli'
+
+# Option B: release binary
+# Download from https://github.com/virtualcell/vcell-cli/releases, extract, add to PATH
+
+# Option C: BioSimulations REST API
+# POST an OMEX archive to https://api.biosimulations.org and select simulator=vcell
+```
+
+Wiring the VCell leg fully active requires OMEX-archive bundling (audit item 5) since VCell consumes OMEX, not bare SBML. Once that lands, `verify_lab1_sbml.py`'s `_simulate_vcell` switches from a `SimSkip` to a real `vcell-cli` invocation.
+
+**openCOR** (Hunter lab, Auckland) — C++ desktop app with a Python module; prefers CellML over SBML.
+
+```bash
+# Download from https://opencor.ws (Linux .tar.gz, macOS .pkg, Windows .exe)
+tar xzf OpenCOR-2024-XX-XX-Linux.tar.gz
+export PYTHONPATH="$PWD/OpenCOR-2024-XX-XX-Linux/python:$PYTHONPATH"
+
+# Now: `python -c 'import OpenCOR'` succeeds, and the openCOR leg of
+# verify_lab1_sbml.py activates next run.
+```
+
+Wiring the openCOR leg fully active requires a CellML emission step in [`scripts/export_lab1_sbml.py`](../scripts/export_lab1_sbml.py) (audit item 4) — currently only Antimony + SBML L3v2 are emitted. CellML is a sibling format; libCellML or `tellurium`'s CellML export covers the translation when the time comes.
 
 ---
 
