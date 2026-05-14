@@ -59,7 +59,8 @@ There is **no existing differentiable Cellular Potts framework**. The mature CP 
 |---|---|---|
 | **CompuCell3D** (Glazier lineage) | C++ core + Python steppables | C++ MC loop opaque to autodiff; Python steppables run per-step, not differentiable through |
 | **Morpheus** (Gerisch/Deutsch lineage) | XML model spec (MorpheusML) + C++ engine | XML→C++ pipeline, no autodiff hook |
-| **PhysiCell** | agent-based, off-lattice | wrong substrate, non-differentiable |
+| **PhysiCell** (Ghaffarizadeh 2018 / Heiland 2024 Studio / Johnson 2025 grammar — refs. 77, 77a, 77c) | agent-based off-lattice, pair-of-spheres + rule-based behaviour | wrong physics substrate (off-lattice not Potts), non-differentiable — but the **PhysiCell grammar** (77c) is a candidate human-readable *compilation target* for [Lab 8](../notebooks/08_anatomical_compiler.ipynb) outputs |
+| **PhysiBoSS 2.0** (Ponce-de-Leon 2023 — ref. 77b) | PhysiCell + per-cell Boolean network via MaBoSS | **the closest existing realisation of the regulome ⇄ form coupling this project flags as deepest gap** — each cell has its own Boolean GRN coupled to its physics; forward-only / non-differentiable, but the architectural precedent for what `cpjax` + the anatomical compiler want |
 | **Chaste** | cell-based C++ framework | non-differentiable |
 | **jax-md** (Schoenholz & Cubuk 2020) | differentiable MD in JAX | wrong physics (continuous, not lattice MC) — but the *architectural template* is the closest precedent |
 | **Growing Neural CA** (Mordvintsev et al. 2020) | learned continuous CA dynamics | learned not parameter-recovering — solves a different inverse problem; useful as a *baseline* for soft-lattice variant (c) |
@@ -67,8 +68,8 @@ There is **no existing differentiable Cellular Potts framework**. The mature CP 
 **Answer: build new, in JAX, validated against existing.** Same pattern as BETSE-JAX:
 
 - *Build* the differentiable engine (`cpjax`), JAX-native, GPU-first, `jax.grad`-able, `lax.scan`-fast.
-- *Use existing* CC3D and Morpheus as **oracles** (forward-parity validation, BioModels test cases).
-- *Ingest* **MorpheusML** as the import format — every BioModels CP entry becomes a differentiable model. This is the COMBINE-ecosystem play, exactly parallel to BETSE-JAX importing SBML/CellML.
+- *Use existing* CC3D and Morpheus as **lattice oracles** (forward-parity validation, BioModels test cases); use **PhysiCell + PhysiBoSS** as the off-lattice / per-cell-GRN architectural precedent (Ponce-de-Leon 2023 — ref. 77b) — different physics, same coupling pattern.
+- *Ingest* **MorpheusML** as the import format — every BioModels CP entry becomes a differentiable model. This is the COMBINE-ecosystem play, exactly parallel to BETSE-JAX importing SBML/CellML. Long-term parallel: a *PhysiCell-grammar* importer (Johnson 2025 — ref. 77c) would let the anatomical compiler emit human-readable rule sentences that round-trip through the existing PhysiCell user base.
 
 ---
 

@@ -310,9 +310,19 @@ know the rest of it.
   The simulators themselves: [**CompuCell3D**](https://compucell3d.org) (Cellular-Potts; its
   [Workshop series](https://compucell3d.org/Workshop26) and [nanoHub-hosted model library](https://compucell3d.org/Models-nanoHub)
   are the de-facto student on-ramp), [**Morpheus**](https://morpheus.gitlab.io) (Cellular-Potts +
-  reaction–diffusion, GUI, SBML/MorpheusML), **PhysiCell** (3-D agent-based, tumour microenvironments),
-  **Chaste** ("Cancer, Heart and Soft Tissue Environment"). They simulate cells *moving, adhering,
-  dividing, signalling in space*; this track is the **regulome / control complement** (`hgx`
+  reaction–diffusion, GUI, SBML/MorpheusML), [**PhysiCell**](https://physicell.org) (3-D agent-based,
+  tumour microenvironments — Ghaffarizadeh 2018, with [**PhysiCell Studio**](https://github.com/MathCancer/PhysiCell-Studio)
+  for no-code authoring (Heiland 2024, ref. 77a) and the **PhysiCell grammar** (Johnson 2025, ref. 77c)
+  as a human-readable behaviour DSL — a candidate compilation target for [Lab 8](08_anatomical_compiler.ipynb)),
+  [**PhysiBoSS 2.0**](https://github.com/PhysiBoSS/PhysiBoSS) (PhysiCell + per-cell Boolean networks
+  via MaBoSS; Ponce-de-Leon 2023, ref. 77b — **the closest existing realisation of the regulome ⇄ form
+  coupling this project flags as its deepest gap**, but forward-only / non-differentiable, hence the
+  `cpjax` plan; tutorial at Ruscone 2024, ref. 77d), **Chaste** ("Cancer, Heart and Soft Tissue
+  Environment"). PhysiCell's HPC-active-learning arm — **EMEWS** (Ozik 2019, ref. 78a) — is the
+  precedent for the project's [`docs/computational-roadmap.md`](../docs/computational-roadmap.md) §2
+  active-learning track and the wet-lab BO loop in [`docs/wetlab-program.md`](../docs/wetlab-program.md).
+  These all simulate cells *moving, adhering, dividing, signalling in space*; this track is the
+  **regulome / control complement** (`hgx`
   hypergraph neural networks + `jaxctrl` control on inferred genome-scale regulomes), interoperating
   with that world *via SBML* at the subcellular layer. A full virtual-tissue curriculum pairs them:
   CC3D / Morpheus for the morphogenesis-and-mechanics labs, this track for "the regulatory program
