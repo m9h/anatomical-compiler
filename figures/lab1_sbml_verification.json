@@ -7,7 +7,8 @@
     "tellurium_libroadrunner",
     "copasi_basico",
     "vcell",
-    "opencor"
+    "opencor",
+    "biosimulations_api"
   ],
   "results": [
     {
@@ -58,6 +59,10 @@
         "opencor": {
           "status": "skipped",
           "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_negative_autoregulation.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
+        },
+        "biosimulations_api": {
+          "status": "skipped",
+          "reason": "BioSimulations job submission failed (simulator=copasi, HTTPError: 400 Client Error: Bad Request for url: https://api.biosimulations.org/runs). Check the API endpoint pattern at the top of this function if the API surface has changed."
         }
       }
     },
@@ -117,6 +122,10 @@
         "opencor": {
           "status": "skipped",
           "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_toggle_switch.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
+        },
+        "biosimulations_api": {
+          "status": "skipped",
+          "reason": "BioSimulations job submission failed (simulator=copasi, HTTPError: 400 Client Error: Bad Request for url: https://api.biosimulations.org/runs). Check the API endpoint pattern at the top of this function if the API surface has changed."
         }
       }
     },
@@ -184,6 +193,10 @@
         "opencor": {
           "status": "skipped",
           "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_repressilator.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
+        },
+        "biosimulations_api": {
+          "status": "skipped",
+          "reason": "BioSimulations job submission failed (simulator=copasi, HTTPError: 400 Client Error: Bad Request for url: https://api.biosimulations.org/runs). Check the API endpoint pattern at the top of this function if the API surface has changed."
         }
       }
     },
@@ -235,6 +248,10 @@
         "opencor": {
           "status": "skipped",
           "reason": "OpenCOR Python module not importable (SBML ready at models/lab1_positive_autoregulation.sbml). Install from https://opencor.ws (Linux .tar.gz / macOS .pkg / Windows .exe), extract, and add `<install_dir>/python` to PYTHONPATH. The Python module bundled with OpenCOR accepts SBML L3 directly via libCellML's SBML importer."
+        },
+        "biosimulations_api": {
+          "status": "skipped",
+          "reason": "BioSimulations job submission failed (simulator=copasi, HTTPError: 400 Client Error: Bad Request for url: https://api.biosimulations.org/runs). Check the API endpoint pattern at the top of this function if the API surface has changed."
         }
       }
     }

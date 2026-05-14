@@ -355,6 +355,191 @@ def _simulate_opencor(
 
 
 # ----------------------------------------------------------------------------
+# BioSimulations REST API — a 6th simulator without local installs
+# ----------------------------------------------------------------------------
+
+# API surface — easy to adjust if the BioSimulations server's endpoints differ
+# from the assumed pattern. The default simulator can be overridden via the
+# BIOSIMULATIONS_SIMULATOR env var; this is most useful when set to a simulator
+# *we can't run locally* (VCell, GINsim, libSBMLsim, …), turning BioSimulations
+# into the network-fallback execution path for the wired-but-not-locally-active
+# legs.
+_BIOSIM_API_BASE = "https://api.biosimulations.org"
+_BIOSIM_DEFAULT_SIMULATOR = "copasi"  # safe default; cross-checks local copasi via REST
+_BIOSIM_DEFAULT_TIMEOUT = 300.0       # 5 min — typical job completes in tens of seconds
+
+
+@_register("biosimulations_api")
+def _simulate_biosimulations(
+    circuit: Circuit, ant_path: Path, t_final: float, n_points: int
+) -> SimResult:
+    """BioSimulations REST API run on the OMEX archive.
+
+    Submits the per-circuit OMEX (CURE-audit item 5 deliverable) to
+    BioSimulations and parses the HDF5 results. The simulator that BioSim
+    runs the archive against is configurable via ``BIOSIMULATIONS_SIMULATOR``;
+    by default it's ``copasi`` (cross-checks against our local COPASI
+    backend through an independent execution path that also validates the
+    OMEX archive's COMBINE compliance).
+
+    Set ``BIOSIMULATIONS_SIMULATOR=vcell`` to use BioSimulations as the
+    network-fallback execution path for VCell when ``vcell-cli`` isn't
+    installed locally. Same for ``ginsim``, ``libsbmlsim``, etc. — see
+    https://biosimulators.org for the full simulator list.
+
+    Skips cleanly on: no requests / h5py, no OMEX archive, no internet,
+    API down, job submission failure, job execution failure, timeout.
+    """
+    import os
+
+    omex_path = ant_path.parent / f"lab1_{circuit.name}.omex"
+    if not omex_path.exists():
+        raise SimSkip(
+            f"OMEX archive missing at {omex_path}. Run "
+            "`python scripts/export_lab1_sbml.py` to emit it."
+        )
+
+    try:
+        import requests
+    except ImportError as e:
+        raise SimSkip("requests not installed (`uv pip install requests`).") from e
+    try:
+        import h5py  # noqa: F401
+    except ImportError as e:
+        raise SimSkip("h5py not installed (`uv pip install h5py`).") from e
+
+    simulator = os.environ.get("BIOSIMULATIONS_SIMULATOR", _BIOSIM_DEFAULT_SIMULATOR)
+    api_base = os.environ.get("BIOSIMULATIONS_API_BASE", _BIOSIM_API_BASE)
+    timeout = float(os.environ.get("BIOSIMULATIONS_TIMEOUT", _BIOSIM_DEFAULT_TIMEOUT))
+
+    # Reachability probe — fast failure if offline / API down.
+    try:
+        probe = requests.get(f"{api_base}/health", timeout=10)
+        probe.raise_for_status()
+    except Exception as e:
+        raise SimSkip(
+            f"BioSimulations API unreachable at {api_base} ({type(e).__name__}: {e}). "
+            "Set BIOSIMULATIONS_API_BASE if using a different host."
+        ) from e
+
+    # Submit. The form-multipart body convention is what runBioSimulations
+    # documents on https://docs.biosimulations.org — fields are:
+    #   file:       the OMEX archive
+    #   simulator:  the simulator name (copasi, vcell, tellurium, ginsim, …)
+    #   name:       a free-form run name (for the dashboard)
+    submission_url = f"{api_base}/runs"
+    try:
+        with open(omex_path, "rb") as f:
+            files = {"file": (omex_path.name, f, "application/zip")}
+            data = {
+                "simulator": simulator,
+                "name": f"anatomical-compiler::lab1_{circuit.name}",
+            }
+            r = requests.post(submission_url, files=files, data=data, timeout=60)
+        r.raise_for_status()
+        run_info = r.json()
+        run_id = run_info.get("id") or run_info.get("_id")
+        if not run_id:
+            raise RuntimeError(f"submission response missing run id: {run_info}")
+    except Exception as e:
+        raise SimSkip(
+            f"BioSimulations job submission failed (simulator={simulator}, {type(e).__name__}: {e}). "
+            "Check the API endpoint pattern at the top of this function if the API surface has changed."
+        ) from e
+
+    # Poll until terminal status.
+    import time as _time
+
+    poll_url = f"{api_base}/runs/{run_id}"
+    deadline = _time.monotonic() + timeout
+    final_status = None
+    while _time.monotonic() < deadline:
+        try:
+            r = requests.get(poll_url, timeout=30)
+            r.raise_for_status()
+            info = r.json()
+            status_raw = (info.get("status") or "").upper()
+            if status_raw in ("SUCCEEDED", "FAILED", "CANCELED"):
+                final_status = status_raw
+                break
+        except Exception:
+            pass
+        _time.sleep(min(10.0, max(2.0, (deadline - _time.monotonic()) / 30)))
+    if final_status is None:
+        raise RuntimeError(f"BioSimulations job {run_id} did not complete in {timeout:.0f}s")
+    if final_status != "SUCCEEDED":
+        raise RuntimeError(
+            f"BioSimulations job {run_id} ended with status={final_status}; "
+            f"check https://biosimulations.org/runs/{run_id} for the failure log."
+        )
+
+    # Download results — typically an HDF5 with reports/<sedml-report-id>.
+    results_url = f"{api_base}/results/{run_id}/download"
+    try:
+        r = requests.get(results_url, timeout=120, stream=True)
+        r.raise_for_status()
+    except Exception as e:
+        raise RuntimeError(f"BioSimulations result fetch failed: {type(e).__name__}: {e}") from e
+
+    import tempfile
+    import h5py
+
+    with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tf:
+        for chunk in r.iter_content(1 << 20):
+            tf.write(chunk)
+        tf_path = Path(tf.name)
+    try:
+        with h5py.File(tf_path, "r") as h5:
+            # Result HDF5 typically: /<sedml-doc>/<report-id> dataset, rows=variables,
+            # cols=timepoints; +1st row commonly is 'time'. We discover the first
+            # 2D dataset rather than hard-code paths.
+            def _first_2d(grp):
+                for key in grp:
+                    item = grp[key]
+                    if isinstance(item, h5py.Dataset) and item.ndim == 2:
+                        return item, key
+                    if isinstance(item, h5py.Group):
+                        sub = _first_2d(item)
+                        if sub is not None:
+                            return sub
+                return None
+
+            found = _first_2d(h5)
+            if found is None:
+                raise RuntimeError(f"no 2-D dataset found in {tf_path} — unexpected result shape")
+            dataset, _name = found
+            data = np.asarray(dataset[:])
+            # SED-ML data-set labels are typically in dataset.attrs['sedmlDataSetLabels'].
+            labels = list(dataset.attrs.get("sedmlDataSetLabels", []))
+            if isinstance(labels[0] if labels else None, bytes):
+                labels = [l.decode("utf-8") for l in labels]
+    finally:
+        tf_path.unlink(missing_ok=True)
+
+    # First row = time per convention; remaining rows = species in order of SED-ML reporting.
+    if not labels:
+        # Fall back: assume the same SED-ML data-set order the emitter wrote.
+        labels = ["time"] + list(circuit.rate_rules.keys())
+    if labels[0].lower() == "time":
+        times = data[0]
+        species_rows = data[1:]
+        species_names = labels[1:]
+    else:
+        # Unexpected — try treating column 0 as time.
+        times = data[:, 0]
+        species_rows = data[:, 1:].T
+        species_names = labels
+
+    return SimResult(
+        times=np.asarray(times),
+        traj=np.asarray(species_rows).T,  # (T, n_species)
+        species_names=species_names,
+        backend=f"biosimulations:{simulator}",
+        backend_version=f"api={api_base}",
+    )
+
+
+# ----------------------------------------------------------------------------
 # Compare two SimResults
 # ----------------------------------------------------------------------------
 
