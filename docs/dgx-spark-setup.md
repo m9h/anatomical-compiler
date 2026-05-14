@@ -28,7 +28,7 @@ Assuming a clean Ubuntu environment with `uv` and CUDA drivers in place:
 
 ```bash
 # Project deps (existing):
-cd ~/Workspace/anatomical-compiler
+cd ~/dev/anatomical-compiler
 uv sync
 
 # Foundation-model deps (real-mode only — stubs need nothing extra):
