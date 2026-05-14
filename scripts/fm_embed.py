@@ -194,45 +194,203 @@ _STUBS = {
 
 
 def _real_uce(adata, dim: int, seed: int) -> np.ndarray:
-    """Universal Cell Embedding (Stanford + CZI). Lazy-imports the official package."""
-    try:
-        # The CZI release ships under `uce` or `cellxgene_census` depending on
-        # version; we keep the import permissive and surface a clear error.
-        import uce  # type: ignore
-    except ImportError as e:
+    """Universal Cell Embedding (Stanford + CZI).
+
+    UCE has no clean in-process Python API: the upstream entry is
+    `eval_single_anndata.py`, which reads an h5ad, runs the encoder, and
+    writes an h5ad with embeddings in `.obsm["X_uce"]`. We invoke that
+    script as a subprocess and read the result back.
+
+    Required env:
+        UCE_REPO       path to the cloned snap-stanford/UCE repository
+                       (containing eval_single_anndata.py).
+        UCE_MODEL_LOC  path to the model `.torch` checkpoint
+                       (e.g. .../4layer_model.torch). Defaults to the path
+                       the script auto-downloads if unset.
+        UCE_SPECIES    species string for the dataset (default "human").
+    """
+    import os
+    import subprocess
+    import sys
+    import tempfile
+    from pathlib import Path
+    import anndata as ad
+
+    uce_repo = os.environ.get("UCE_REPO")
+    if not uce_repo:
         raise RuntimeError(
-            "UCE real-mode requires the `uce` package: pip install uce-models. "
-            "Fall back to --mode stub for tutorial/smoke-test use."
-        ) from e
-    # Implementation note: the official UCE API is `uce.embed(adata)` returning
-    # an (n_cells, 1280) array. We do not exercise this in the smoke-tested path.
-    return uce.embed(adata)  # type: ignore[attr-defined]
+            "UCE real-mode needs UCE_REPO pointing to the snap-stanford/UCE repo "
+            "(eval_single_anndata.py lives there). Inside the FM container the repo "
+            "is cloned to /opt/UCE; set UCE_REPO=/opt/UCE."
+        )
+    script = Path(uce_repo) / "eval_single_anndata.py"
+    if not script.exists():
+        raise RuntimeError(f"UCE script not found: {script}")
+
+    species = os.environ.get("UCE_SPECIES", "human")
+    model_loc = os.environ.get("UCE_MODEL_LOC")
+    batch_size = int(os.environ.get("UCE_BATCH_SIZE", "100"))
+
+    with tempfile.TemporaryDirectory(prefix="uce_") as work:
+        work = Path(work)
+        in_path = work / "input.h5ad"
+        adata.write_h5ad(in_path)
+
+        cmd = [
+            sys.executable, str(script),
+            "--adata_path", str(in_path),
+            "--dir", str(work),
+            "--species", species,
+            "--batch_size", str(batch_size),
+        ]
+        if model_loc:
+            cmd += ["--model_loc", model_loc]
+        subprocess.run(cmd, check=True, cwd=uce_repo)
+
+        # UCE writes <stem>_uce_adata.h5ad with X_uce in .obsm
+        out = next(work.glob("*_uce_adata.h5ad"), None)
+        if out is None:
+            raise RuntimeError(f"UCE produced no output h5ad in {work}")
+        ad_out = ad.read_h5ad(out)
+        if "X_uce" not in ad_out.obsm:
+            raise RuntimeError("UCE output h5ad has no obsm['X_uce']")
+        return np.asarray(ad_out.obsm["X_uce"], dtype=np.float32)
 
 
 def _real_geneformer(adata, dim: int, seed: int) -> np.ndarray:
-    """Geneformer (UCSF/Gladstone). Lazy-imports `geneformer`."""
+    """Geneformer (UCSF/Gladstone).
+
+    The actual API is two-stage: `TranscriptomeTokenizer.tokenize_data()`
+    writes a HuggingFace Dataset of rank-value-encoded sequences to disk,
+    and `EmbExtractor.extract_embs()` consumes that dataset and writes
+    embeddings out. We orchestrate both in a temp dir and return numpy.
+
+    Requirements:
+        - adata.var must contain "ensembl_id" (we synthesise it if var_names
+          are already Ensembl IDs).
+        - adata.obs must contain "n_counts" (we compute it if missing).
+    """
     try:
-        from geneformer import EmbExtractor  # type: ignore
+        from geneformer import EmbExtractor, TranscriptomeTokenizer  # type: ignore
     except ImportError as e:
         raise RuntimeError(
-            "Geneformer real-mode requires the `geneformer` package "
-            "(https://huggingface.co/ctheodoris/Geneformer). Fall back to "
-            "--mode stub for tutorial/smoke-test use."
+            "Geneformer real-mode requires `pip install geneformer`. "
+            "Available in the FM container (Dockerfile.fm)."
         ) from e
-    extractor = EmbExtractor(model_type="Pretrained", emb_mode="gene")
-    return extractor.extract_embs(adata)  # implementation pinned to model card
+
+    import os
+    import tempfile
+    from pathlib import Path
+
+    adata = adata.copy()
+    # Ensure ensembl_id column — Geneformer's tokenizer keys on it.
+    if "ensembl_id" not in adata.var.columns:
+        names = list(adata.var_names[:10])
+        if all(n.startswith(("ENSG", "ENSMUSG", "ENSRNOG")) for n in names):
+            adata.var["ensembl_id"] = adata.var_names
+        else:
+            raise RuntimeError(
+                "Geneformer requires Ensembl IDs in adata.var['ensembl_id']. "
+                "Map gene symbols to Ensembl IDs first (e.g. via mygene or biomart)."
+            )
+    if "n_counts" not in adata.obs.columns:
+        X = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
+        adata.obs["n_counts"] = X.sum(axis=1).astype(np.float32)
+
+    model_dir = os.environ.get("GENEFORMER_MODEL", "ctheodoris/Geneformer")
+    forward_batch_size = int(os.environ.get("GENEFORMER_BATCH", "64"))
+    emb_mode = os.environ.get("GENEFORMER_EMB_MODE", "cls")  # cls = cell
+
+    with tempfile.TemporaryDirectory(prefix="geneformer_") as work:
+        work = Path(work)
+        h5_dir = work / "h5ad"
+        h5_dir.mkdir()
+        adata.write_h5ad(h5_dir / "input.h5ad")
+
+        tok_dir = work / "tok"
+        tok_dir.mkdir()
+        tokenizer = TranscriptomeTokenizer()
+        tokenizer.tokenize_data(
+            data_directory=str(h5_dir),
+            output_directory=str(tok_dir),
+            output_prefix="input",
+            file_format="h5ad",
+        )
+
+        emb_dir = work / "emb"
+        emb_dir.mkdir()
+        extractor = EmbExtractor(
+            model_type="Pretrained",
+            num_classes=0,
+            emb_mode=emb_mode,
+            max_ncells=None,
+            emb_layer=-1,
+            forward_batch_size=forward_batch_size,
+        )
+        result = extractor.extract_embs(
+            model_directory=model_dir,
+            input_data_file=str(tok_dir / "input.dataset"),
+            output_directory=str(emb_dir),
+            output_prefix="emb",
+            output_torch_embs=True,
+        )
+        # (embs_df, torch_embs, avg_attentions) when output_torch_embs=True
+        torch_embs = result[1] if isinstance(result, tuple) and len(result) >= 2 else result
+        return torch_embs.detach().cpu().numpy().astype(np.float32)
 
 
 def _real_scgpt(adata, dim: int, seed: int) -> np.ndarray:
-    """scGPT (Toronto/Vector). Lazy-imports `scgpt`."""
+    """scGPT (Toronto/Vector).
+
+    Uses `scgpt.tasks.embed_data` (the modern public entry point). Returns
+    cell-level embeddings; reads them back from `obsm['X_scGPT']` of the
+    returned AnnData.
+
+    Required env:
+        SCGPT_MODEL_DIR  directory holding the scGPT checkpoint
+                         (args.json, vocab.json, best_model.pt).
+        SCGPT_GENE_COL   column in adata.var holding gene identifiers
+                         (default "feature_name"; fall back to var_names).
+    """
     try:
-        import scgpt  # type: ignore
+        from scgpt.tasks import embed_data  # type: ignore
     except ImportError as e:
         raise RuntimeError(
-            "scGPT real-mode requires the `scgpt` package "
-            "(https://github.com/bowang-lab/scGPT). Fall back to --mode stub."
+            "scGPT real-mode requires `pip install git+https://github.com/bowang-lab/scGPT`. "
+            "Available in the FM container (Dockerfile.fm)."
         ) from e
-    return scgpt.embed_cells(adata)  # type: ignore[attr-defined]
+
+    import os
+    from pathlib import Path
+
+    model_dir = os.environ.get("SCGPT_MODEL_DIR")
+    if not model_dir or not Path(model_dir).exists():
+        raise RuntimeError(
+            "scGPT real-mode needs SCGPT_MODEL_DIR pointing to the checkpoint "
+            "(must contain args.json, vocab.json, best_model.pt). "
+            "Pre-fetch via `huggingface-cli download subercui/scGPT_human`."
+        )
+
+    gene_col = os.environ.get("SCGPT_GENE_COL", "feature_name")
+    if gene_col not in adata.var.columns:
+        # Fall back to var_names — embed_data requires the column to exist.
+        adata = adata.copy()
+        adata.var[gene_col] = adata.var_names
+
+    batch_size = int(os.environ.get("SCGPT_BATCH", "64"))
+    device = os.environ.get("SCGPT_DEVICE", "cuda")
+
+    out = embed_data(
+        adata,
+        model_dir=model_dir,
+        gene_col=gene_col,
+        batch_size=batch_size,
+        device=device,
+        return_new_adata=True,
+    )
+    if "X_scGPT" not in out.obsm:
+        raise RuntimeError("scGPT output AnnData has no obsm['X_scGPT']")
+    return np.asarray(out.obsm["X_scGPT"], dtype=np.float32)
 
 
 _REAL = {

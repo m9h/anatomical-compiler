@@ -1,0 +1,84 @@
+FROM nvcr.io/nvidia/pytorch:26.04-py3
+
+# Foundation-model deps. Layered so a failure on one model package doesn't force
+# the rest to re-install.
+
+# transformers + biopython from PyPI. Pin transformers<5 — Geneformer was
+# written against 4.x and the 5.x release line has breaking changes.
+RUN pip install --no-cache-dir \
+    'transformers>=4.40,<5' \
+    'biopython>=1.83'
+
+# Geneformer is HuggingFace-hosted (not on PyPI). The HF git endpoint doesn't
+# work with pip's partial-clone, so we do it in two steps: clone with LFS
+# smudge disabled (skips ~GB of model weights), then pip install the package
+# code. Model weights are fetched at runtime via HF_HOME / snapshot_download.
+RUN apt-get update && apt-get install -y --no-install-recommends git git-lfs \
+ && git lfs install --skip-smudge \
+ && git clone https://huggingface.co/ctheodoris/Geneformer /opt/geneformer \
+ && cd /opt/geneformer && pip install --no-cache-dir .
+
+# Evo 1 (Arc Institute) — DNA LM. PyPI has evo-model up to 0.5; the
+# `>=1.1` figure in docs/dgx-spark-setup.md was aspirational for Evo 2,
+# which isn't on PyPI yet.
+RUN pip install --no-cache-dir evo-model
+
+# Borzoi (Calico/Kundaje) — sequence→track predictor
+RUN pip install --no-cache-dir borzoi-pytorch
+
+# scGPT — editable install from upstream (lab repo, no PyPI release of recent versions)
+RUN pip install --no-cache-dir 'git+https://github.com/bowang-lab/scGPT'
+
+# UCE — research repo without a setup.py; clone and rely on UCE_REPO env var
+# pointing to /opt/UCE. The _real_uce backend in scripts/fm_embed.py subprocesses
+# /opt/UCE/eval_single_anndata.py.
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+ && git clone --depth 1 https://github.com/snap-stanford/UCE.git /opt/UCE \
+ && pip install --no-cache-dir -r /opt/UCE/requirements.txt || true
+ENV UCE_REPO=/opt/UCE
+
+# anndata + scanpy (the host venv has these; we want them inside the container too
+# so the real backends can read the same h5ad inputs)
+RUN pip install --no-cache-dir \
+    'anndata>=0.10' \
+    'scanpy>=1.10' \
+    numpy \
+    pandas
+
+# NGC's apex package dropped the `apex.amp` submodule (modern code uses torch.amp).
+# transformers.trainer still does `from apex import amp` when it detects apex exists,
+# which breaks `import geneformer`. Shim apex.amp with no-op stubs — we use bf16
+# autocast everywhere, never the apex.fp16 pathway.
+RUN python -c "import apex.amp" 2>/dev/null || ( \
+    APEX_DIR=$(python -c "import apex, os; print(os.path.dirname(apex.__file__))") \
+ && printf '%s\n' \
+    '"""Shim — NGC apex lacks the legacy amp submodule. transformers.trainer expects it"""' \
+    '"""even when fp16 isn\x27t used. Functions below are no-ops; the actual mixed-precision"""' \
+    '"""path goes through torch.amp / autocast in modern code."""' \
+    'from contextlib import contextmanager' \
+    '' \
+    'def initialize(model, optimizer=None, **kwargs):' \
+    '    return (model, optimizer) if optimizer is not None else model' \
+    '' \
+    '@contextmanager' \
+    'def scale_loss(loss, optimizer, **kwargs):' \
+    '    yield loss' \
+    '' \
+    'def master_params(optimizer):' \
+    '    for group in optimizer.param_groups:' \
+    '        yield from group["params"]' \
+    '' \
+    'def state_dict():' \
+    '    return {}' \
+    '' \
+    'def load_state_dict(_):' \
+    '    return None' \
+    > "$APEX_DIR/amp.py" )
+
+# Smoke test imports at build time — fail loudly if any package is broken
+RUN python -c "import transformers, Bio, geneformer; print('geneformer/transformers/biopython OK')"
+RUN python -c "import borzoi_pytorch; print('borzoi_pytorch OK')" || echo "WARN: borzoi_pytorch import failed"
+RUN python -c "import evo; print('evo OK')" || echo "WARN: evo import failed"
+RUN python -c "import scgpt; print('scgpt OK')" || echo "WARN: scgpt import failed"
+
+WORKDIR /workspace
