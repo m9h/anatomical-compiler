@@ -55,6 +55,15 @@ KIDNEY_INJURY_TFS = [
     "CDH1", "CD44", "ATF3", "MYC", "TP53",
 ]
 
+# Default driver / stress panels for the multi-component training loss.
+# These are the TFs the paper (paper.Rnw §3) calls out as the homeostatic /
+# regenerative drivers vs the transient injury responders.  They're used
+# both here (when --use-trainer is on) and as the CLI defaults in
+# scripts/train_hg_neural_ode.py -- imported from this module so the
+# canonical panel definition lives in one place.
+DEFAULT_DRIVERS = ["LHX1", "PAX2", "PAX8", "SIX1", "SIX2", "WT1", "FOXC2", "CDH1", "HNF4A"]
+DEFAULT_STRESS = ["FOS", "JUN", "ATF3", "CD44"]
+
 
 def _resolve_symbols(adata, symbols):
     """Resolve gene symbols across human (UPPER) and mouse (Title) conventions."""
@@ -100,36 +109,202 @@ def build_tf_trajectory(adata, tf_panel, time_col, n_bins=5):
     return times, arr[:, :, None].astype(np.float32)
 
 
-def fit_regenerative_ode(trajectories, epochs, key):
-    """Fit Hypergraph Neural ODE on TF trajectory; return per-TF rollout MSE."""
+def _panel_idx_in_tf_panel(tf_panel, names):
+    """Return positions within ``tf_panel`` of each name in ``names``.
+
+    Tries the literal symbol, then Title-case, then lower-case, matching
+    the gene-symbol resolution policy in :func:`_resolve_symbols`.  The
+    output indices are positions in ``tf_panel`` (the model's node axis),
+    not adata var indices.
+    """
+    panel_index = {v: i for i, v in enumerate(tf_panel)}
+    out = []
+    for s in names:
+        for candidate in (s, s.title(), s.lower()):
+            if candidate in panel_index:
+                out.append(panel_index[candidate])
+                break
+    return out
+
+
+def fit_regenerative_ode(
+    trajectories,
+    epochs,
+    key,
+    *,
+    tf_panel=None,
+    drivers=None,
+    stress=None,
+    lr=1e-3,
+    loss_weights=None,
+    legacy=False,
+):
+    """Fit Hypergraph Neural ODE on a TF trajectory and return per-TF rollout MSE.
+
+    Default behaviour now routes through
+    :func:`anatomical_compiler.training.train_hg_neural_ode`, which adds
+    weighted driver / stress losses, NaN-protected updates, gradient
+    clipping, parameter clamping, and a per-epoch components history on
+    top of the bare hgx fit.  Pass ``legacy=True`` to fall back to the
+    original ``hgx.fit_neural_ode`` call for A/B comparison.
+
+    The return dict preserves the original keys (``elapsed_sec``,
+    ``per_tf_mse``, ``pred``, ``obs``) so callers like ``paper.Rnw`` keep
+    working unchanged; new keys (``loss_history``, ``final_components``,
+    ``driver_panel``, ``stress_panel``) are added on top.
+
+    Args:
+        trajectories: ``(T, N, D)`` TF trajectory.
+        epochs: Number of training epochs.
+        key: JAX PRNG key (forwarded to the conv layer init).
+        tf_panel: Optional list of TF symbols ordered along the ``N`` axis;
+            required for driver / stress panel resolution.  If ``None``,
+            driver and stress weightings degenerate to zero (equivalent
+            to the legacy plain-MSE objective).
+        drivers: Optional list of TF symbols marked as regenerative
+            drivers (extra weight on their MSE).  Defaults to
+            :data:`DEFAULT_DRIVERS`.
+        stress: Optional list of TF symbols marked as stress responders
+            (soft-hinge penalty when their MSE is too small).  Defaults
+            to :data:`DEFAULT_STRESS`.
+        lr: Adam learning rate.
+        loss_weights: Optional dict overriding any of ``w_rollout``,
+            ``w_driver``, ``w_stress``, ``w_smooth``, ``w_uniformity``,
+            ``w_reg``, ``stress_margin``.  Anything not provided uses the
+            ``TrainingConfig`` defaults.
+        legacy: If True, run the original bare ``hgx.fit_neural_ode`` and
+            return only the legacy keys (no ``loss_history`` etc.).
+
+    Returns:
+        dict, or ``None`` if hgx / diffrax are unavailable.
+    """
     if not (HAS_HGX and HAS_DIFFRAX):
         return None
+
+    import diffrax  # local import: keeps top-of-module HAS_DIFFRAX gating
     T, N, D = trajectories.shape
+
     # All-pairs incidence -> single hyperedge containing all TFs (the regulome)
     incidence = jnp.ones((N, 1), dtype=jnp.float32)
-    snaps = [hgx.from_incidence(incidence, node_features=jnp.array(trajectories[t])) for t in range(T)]
+    snaps = [
+        hgx.from_incidence(incidence, node_features=jnp.array(trajectories[t]))
+        for t in range(T)
+    ]
     times = jnp.linspace(0.0, 1.0, T)
     temp_hg = hgx.from_snapshots(snaps, times=times)
 
     k1, k2 = jax.random.split(key)
     conv = hgx.UniGCNConv(D, D, key=k1)
-    print(f"  Fitting Neural ODE over T={T} timepoints, N={N} TFs (epochs={epochs})...")
+
+    if legacy:
+        print(f"  [legacy fit] Fitting Neural ODE over T={T} timepoints, "
+              f"N={N} TFs (epochs={epochs})...")
+        t0 = time.time()
+        ode = hgx.fit_neural_ode(temp_hg, conv, key=k2, epochs=epochs, lr=lr)
+        elapsed = time.time() - t0
+        print(f"  Training time: {elapsed:.1f}s")
+        sol = ode(snaps[0], t0=0.0, t1=1.0,
+                  saveat=diffrax.SaveAt(ts=times[1:]))
+        pred = np.asarray(sol.ys)
+        obs = trajectories[1:]
+        per_tf_mse = ((pred - obs) ** 2).mean(axis=(0, 2))
+        return {
+            "elapsed_sec": elapsed,
+            "per_tf_mse": per_tf_mse.tolist(),
+            "pred": pred.squeeze(-1).tolist(),
+            "obs": obs.squeeze(-1).tolist(),
+            "trainer": "legacy",
+        }
+
+    # --- New path: multi-component training loop ---
+    from hgx._dynamics import HypergraphNeuralODE
+    from anatomical_compiler.training import (
+        TrainingConfig, train_hg_neural_ode,
+    )
+
+    driver_names = list(drivers) if drivers is not None else list(DEFAULT_DRIVERS)
+    stress_names = list(stress) if stress is not None else list(DEFAULT_STRESS)
+    if tf_panel is None:
+        # Without a TF-symbol panel we can't map driver/stress names to
+        # node indices; fall back to plain rollout MSE.
+        driver_idx, stress_idx = [], []
+        driver_resolved, stress_resolved = [], []
+    else:
+        driver_idx = _panel_idx_in_tf_panel(tf_panel, driver_names)
+        stress_idx = _panel_idx_in_tf_panel(tf_panel, stress_names)
+        driver_resolved = [tf_panel[i] for i in driver_idx]
+        stress_resolved = [tf_panel[i] for i in stress_idx]
+
+    weights = dict(
+        w_rollout=1.0, w_driver=1.0, w_stress=0.5,
+        w_smooth=0.05, w_uniformity=0.1, w_reg=1e-4,
+        stress_margin=0.05,
+    )
+    if loss_weights:
+        weights.update(loss_weights)
+
+    cfg = TrainingConfig(
+        n_epochs=epochs,
+        learning_rate=lr,
+        log_every=max(epochs // 10, 1),
+        **weights,
+    )
+
+    print(
+        f"  Fitting Neural ODE over T={T} timepoints, N={N} TFs "
+        f"(epochs={epochs}, drivers={len(driver_idx)}, stress={len(stress_idx)})..."
+    )
+
+    model = HypergraphNeuralODE(conv)
+    hg0 = snaps[0]
+    target = jnp.asarray(trajectories[1:])
+    target_times = times[1:]
+
+    def forward(m):
+        sol = m(hg0, t0=0.0, t1=1.0,
+                saveat=diffrax.SaveAt(ts=target_times))
+        return sol.ys
+
     t0 = time.time()
-    ode = hgx.fit_neural_ode(temp_hg, conv, key=k2, epochs=epochs, lr=1e-3)
+    result = train_hg_neural_ode(
+        model,
+        forward=forward,
+        target=target,
+        driver_idx=jnp.asarray(driver_idx, dtype=jnp.int32),
+        stress_idx=jnp.asarray(stress_idx, dtype=jnp.int32),
+        config=cfg,
+    )
     elapsed = time.time() - t0
     print(f"  Training time: {elapsed:.1f}s")
 
-    # Per-TF rollout from t=0
-    sol = ode(snaps[0], t0=0.0, t1=1.0, saveat=__import__("diffrax").SaveAt(ts=times[1:]))
-    pred = np.asarray(sol.ys)  # (T-1, N, D)
-    obs = trajectories[1:]
+    pred = np.asarray(forward(result.model))
+    obs = np.asarray(target)
     per_tf_mse = ((pred - obs) ** 2).mean(axis=(0, 2))
+
+    # Keep the history compact in JSON: just every record's scalar fields.
+    # bl1's train_culture.py logs the whole list -- we do too.
+    final_components = result.loss_history[-1] if result.loss_history else {}
+
     return {
         "elapsed_sec": elapsed,
         "per_tf_mse": per_tf_mse.tolist(),
         "pred": pred.squeeze(-1).tolist(),
         "obs": obs.squeeze(-1).tolist(),
+        "trainer": "anatomical_compiler.training.train_hg_neural_ode",
+        "loss_history": result.loss_history,
+        "final_components": final_components,
+        "driver_panel": driver_resolved,
+        "stress_panel": stress_resolved,
+        "nan_epochs": result.nan_epochs,
+        "loss_weights": weights,
     }
+
+
+def _parse_panel(arg, default):
+    """Parse a comma-separated CLI panel argument; fall back to ``default``."""
+    if arg is None:
+        return list(default)
+    return [s.strip() for s in arg.split(",") if s.strip()]
 
 
 def main():
@@ -143,6 +318,26 @@ def main():
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out-fig", default="figures/regenerative_flow.png")
     parser.add_argument("--out-json", default="figures/regenerative_flow_results.json")
+
+    # Multi-component training (anatomical_compiler.training)
+    parser.add_argument("--legacy-fit", action="store_true",
+                        help="Use the bare hgx.fit_neural_ode path instead of "
+                             "the multi-component training loop (A/B comparison).")
+    parser.add_argument("--drivers", default=None,
+                        help=f"Driver TF panel (comma-separated). Default: "
+                             f"{','.join(DEFAULT_DRIVERS)}.")
+    parser.add_argument("--stress", default=None,
+                        help=f"Stress responder panel (comma-separated). Default: "
+                             f"{','.join(DEFAULT_STRESS)}.")
+    parser.add_argument("--lr", type=float, default=1e-3,
+                        help="Adam learning rate.")
+    parser.add_argument("--w-rollout", type=float, default=1.0)
+    parser.add_argument("--w-driver", type=float, default=1.0)
+    parser.add_argument("--w-stress", type=float, default=0.5)
+    parser.add_argument("--w-smooth", type=float, default=0.05)
+    parser.add_argument("--w-uniformity", type=float, default=0.1)
+    parser.add_argument("--w-reg", type=float, default=1e-4)
+    parser.add_argument("--stress-margin", type=float, default=0.05)
     args = parser.parse_args()
 
     adata_path = Path(args.input)
@@ -188,22 +383,60 @@ def main():
 
         if HAS_HGX and HAS_DIFFRAX:
             key = jax.random.PRNGKey(args.seed)
-            ode_out = fit_regenerative_ode(traj, args.epochs, key)
+            drivers = _parse_panel(args.drivers, DEFAULT_DRIVERS)
+            stress = _parse_panel(args.stress, DEFAULT_STRESS)
+            loss_weights = dict(
+                w_rollout=args.w_rollout,
+                w_driver=args.w_driver,
+                w_stress=args.w_stress,
+                w_smooth=args.w_smooth,
+                w_uniformity=args.w_uniformity,
+                w_reg=args.w_reg,
+                stress_margin=args.stress_margin,
+            )
+            ode_out = fit_regenerative_ode(
+                traj, args.epochs, key,
+                tf_panel=tf_panel,
+                drivers=drivers,
+                stress=stress,
+                lr=args.lr,
+                loss_weights=loss_weights,
+                legacy=args.legacy_fit,
+            )
             if ode_out is not None:
+                # paper.Rnw reads J$regen$ode$per_tf_mse and
+                # J$regen$ode$elapsed_sec -- those keys MUST stay.
                 results["ode"] = {
                     "elapsed_sec": ode_out["elapsed_sec"],
                     "per_tf_mse": dict(zip(tf_panel, ode_out["per_tf_mse"])),
+                    "trainer": ode_out.get("trainer", "legacy"),
                 }
+                # New multi-component-training fields, added on top.
+                for k in ("loss_history", "final_components", "driver_panel",
+                          "stress_panel", "nan_epochs", "loss_weights"):
+                    if k in ode_out:
+                        results["ode"][k] = ode_out[k]
+
                 # Lowest MSE = TFs whose flow the ODE captures best (drivers
-                # of stable regenerative trajectory)
+                # of stable regenerative trajectory).
                 ranked = sorted(
                     zip(tf_panel, ode_out["per_tf_mse"]), key=lambda x: x[1]
                 )
                 results["regenerative_drivers"] = [
                     {"tf": tf, "rollout_mse": float(mse)} for tf, mse in ranked[:8]
                 ]
-                # Plot
-                fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+                # The dual ranking -- highest MSE = transient injury markers
+                # the autonomous flow does NOT capture (this is the
+                # stress-responder bucket the paper calls out).
+                results["transient_responders"] = [
+                    {"tf": tf, "rollout_mse": float(mse)} for tf, mse in ranked[-4:]
+                ]
+
+                # --- Plot ---
+                n_panels = 3 if "loss_history" in ode_out else 2
+                fig, axes = plt.subplots(1, n_panels, figsize=(6.5 * n_panels, 5))
+                if n_panels == 2:
+                    axes = list(axes)
                 obs = np.array(ode_out["obs"])  # (T-1, N)
                 pred = np.array(ode_out["pred"])
                 for i, tf in enumerate(tf_panel[:6]):
@@ -219,6 +452,26 @@ def main():
                              [m for _, m in top][::-1], color="forestgreen")
                 axes[1].set_xlabel("Rollout MSE (lower → better captured)")
                 axes[1].set_title("Regenerative drivers")
+
+                if "loss_history" in ode_out and ode_out["loss_history"]:
+                    hist = ode_out["loss_history"]
+                    epochs_x = [r["epoch"] for r in hist]
+                    axes[2].plot(epochs_x, [r["total"] for r in hist],
+                                 "k-", lw=2, label="total")
+                    axes[2].plot(epochs_x, [r["rollout_mse"] for r in hist],
+                                 "C0--", label="rollout")
+                    if any(r["driver_mse"] > 0 for r in hist):
+                        axes[2].plot(epochs_x, [r["driver_mse"] for r in hist],
+                                     "C2--", label="driver")
+                    if any(r["stress_hinge"] > 0 for r in hist):
+                        axes[2].plot(epochs_x, [r["stress_hinge"] for r in hist],
+                                     "C3--", label="stress")
+                    axes[2].set_xlabel("Epoch")
+                    axes[2].set_ylabel("Loss")
+                    axes[2].set_yscale("log")
+                    axes[2].set_title("Training loss components")
+                    axes[2].legend(fontsize=8)
+
                 plt.tight_layout()
                 Path(args.out_fig).parent.mkdir(parents=True, exist_ok=True)
                 plt.savefig(args.out_fig, dpi=200, bbox_inches="tight")
