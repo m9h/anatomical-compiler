@@ -1,0 +1,100 @@
+{
+  "tolerance": 0.05,
+  "t_final": 10.0,
+  "n_points": 501,
+  "overall": "pass",
+  "results": [
+    {
+      "name": "negative_autoregulation",
+      "status": "ok",
+      "ant_path": "models/lab1_negative_autoregulation.ant",
+      "t_final": 10.0,
+      "n_points": 501,
+      "species": [
+        "x"
+      ],
+      "per_species_relative_l2": {
+        "x": 4.162775546290085e-07
+      },
+      "total_relative_l2": 4.162775546290085e-07,
+      "final_state_jax": [
+        1.5159802436828613
+      ],
+      "final_state_tellurium": [
+        1.5159802954786472
+      ]
+    },
+    {
+      "name": "toggle_switch",
+      "status": "ok",
+      "ant_path": "models/lab1_toggle_switch.ant",
+      "t_final": 10.0,
+      "n_points": 501,
+      "species": [
+        "u",
+        "v"
+      ],
+      "per_species_relative_l2": {
+        "u": 9.524170686812274e-07,
+        "v": 4.0339269887556717e-07
+      },
+      "total_relative_l2": 4.044802752365893e-07,
+      "final_state_jax": [
+        0.06166388839483261,
+        3.9989194869995117
+      ],
+      "final_state_tellurium": [
+        0.061663876978510154,
+        3.9989152535417753
+      ]
+    },
+    {
+      "name": "repressilator",
+      "status": "ok",
+      "ant_path": "models/lab1_repressilator.ant",
+      "t_final": 6.0,
+      "n_points": 501,
+      "species": [
+        "p0",
+        "p1",
+        "p2"
+      ],
+      "per_species_relative_l2": {
+        "p0": 5.5434153185692096e-06,
+        "p1": 5.140829630493157e-06,
+        "p2": 5.61513847871502e-06
+      },
+      "total_relative_l2": 5.429209848185757e-06,
+      "final_state_jax": [
+        1.7789487838745117,
+        3.392400026321411,
+        1.1616148948669434
+      ],
+      "final_state_tellurium": [
+        1.7789224373912207,
+        3.392427246637028,
+        1.1616253277689361
+      ]
+    },
+    {
+      "name": "positive_autoregulation",
+      "status": "ok",
+      "ant_path": "models/lab1_positive_autoregulation.ant",
+      "t_final": 10.0,
+      "n_points": 501,
+      "species": [
+        "x"
+      ],
+      "per_species_relative_l2": {
+        "x": 1.845323156180253e-06
+      },
+      "total_relative_l2": 1.845323156180253e-06,
+      "final_state_jax": [
+        0.20752716064453125
+      ],
+      "final_state_tellurium": [
+        0.20752714254342583
+      ]
+    }
+  ]
+}

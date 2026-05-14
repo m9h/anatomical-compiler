@@ -6,7 +6,7 @@ Required reading: this card lives next to [`README.md`](README.md), [`ROADMAP.md
 
 The project's artifacts split into three classes:
 
-- **Mechanistic / closed-form** — Hill ODEs (Lab 1), the LQR plant (Lab 6) — SBML-shaped in principle, structurally CURE-Understandable; current SBML export is the priority-2 item in the audit.
+- **Mechanistic / closed-form** — Hill ODEs (Lab 1), the LQR plant (Lab 6) — SBML-shaped in principle, structurally CURE-Understandable; **Lab 1 SBML export landed 2026-05-14** ([`models/lab1_*.ant`](models/), verified via Tellurium round-trip at machine precision — [`figures/lab1_sbml_verification.md`](figures/lab1_sbml_verification.md)).
 - **Learned / parameterised** — the Hypergraph Neural ODE (Lab 5), the FM-prior caches (UCE / Geneformer / scGPT / Evo / Borzoi), the perturbation predictor (Lab 3) — these are 10³–10⁵-parameter learned models with no closed-form representation; CURE's recommendation for them is "use SBML where possible, document why not where not."
 - **Diagnostic** — the MII regulome metric (Lab 4), structural identifiability (Lab 7), the cancer-as-loss-of-MII signature (Lab 10) — pure analysis on a substrate; provenance and reproducibility are the relevant pillars.
 

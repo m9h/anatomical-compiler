@@ -34,8 +34,17 @@ data/Sonthalia_Table3.xlsx
 # (keep small text/csv/json inputs: data/cropseq/*.csv, data/disease_gene_lists.json,
 #  data/SonthaliaEtAl_SupplTable3_*.txt — add explicitly if large)
 
-# Trained models / checkpoints
-models/
+# Trained models / checkpoints (large; per-user / per-machine caches).
+# Use `models/*` (not `models/`) so the un-ignore patterns below can re-include
+# specific files — git won't re-include from a wholly-excluded directory.
+models/*
+# …except hand-curated source-of-truth model files (Antimony / SBML / CellML
+# / MorpheusML — small text, intentional commit artifacts per docs/cure-audit.md).
+!models/*.ant
+!models/*.sbml
+!models/*.xml
+!models/*.cellml
+!models/README.md
 
 # OS / coverage / scratch
 .DS_Store
