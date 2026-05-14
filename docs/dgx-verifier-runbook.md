@@ -293,6 +293,101 @@ git push origin master
 
 ---
 
+## Tier 5 — Post-CURE-6 supplementary tests *(added 2026-05-14 by DGX-side agent)*
+
+These are bite-sized tests the **laptop-side runbook didn't include** but that the audit doc (`docs/cure-audit.md`) implicitly invites. Each is independent — run any subset in any order. They strengthen the credibility claim without needing Tier 3's heavy infra.
+
+### 5a — libsbml/libsedml/libcombine semantic validation
+
+**~2 hours; no GPU; CPU-only.** `verify_lab1_sbml.py` checks *numerical* trajectory agreement but does **not** check whether the emitted SBML/SED-ML is *semantically valid* (units consistent, no dangling id refs, parameters all used). libsbml ships a validator; libsedml does too. Catches issues that don't show up in trajectory comparisons.
+
+```python
+# Suggested: scripts/validate_sbml_semantic.py
+import libsbml, libsedml, libcombine
+from pathlib import Path
+
+for sbml_path in Path("models").glob("lab1_*.sbml"):
+    doc = libsbml.SBMLReader().readSBML(str(sbml_path))
+    doc.setConsistencyChecks(libsbml.LIBSBML_CAT_MODELING_PRACTICE, True)
+    n_err = doc.checkConsistency()
+    # report n_err and the .getErrorLog() at severity >= ERROR
+```
+
+Same for `.sedml` (libsedml.SedReader) and `.omex` (libcombine.CombineArchive). Output a single `figures/sbml_semantic_validation.{json,md}` with per-file pass/fail + error counts. **Success:** all 4 SBML files pass at LIBSBML_SEV_ERROR (warnings tolerable).
+
+### 5b — Cross-tolerance numerical sensitivity for Lab 1
+
+**~2 hours; no GPU.** The current verifier asserts "JAX vs Tellurium vs COPASI agree at machine precision" but only at the **default tolerances**. Tightening proves the agreement isn't an artifact of loose tolerance.
+
+```bash
+# Suggested: scripts/lab1_tolerance_sweep.py
+# For each circuit and each rtol in {1e-6, 1e-8, 1e-10, 1e-12}:
+#   re-run JAX/Dopri5 and Tellurium/CVODE
+#   record worst rel-L2
+# Assert rel-L2 decreases monotonically as rtol decreases.
+```
+
+Writes `figures/lab1_tolerance_sweep.{json,md}`. **Success:** rel-L2 is monotone non-increasing in tightening rtol for all 4 circuits across both solvers.
+
+### 5c — BioSimulations REST round-trip
+
+**~30 minutes; needs internet.** External third-party verification — the strongest credibility claim available. POST each `models/lab1_*.omex` to https://api.biosimulations.org/runs, poll until done, pull the trajectory CSV, compare to JAX/diffrax reference.
+
+```bash
+# Suggested: scripts/biosimulations_roundtrip.py
+# For each omex:
+#   POST https://api.biosimulations.org/runs with simulator=tellurium (or copasi)
+#   poll /runs/<id> until status=SUCCEEDED
+#   GET /results/<id>/outputs
+#   compare to JAX/diffrax baseline
+```
+
+Writes `figures/biosimulations_roundtrip.{json,md}` with the BioSimulations run IDs (citable URLs). **Success:** all 4 circuits agree with the BioSimulations-hosted Tellurium run within tolerance.
+
+### 5d — Hash-pinned reproducibility test in CI
+
+**~half a day; one-time work.** Today `Dockerfile`'s build-time smoke test runs `verify_lab1_sbml.py` + the two ablations but doesn't pin their *outputs*. Add SHA-256 hashes of the committed `figures/lab1_sbml_verification.json` and `figures/{edge_prior,perturb_eig}_ablation.json` to a `tests/test_reproducibility.py`; have the Docker build re-run and assert hash equality. Catches accidental numerical drift from upstream package updates.
+
+Writes `tests/test_reproducibility.py`; modifies `Dockerfile` to invoke it. **Success:** clean Docker builds reproduce the hashes; intentional changes to outputs require updating both the figures and the test.
+
+### 5e — AIC/BIC + parameter-count reporting on the fidelity-triple
+
+**~2 hours; CPU-only.** `docs/cure-audit.md` §C-flags "AIC/BIC reporting" as cheap-but-missing. For Lab 5 (Hypergraph Neural ODE):
+
+```python
+# n_params = sum(p.size for p in flatten(model_params))
+# AIC = -2 * test_log_likelihood + 2 * n_params
+# BIC = -2 * test_log_likelihood + log(n_test) * n_params
+```
+
+Add to `scripts/compare_pollen.py`'s output JSON. Same one-line addition for any other scored model. **Success:** `figures/compare_pollen.json` now has `aic` and `bic` fields alongside `transfer_r`.
+
+### 5f — Sauro Table-1 numeric self-scorecard
+
+**~half a day; CPU-only.** The current `docs/cure-audit.md` uses ✅/⚠️/❌ glyphs. A numeric scorecard with explicit coverage percentages is the kind of thing reviewers cite. Iterate Sauro 2025 Table 1's items; for each, compute a coverage number (e.g. *Annotation: X/Y species → ChEBI; X/Y reactions → SBO*; *Provenance: X/Y benchmarks have SHA-fingerprinted manifests*; *Verification: X/Y closed-form models cross-verified against ≥ 2 simulators*).
+
+Writes `figures/cure_scorecard.{json,md}`. **Success:** every Table-1 row has a numeric value, not just a glyph.
+
+---
+
+## Tier 6 — Standing CURE gaps the audit explicitly names *(post-Tier 4)*
+
+These are the items `docs/cure-audit.md` flags as ⚠️ partial that aren't closed by any of Tier 1–5. Bigger lifts, publication-grade returns.
+
+### 6a — Bayesian posterior on Lab 5 (Hypergraph Neural ODE)
+
+**~1–3 days; needs GPU.** The audit's flagged C-Uncertainty gap: structural identifiability (Lab 7) and per-input sensitivity (Lab 6) are covered, but there's no global posterior over the 50k-parameter Neural ODE weights. Laplace approximation at MAP is the cheapest path: compute Hessian (or its diagonal) at the trained weights, sample, propagate to predicted trajectories, report posterior std on transfer-r. Heavier alternative: NUTS via numpyro or HMC via blackjax on a low-rank reparameterisation.
+
+Writes `figures/lab5_posterior.{json,md}` + an updated section in `notebooks/05_hypergraph_neural_odes.ipynb`. **Success:** posterior std on transfer-r reported; the headline 0.13 transfer-r number now has an honest uncertainty interval attached.
+
+### 6b — Annotation completeness audit
+
+**~half a day; CPU-only.** Cure-audit §C-flags "MIRIAM / SBO / KiSAO terms" as ⚠️ partial — items 4 & 5 landed MIRIAM/SBO for Lab 1's 4 closed-form circuits but the regulome substrate is annotated only at the manifest level. A coverage report: % of `hgx.Regulome` entities with Ensembl / NCBI / UniProt / GO annotations; gap analysis on what's missing.
+
+Writes `figures/regulome_annotation_coverage.{json,md}` and extends `models/regulome_provenance.json`. **Success:** coverage percentages are reported, not just "we have Ensembl".
+
+---
+
 ## Decision flowchart
 
 ```
@@ -302,9 +397,11 @@ Tier 1 PASS              → proceed to Tier 2 (heavier installs) OR skip to Tie
 Tier 2 PASS              → 5-simulator panel done; commit; CURE item 6 fully ✅
 Tier 3 PASS              → real-mode cache ready; commit summary; proceed to Tier 4
 Tier 4 PASS              → headline numbers measured; **this is the real-data CURE-Validation answer**
+Tier 5 items             → independent of each other; cherry-pick by leverage/cost
+Tier 6 items             → bigger lifts that close the audit's explicitly-named ⚠️ gaps
 ```
 
-**Order priority if time-limited:** Tier 1 → Tier 3 → Tier 4 → Tier 2. Tier 3+4 produce the actual scientific result the project's been asking for; Tier 2 is a CURE-completeness move that's lower-impact than the real-data measurements.
+**Order priority if time-limited:** Tier 1 → Tier 3 → Tier 4 → Tier 2 → Tier 5a/5d (cheap audit reinforcement) → Tier 5b/5c/5e (publication-quality numerics) → Tier 6 (paper-worthy gap closure). Tier 3+4 produce the actual scientific result the project's been asking for; Tier 2 is a CURE-completeness move that's lower-impact than the real-data measurements; Tier 5+6 are post-result reinforcement.
 
 ---
 
