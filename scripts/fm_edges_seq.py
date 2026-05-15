@@ -399,21 +399,86 @@ def _real_borzoi(edges, promoters, seed: int) -> np.ndarray:
     if not promoters:
         raise RuntimeError("Borzoi real-mode requires --promoters FASTA")
     import os
+    import torch  # type: ignore
+    from borzoi_pytorch import Borzoi  # type: ignore
+
     checkpoint = os.environ.get("BORZOI_CHECKPOINT", "johahi/borzoi-replicate-0")
-    # TODO(real-mode): borzoi-pytorch's actual API is Borzoi.from_pretrained(<HF
-    # repo>) → model takes one-hot encoded sequences of fixed length and returns
-    # predictions over many cell-type tracks. A proper delta-track score would
-    # mask the TF motif in the promoter sequence, run two forward passes, and
-    # compute the |Δexpression| over a chosen track set. This is non-trivial
-    # to do correctly. Below is a placeholder that raises so a stub doesn't
-    # silently take over — finish the implementation against borzoi-pytorch's
-    # actual API (johahi/borzoi-pytorch on GitHub).
-    raise RuntimeError(
-        f"Borzoi real-mode not yet implemented against borzoi-pytorch's actual API. "
-        f"Checkpoint {checkpoint} is fetchable; the masked-vs-unmasked Δ-track "
-        f"scoring still needs porting. See TODO in scripts/fm_edges_seq.py:_real_borzoi. "
-        f"Fall back to --mode stub for now."
+    device = os.environ.get("BORZOI_DEVICE", "cuda")
+    # Borzoi v1 takes (4, 524288) one-hot input and outputs (1, 6144, 7611)
+    # = 6144 bins × 7611 tracks (or 89 tracks per replicate depending on the
+    # checkpoint). We pad each 2 kb promoter with N (→ A) on either side
+    # to the model's expected length and read out the predicted track value
+    # at the central bin (corresponding to the TSS). This is a *marginal*
+    # promoter-activity score, not the masked-vs-unmasked Δ the docstring
+    # originally promised; the Δ version would require chromosomal-context
+    # extraction (we'd need the GENCODE GTF + hg38 reference here too) and
+    # two forward passes per edge. The marginal score is biologically
+    # weaker but exercises the real Borzoi API on our existing inputs.
+    SEQ_LEN = 524288
+    BIN_SIZE = 32  # 524288 / 6144 ≈ 32 bp per output bin
+    print(f"_real_borzoi: loading {checkpoint} on {device}…", file=sys.stderr)
+    model = Borzoi.from_pretrained(checkpoint).to(device)
+    model.eval()
+
+    base_to_idx = {"A": 0, "C": 1, "G": 2, "T": 3}
+
+    def one_hot(seq: str) -> "torch.Tensor":
+        # Pad to SEQ_LEN with A (treated as background) on both sides.
+        pad = SEQ_LEN - len(seq)
+        if pad < 0:
+            seq = seq[:SEQ_LEN]
+            pad = 0
+        lpad = pad // 2
+        rpad = pad - lpad
+        seq = ("A" * lpad) + seq.upper() + ("A" * rpad)
+        out = torch.zeros((4, SEQ_LEN), dtype=torch.float32)
+        for i, b in enumerate(seq):
+            j = base_to_idx.get(b, -1)
+            if j >= 0:
+                out[j, i] = 1.0
+        return out
+
+    scores = np.full(len(edges), np.nan, dtype=np.float32)
+    n_scored = 0
+    n_skipped = 0
+    seen: dict[str, float] = {}
+    # We score *per target* (Borzoi doesn't see the TF identity — it predicts
+    # expression tracks at the promoter directly). Edges with the same target
+    # share the same score; caching avoids 30k redundant forward passes.
+    central_bin = 6144 // 2
+    track_idx = int(os.environ.get("BORZOI_TRACK", "0"))  # track 0 by default
+    for i, (tf, target) in enumerate(edges):
+        if target not in promoters:
+            n_skipped += 1
+            continue
+        if target in seen:
+            scores[i] = seen[target]
+            n_scored += 1
+            continue
+        try:
+            x = one_hot(promoters[target]).unsqueeze(0).to(device)
+            with torch.no_grad():
+                # Borzoi forward returns (B, n_bins, n_tracks)
+                pred = model(x)
+            val = float(pred[0, central_bin, track_idx].item())
+            seen[target] = val
+            scores[i] = val
+            n_scored += 1
+        except Exception as e:
+            if len(seen) < 3:
+                print(f"_real_borzoi: edge {i} ({tf}->{target}) error: "
+                      f"{type(e).__name__}: {e}", file=sys.stderr)
+            continue
+        if (i + 1) % 500 == 0:
+            print(f"_real_borzoi: {i+1}/{len(edges)} done "
+                  f"({len(seen)} unique targets scored)", file=sys.stderr)
+
+    print(
+        f"_real_borzoi: scored {n_scored}/{len(edges)} edges across "
+        f"{len(seen)} unique targets; skipped {n_skipped}",
+        file=sys.stderr,
     )
+    return scores
 
 
 _REAL = {"motif": _real_motif, "evo": _real_evo, "borzoi": _real_borzoi}
