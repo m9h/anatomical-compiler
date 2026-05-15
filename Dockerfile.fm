@@ -44,12 +44,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 ENV UCE_REPO=/opt/UCE
 
 # anndata + scanpy (the host venv has these; we want them inside the container too
-# so the real backends can read the same h5ad inputs)
+# so the real backends can read the same h5ad inputs).
+# diffrax: needed by scripts/verify_lab1_sbml.py for the JAX reference baseline
+# in the cross-simulator check; jax/jaxlib come along as deps and coexist with
+# NGC's torch stack without issue.
 RUN pip install --no-cache-dir \
     'anndata>=0.10' \
     'scanpy>=1.10' \
     numpy \
-    pandas
+    pandas \
+    'jax>=0.4' \
+    'jaxlib>=0.4' \
+    'diffrax>=0.5' \
+    'optax>=0.2' \
+    'equinox>=0.11'
 
 # NGC's apex package dropped the `apex.amp` submodule (modern code uses torch.amp).
 # transformers.trainer still does `from apex import amp` when it detects apex exists,
@@ -81,10 +89,71 @@ RUN python -c "import apex.amp" 2>/dev/null || ( \
     '    return None' \
     > "$APEX_DIR/amp.py" )
 
+# SBML / SED-ML / COMBINE stack for Tier 0–2 of docs/dgx-verifier-runbook.md.
+# Two compat issues addressed:
+#   - tellurium 2.2.7 (latest PyPI) does `import imp` which Python 3.12 removed.
+#     Install from the develop branch (post-2.2.7) which dropped the imp deps.
+#   - libnuml (transitive via tellurium/basico) declares cmake_minimum_required(2.8)
+#     which cmake ≥ 4 refuses. Override the policy floor at build time.
+RUN apt-get update && apt-get install -y --no-install-recommends swig \
+ && pip install --no-cache-dir cmake setuptools wheel \
+ && CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    CMAKE_ARGS=-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    pip install --no-cache-dir --no-build-isolation \
+        python-libsbml \
+        python-libsedml \
+        python-libcombine \
+ && CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    CMAKE_ARGS=-DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    pip install --no-cache-dir --no-build-isolation tellurium basico \
+ && pip install --no-cache-dir --upgrade 'numpy>=2'
+
+# Tellurium 2.2.7 (latest PyPI) does `import imp` which Python 3.12 removed.
+# Cleanest fix: drop a minimal `imp.py` shim into site-packages so any
+# `import imp` finds it. Shim wraps importlib for the function surface
+# tellurium actually uses (find_module, load_source, load_module).
+RUN IMPSHIM=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'] + '/imp.py')") \
+ && printf '%s\n' \
+    '"""imp shim for tellurium 2.2.7 on Python 3.12+. Wraps importlib."""' \
+    'import importlib.util as _u' \
+    'import sys as _sys' \
+    '' \
+    'PY_SOURCE = 1' \
+    'PY_COMPILED = 2' \
+    'C_EXTENSION = 3' \
+    'PKG_DIRECTORY = 5' \
+    '' \
+    'def find_module(name, path=None):' \
+    '    spec = _u.find_spec(name)' \
+    '    if spec is None: raise ImportError(name)' \
+    '    return None, spec.origin, (".py", "r", PY_SOURCE)' \
+    '' \
+    'def load_source(name, pathname, file=None):' \
+    '    spec = _u.spec_from_file_location(name, pathname)' \
+    '    mod = _u.module_from_spec(spec)' \
+    '    spec.loader.exec_module(mod)' \
+    '    _sys.modules[name] = mod' \
+    '    return mod' \
+    '' \
+    'def load_module(name, file, pathname, description):' \
+    '    return load_source(name, pathname, file)' \
+    '' \
+    'def reload(module):' \
+    '    import importlib; return importlib.reload(module)' \
+    '' \
+    'def acquire_lock():' \
+    '    pass' \
+    '' \
+    'def release_lock():' \
+    '    pass' \
+    > "$IMPSHIM" \
+ && python -c "import imp; print('imp shim:', imp.__file__)"
+
 # Smoke test imports at build time — fail loudly if any package is broken
 RUN python -c "import transformers, Bio, geneformer; print('geneformer/transformers/biopython OK')"
 RUN python -c "import borzoi_pytorch; print('borzoi_pytorch OK')" || echo "WARN: borzoi_pytorch import failed"
 RUN python -c "import evo; print('evo OK')" || echo "WARN: evo import failed"
 RUN python -c "import scgpt; print('scgpt OK')" || echo "WARN: scgpt import failed"
+RUN python -c "import tellurium, basico, libsbml, libsedml, libcombine; print('SBML stack OK')"
 
 WORKDIR /workspace
