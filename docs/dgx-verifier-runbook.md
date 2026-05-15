@@ -8,6 +8,49 @@ This runbook is **tiered**. Run Tier 0 first; then proceed through Tier 1 → 2 
 
 ---
 
+## DGX-side status — live update (last edited 2026-05-15 by DGX agent)
+
+Where the runbook is in execution. Updated as new tiers finish.
+
+**Container (`anatomical-compiler/fm:26.04`)**: ✅ built and self-sufficient. Subsumes both Tier-1 SBML verification (tellurium 2.2.7 + basico + libsbml/libsedml/libcombine + JAX/diffrax) and Tier-3 FM real-mode (geneformer + scgpt + UCE + evo + borzoi). Eight rebuild iterations resolved: cmake-4 vs libnuml legacy policy, swig for libcombine bindings, numpy<2 conflict post-SBML install, tellurium's `import imp` on Python 3.12 (shim at `/usr/local/lib/python3.12/dist-packages/imp.py`), apex.amp no-op shim for transformers.trainer, UCE chmod + torch.load weights_only=False sed.
+
+**Tier 0**: ✅ in container (5/5 imports). Partial on host venv — tellurium can't build on the conda-cmake-4 setup, but the container is the canonical environment.
+
+**Tier 1**: 3/4 pass.
+- `emit_regulome_provenance.py --check`: ✅ OK
+- `verify_lab1_sbml.py`: tellurium=PASS at machine precision (4e-07–6e-06 worst rel-L2) on all 4 circuits; basico/COPASI failed on the runbook-version of the script due to `module 'basico' has no attribute 'load_model_from_string'`. **Closed by the laptop-side fix in `46fe65d` (basico.load_model auto-detect)**; pending re-run on DGX.
+- `ablate_edge_priors.py` (stub): ✅ best_α=0.30, lift_over_pando=+0.109 — exact match
+- `ablate_perturb_eig.py` (stub): ✅ EIG-rank − GREEDY = +0.029 at median budget — exact match
+
+**Tier 2** (VCell + OpenCOR): not installed; the script's stubs are correctly skip-gracefully. Lower priority per runbook's "if time-limited" order.
+
+**Tier 3**: 4/6 backends validated end-to-end on `data/pollen_slice_geneformer.h5ad` (18,082 cells, 37,344 mapped genes; built by `scripts/annotate_h5ad_for_geneformer.py` from `data/pollen_slice.h5ad` + GENCODE v47) and `data/pollen_edges.csv` (32,000 edges, 44 TFs × 1,963 unique targets from `data/pollen/processed/incidence.npy`):
+
+| backend | shape | mode | wall-clock | cache |
+|---|---|---|---|---|
+| Geneformer (V2-104M) | (18082, 1152) | real | ~51 min | `cache/real_run/pollen_slice_geneformer_geneformer.npy` |
+| scGPT (perturblab/scgpt-human) | (18082, 512) | real | ~67 s | `…_scgpt.npy` |
+| Motif (JASPAR2024 + PSSM scan) | (32000,) — 27,508 scored | real | ~30 s | `…_motif.npy` |
+| UCE (4-layer) | (18082, 1280) | real | ~5 min | `…_uce.npy` |
+| **Evo** (1-131k-base, 7B) | full 32k-edge run **in flight** (37.5% at 3h37m, ~6h remaining; ~1.1 s/edge) | real | ETA: another ~6 h | (pending) |
+| **Borzoi** (johahi/borzoi-replicate-0) | marginal-promoter-activity impl committed in `fcba1f8`; smoke test queued after evo finishes the GPU | real | TBD | (pending) |
+
+The four committed extractors are mirrored to **NFS at `/data/mhough/cache/anatomical-compiler/real_run/`** so any host that mounts the NAS can consume them. SHA-256-fingerprinted manifest in `figures/dgx_real_run_2026-05-15.json`.
+
+Several script bugs in the original `_real_*` placeholders had to be fixed against the actual installed packages — full details in commits `49ff800`, `7b4d5d2`, `fcba1f8`. Summary: scGPT writes embeddings to `out.X` not `out.obsm`; biopython's "minimal" MEME parser captures only the accession (gene symbol parsed separately); PWM has no `.calculate()` (it's on PSSM); UCE's eval_single_anndata.py concatenates `args.dir + name` without a separator and needs `weights_only=False` patches across all `torch.load` calls. UCE also requires manual figshare-fetched model files in `/data/mhough/refs/uce/model_files/` (bind-mounted at runtime); figshare's AWS WAF blocks programmatic downloads. Evo's `Evo.score()` API was aspirational — actual API is `evo_obj.model(input_ids) → (logits, _)` with manual log-likelihood compute. Borzoi takes 524 kb input sequences (vs our 2 kb promoters), so the committed implementation is "marginal track activity over A-padded promoter" — biologically weaker than the masked-vs-unmasked Δ in the original docstring but exercises the real API.
+
+**Tier 4**: **starting now** with what's already validated.
+- **Lab 3** (fidelity-triple transfer-r with Geneformer + UCE priors) — CPU-bound, doesn't compete with Evo's GPU run. Starting first.
+- **Lab 4** (MII gap with sequence-edge priors blended) — motif-only pass now; rerun with evo when its full run finishes.
+- **Edge-prior ablation real-mode** (`ablate_edge_priors.py` consuming the motif cache) — runs after Lab 3.
+- **Lab 6** (in-silico KD TF agreement) — deferred until `scripts/fm_perturb_scgpt.py` is run (separate extractor not yet exercised; needs a TFs.txt input).
+
+Push cadence: per-measurement commit with `figures/lab{3,4,6}_real_results.{json,md}` updated, following the runbook §Tier 4e pattern.
+
+**Tier 5**: not started. After Tier 4.
+
+---
+
 ## Tier 0 — Pre-flight
 
 **5 minutes; no GPU needed.** Establishes that the local environment matches the canonical state.
