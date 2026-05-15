@@ -241,7 +241,9 @@ def _real_uce(adata, dim: int, seed: int) -> np.ndarray:
         cmd = [
             sys.executable, str(script),
             "--adata_path", str(in_path),
-            "--dir", str(work),
+            # UCE concatenates `args.dir + adata_basename + "_uce_adata.h5ad"`
+            # without a separator — pass the trailing slash explicitly.
+            "--dir", str(work) + "/",
             "--species", species,
             "--batch_size", str(batch_size),
         ]
@@ -249,10 +251,15 @@ def _real_uce(adata, dim: int, seed: int) -> np.ndarray:
             cmd += ["--model_loc", model_loc]
         subprocess.run(cmd, check=True, cwd=uce_repo)
 
-        # UCE writes <stem>_uce_adata.h5ad with X_uce in .obsm
-        out = next(work.glob("*_uce_adata.h5ad"), None)
-        if out is None:
-            raise RuntimeError(f"UCE produced no output h5ad in {work}")
+        # UCE writes <stem>_uce_adata.h5ad either inside `work/` (with proper
+        # trailing slash on --dir) or as a sibling of `work` (without). Glob
+        # both locations to be robust.
+        candidates = list(work.glob("*_uce_adata.h5ad")) + list(
+            work.parent.glob(f"{work.name}*_uce_adata.h5ad")
+        )
+        if not candidates:
+            raise RuntimeError(f"UCE produced no output h5ad near {work}")
+        out = candidates[0]
         ad_out = ad.read_h5ad(out)
         if "X_uce" not in ad_out.obsm:
             raise RuntimeError("UCE output h5ad has no obsm['X_uce']")

@@ -42,7 +42,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
  && git clone --depth 1 https://github.com/snap-stanford/UCE.git /opt/UCE \
  && pip install --no-cache-dir -r /opt/UCE/requirements.txt || true \
  && mkdir -p /opt/UCE/model_files \
- && chmod -R a+rwX /opt/UCE
+ && chmod -R a+rwX /opt/UCE \
+ && grep -rl 'torch\.load(' /opt/UCE --include='*.py' | xargs sed -i 's/torch\.load(\([^)]*\))/torch.load(\1, weights_only=False)/g'
 ENV UCE_REPO=/opt/UCE
 
 # anndata + scanpy (the host venv has these; we want them inside the container too
