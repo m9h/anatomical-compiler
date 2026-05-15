@@ -40,7 +40,9 @@ RUN pip install --no-cache-dir 'git+https://github.com/bowang-lab/scGPT'
 # /opt/UCE/eval_single_anndata.py.
 RUN apt-get update && apt-get install -y --no-install-recommends git \
  && git clone --depth 1 https://github.com/snap-stanford/UCE.git /opt/UCE \
- && pip install --no-cache-dir -r /opt/UCE/requirements.txt || true
+ && pip install --no-cache-dir -r /opt/UCE/requirements.txt || true \
+ && mkdir -p /opt/UCE/model_files \
+ && chmod -R a+rwX /opt/UCE
 ENV UCE_REPO=/opt/UCE
 
 # anndata + scanpy (the host venv has these; we want them inside the container too

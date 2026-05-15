@@ -390,9 +390,12 @@ def _real_scgpt(adata, dim: int, seed: int) -> np.ndarray:
         device=device,
         return_new_adata=True,
     )
-    if "X_scGPT" not in out.obsm:
-        raise RuntimeError("scGPT output AnnData has no obsm['X_scGPT']")
-    return np.asarray(out.obsm["X_scGPT"], dtype=np.float32)
+    # With return_new_adata=True, scGPT puts the (n_cells, dim) embeddings
+    # in the new AnnData's .X (not .obsm). .obsm is empty.
+    emb = np.asarray(out.X, dtype=np.float32)
+    if emb.ndim != 2:
+        raise RuntimeError(f"scGPT output .X has unexpected shape {emb.shape}")
+    return emb
 
 
 _REAL = {

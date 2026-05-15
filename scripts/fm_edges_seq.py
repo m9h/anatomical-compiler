@@ -77,7 +77,9 @@ MODELS = {
     "borzoi": {
         "scale": "delta-track-prediction",
         "citation": "Linder, Kelley et al. 2025 (Google + Kundaje, Stanford)",
-        "checkpoint": "calico/borzoi-v1",
+        # HF mirror by johahi (Calico-permitted port). `calico/borzoi-v1`
+        # doesn't exist on HF.
+        "checkpoint": "johahi/borzoi-replicate-0",
         "dgx_gb": 16,  # Borzoi v1 in FP16
     },
 }
@@ -218,43 +220,166 @@ def _real_motif(edges, promoters, seed: int) -> np.ndarray:
         raise RuntimeError(
             f"motif real-mode needs JASPAR MEME file at {meme_path} (or $JASPAR_MEME env)."
         )
-    jdb = {m.name.upper(): m for m in motifs.parse(open(meme_path), "MEME")}
+    # JASPAR's *.meme.txt is the MEME minimal text format. Biopython's
+    # "minimal" parser captures the PWM but only stores the accession
+    # (e.g. "MA0004.1") as motif.name — the gene symbol on the same MOTIF
+    # line (e.g. "Arnt" in "MOTIF MA0004.1 Arnt") is dropped. Parse that
+    # mapping separately and index motifs by gene symbol so edges' tf field
+    # (which holds the gene symbol) can match.
+    parsed = list(motifs.parse(open(meme_path), "minimal"))
+    acc_to_gene: dict[str, str] = {}
+    with open(meme_path) as f:
+        for line in f:
+            if line.startswith("MOTIF "):
+                tok = line.split()
+                if len(tok) >= 3:
+                    acc_to_gene[tok[1]] = tok[2]
+    jdb: dict[str, Any] = {}
+    for m in parsed:
+        gene = acc_to_gene.get(m.name, "")
+        # Heterodimer motifs are written e.g. "RXRA::VDR"; index each component
+        for sym in gene.replace("::", " ").split():
+            jdb.setdefault(sym.upper(), m)
+
     scores = np.full(len(edges), -np.inf, dtype=np.float32)
+    n_scored = 0
+    n_missing_prom = 0
+    n_missing_motif = 0
+    n_calc_error = 0
+    last_err = ""
     for i, (tf, target) in enumerate(edges):
-        if target not in promoters or tf.upper() not in jdb:
+        if target not in promoters:
+            n_missing_prom += 1
             continue
-        seq = Seq(promoters[target])
-        pwm = jdb[tf.upper()].pwm
-        best = max(pwm.calculate(seq), default=-np.inf)
-        scores[i] = float(best)
+        if tf.upper() not in jdb:
+            n_missing_motif += 1
+            continue
+        # Drop ambiguous bases — Bio.motifs PWM scanning can't handle Ns;
+        # replace with A so scoring proceeds (these positions just won't be PWM hits).
+        clean_seq = promoters[target].translate(str.maketrans("Nn", "AA"))
+        seq = Seq(clean_seq)
+        # Score with PSSM (log-odds) — PWM is just the matrix; PSSM is what
+        # has .calculate() in biopython's API.
+        pssm = jdb[tf.upper()].pssm
+        try:
+            arr = pssm.calculate(seq)
+            best = float(np.nanmax(arr)) if hasattr(arr, "__len__") and len(arr) else float("-inf")
+        except Exception as e:
+            n_calc_error += 1
+            last_err = f"{type(e).__name__}: {e}"
+            continue
+        scores[i] = best
+        n_scored += 1
+    print(
+        f"_real_motif: matched {len(jdb)} gene symbols to motifs; "
+        f"scored {n_scored}/{len(edges)} edges "
+        f"(missing_prom={n_missing_prom}, missing_motif={n_missing_motif}, "
+        f"calc_err={n_calc_error}{'; last_err=' + last_err if last_err else ''})",
+        file=sys.stderr,
+    )
     return scores
 
 
 def _real_evo(edges, promoters, seed: int) -> np.ndarray:
-    """Real Evo log-likelihood: P(TF motif | promoter) under the DNA-language model.
+    """Real Evo conditional log-likelihood of TF-motif consensus given promoter.
 
-    Lazy-imports the `evo` HuggingFace wrapper. Single-pass scoring on the
-    DGX Spark's 128 GB GPU runs ~1k edges/sec for the 1B variant.
+    Scores each edge with log P(motif_consensus | promoter) under Evo-1, where
+    motif_consensus is the per-position argmax of the JASPAR PWM for the TF.
+    A more positive score means the model assigns higher likelihood to the
+    motif sequence given the promoter context — interpretable as "this promoter
+    is consistent with this TF's binding motif under the DNA LM."
+
+    Requires:
+        - $JASPAR_MEME (same file as the motif backend) to look up TF consensus
+        - GPU with ≥ 32 GB for the 7B parameter model in bf16
     """
     try:
         from evo import Evo  # type: ignore
+        import torch  # type: ignore
+        from Bio import motifs  # type: ignore
     except ImportError as e:
         raise RuntimeError(
-            "Evo real-mode requires the `evo` package "
-            "(https://github.com/evo-design/evo). Install with: pip install evo-model. "
-            "Fall back to --mode stub for tutorial use."
+            "Evo real-mode requires `evo-model`, `torch`, and `biopython`. "
+            "Available in the FM container (Dockerfile.fm)."
         ) from e
+
     if not promoters:
         raise RuntimeError("Evo real-mode requires --promoters FASTA")
-    model = Evo("evo-1-131k-base")
-    scores = np.full(len(edges), -np.inf, dtype=np.float32)
+
+    import os
+    meme_path = os.environ.get(
+        "JASPAR_MEME", "/opt/jaspar/JASPAR2024_CORE_vertebrates_non-redundant.meme"
+    )
+    if not Path(meme_path).exists():
+        raise RuntimeError(
+            f"Evo real-mode needs JASPAR MEME at {meme_path} (for TF motif consensus)"
+        )
+
+    # Reuse the same JASPAR → gene-symbol mapping as _real_motif.
+    parsed = list(motifs.parse(open(meme_path), "minimal"))
+    acc_to_gene: dict[str, str] = {}
+    with open(meme_path) as f:
+        for line in f:
+            if line.startswith("MOTIF "):
+                tok = line.split()
+                if len(tok) >= 3:
+                    acc_to_gene[tok[1]] = tok[2]
+    consensus: dict[str, str] = {}
+    for m in parsed:
+        gene = acc_to_gene.get(m.name, "")
+        cons = str(m.consensus)
+        for sym in gene.replace("::", " ").split():
+            consensus.setdefault(sym.upper(), cons)
+
+    # Load Evo
+    device = os.environ.get("EVO_DEVICE", "cuda")
+    model_name = os.environ.get("EVO_MODEL", "evo-1-131k-base")
+    print(f"_real_evo: loading {model_name} on {device}…", file=sys.stderr)
+    evo_obj = Evo(model_name)
+    model = evo_obj.model.to(device)
+    tokenizer = evo_obj.tokenizer
+    model.eval()
+
+    scores = np.full(len(edges), np.nan, dtype=np.float32)
+    n_scored = 0
+    n_skipped = 0
+    # Cap promoter to a reasonable context so we don't blow GPU memory.
+    max_ctx = int(os.environ.get("EVO_MAX_CTX", "2048"))
+    print(f"_real_evo: scoring {len(edges)} edges (max_ctx={max_ctx})…", file=sys.stderr)
     for i, (tf, target) in enumerate(edges):
-        if target not in promoters:
+        if target not in promoters or tf.upper() not in consensus:
+            n_skipped += 1
             continue
-        prompt = promoters[target]
-        # Real-mode would query a TF-motif-conditioned likelihood; impl deferred
-        # until the user runs on DGX Spark with weights present.
-        scores[i] = float(model.score(prompt, tf))  # type: ignore[attr-defined]
+        prompt = promoters[target][-max_ctx:]  # last max_ctx bp ending at TSS
+        motif_seq = consensus[tf.upper()]
+        full = prompt + motif_seq
+        try:
+            ids = torch.tensor(tokenizer.tokenize(full), dtype=torch.int, device=device).unsqueeze(0)
+            with torch.no_grad():
+                logits, _ = model(ids)  # (1, L, V)
+            # Conditional log-likelihood of motif tokens given the promoter prefix.
+            # logits[:, t-1, :] predicts token at position t; so log P(token_t | prefix)
+            # = log_softmax(logits[t-1])[token_t].
+            n_prompt = len(tokenizer.tokenize(prompt))
+            motif_ids = ids[0, n_prompt:]
+            shift_logits = logits[0, n_prompt - 1 : n_prompt - 1 + len(motif_ids), :]
+            lp = torch.nn.functional.log_softmax(shift_logits.float(), dim=-1)
+            ll = lp.gather(-1, motif_ids.long().unsqueeze(-1)).squeeze(-1)
+            scores[i] = float(ll.mean().item())
+            n_scored += 1
+        except Exception as e:
+            if i < 3:
+                print(f"_real_evo: edge {i} ({tf}->{target}) error: {type(e).__name__}: {e}",
+                      file=sys.stderr)
+            continue
+        if (i + 1) % 1000 == 0:
+            print(f"_real_evo: {i+1}/{len(edges)} done (scored {n_scored})",
+                  file=sys.stderr)
+
+    print(
+        f"_real_evo: scored {n_scored}/{len(edges)} edges; skipped {n_skipped}",
+        file=sys.stderr,
+    )
     return scores
 
 
@@ -273,13 +398,22 @@ def _real_borzoi(edges, promoters, seed: int) -> np.ndarray:
         ) from e
     if not promoters:
         raise RuntimeError("Borzoi real-mode requires --promoters FASTA")
-    model = borzoi_pytorch.Borzoi.from_pretrained("calico/borzoi-v1")  # type: ignore[attr-defined]
-    scores = np.full(len(edges), np.nan, dtype=np.float32)
-    for i, (tf, target) in enumerate(edges):
-        if target not in promoters:
-            continue
-        scores[i] = float(model.delta_track(promoters[target], tf))  # type: ignore[attr-defined]
-    return scores
+    import os
+    checkpoint = os.environ.get("BORZOI_CHECKPOINT", "johahi/borzoi-replicate-0")
+    # TODO(real-mode): borzoi-pytorch's actual API is Borzoi.from_pretrained(<HF
+    # repo>) → model takes one-hot encoded sequences of fixed length and returns
+    # predictions over many cell-type tracks. A proper delta-track score would
+    # mask the TF motif in the promoter sequence, run two forward passes, and
+    # compute the |Δexpression| over a chosen track set. This is non-trivial
+    # to do correctly. Below is a placeholder that raises so a stub doesn't
+    # silently take over — finish the implementation against borzoi-pytorch's
+    # actual API (johahi/borzoi-pytorch on GitHub).
+    raise RuntimeError(
+        f"Borzoi real-mode not yet implemented against borzoi-pytorch's actual API. "
+        f"Checkpoint {checkpoint} is fetchable; the masked-vs-unmasked Δ-track "
+        f"scoring still needs porting. See TODO in scripts/fm_edges_seq.py:_real_borzoi. "
+        f"Fall back to --mode stub for now."
+    )
 
 
 _REAL = {"motif": _real_motif, "evo": _real_evo, "borzoi": _real_borzoi}
