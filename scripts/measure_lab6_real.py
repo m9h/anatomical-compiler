@@ -127,39 +127,53 @@ def _measure_stub(seed: int = 0) -> dict:
 # ----------------------------------------------------------------------------
 
 
-def _jacobian_importance_from_h5ad(adata, tfs: list[str]) -> np.ndarray:
+def _jacobian_importance_from_h5ad(adata, tfs: list[str]) -> tuple[np.ndarray, list[str]]:
     """Estimate per-TF controllability importance from observational
-    expression. Lab 6's full method is ridge regression of every gene on
-    all TFs, then ‖B‖₂ per TF on the inferred plant matrix. Template
-    version: regress all genes on the TF activities and return the L2
-    norm of each TF's coefficient row.
+    expression. Returns ridge-regression L2 norms aligned to *the subset of
+    tfs actually present in adata*.
+
+    Lab 6's full method: ridge regression of every gene on all TF
+    expression vectors, then ‖B‖₂ per TF as the controllability index.
+    Adds the *aligned* TF list as the second return so callers can match
+    the cache to a possibly-smaller TF subset.
     """
-    import numpy as np
     if "tf_activity" in adata.obsm:
-        A = np.asarray(adata.obsm["tf_activity"])
+        A = np.asarray(adata.obsm["tf_activity"], dtype=np.float32)
+        # obsm['tf_activity'] columns are assumed to match `tfs` order; if
+        # not, the caller is responsible for aligning.
+        tfs_kept = list(tfs)
     else:
-        # Fallback: use the TF rows of the expression matrix directly.
-        # DGX agent fills in the dataset-specific TF activity estimation
-        # (e.g., from CellRank, decoupler, or AUCell).
         var_names = list(adata.var.index)
-        tf_idx = [var_names.index(t) for t in tfs if t in var_names]
-        if not tf_idx:
+        tfs_kept = [t for t in tfs if t in var_names]
+        if not tfs_kept:
             raise ValueError(
-                "Need TF activities. Either adata.obsm['tf_activity'] (n_cells × n_tfs) "
-                "or TF symbols matching adata.var.index. None found."
+                f"None of the {len(tfs)} cache TFs are in adata.var.index. "
+                f"First 5 sought: {tfs[:5]}. First 5 var.index: {var_names[:5]}. "
+                "Either supply adata.obsm['tf_activity'] (n_cells × n_tfs aligned to tfs.txt) "
+                "or re-extract the cache against this h5ad's gene set."
             )
+        tf_idx = [var_names.index(t) for t in tfs_kept]
         X = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
-        A = X[:, tf_idx]
+        A = X[:, tf_idx].astype(np.float32)
     Y = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
-    n_tfs = A.shape[1]
-    AtA = A.T @ A + 1.0 * np.eye(n_tfs, dtype=np.float32)
-    B = np.linalg.solve(AtA, A.T @ Y).astype(np.float32)
-    return np.linalg.norm(B, axis=1)
+    Y = Y.astype(np.float32)
+    n_tfs_kept = A.shape[1]
+    AtA = A.T @ A + 1.0 * np.eye(n_tfs_kept, dtype=np.float32)
+    B = np.linalg.solve(AtA, A.T @ Y)
+    return np.linalg.norm(B, axis=1), tfs_kept
 
 
 def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path) -> dict:
-    """Real-mode template — DGX agent verifies the TF-activity construction
-    matches their dataset, otherwise the script raises a clear error.
+    """Real-mode: load h5ad + scgpt_perturb cache, compute Jacobian importance,
+    compare rankings.
+
+    The two rankings come from independent constructions:
+      - jac_imp[i] = ‖B[i, :]‖₂ where B = ridge(Y ~ TF_expr) on adata
+      - scgpt_imp[i] = ‖scgpt_perturb[i, :]‖₂ — scGPT zero-shot KD magnitude
+
+    Mismatches in TF presence: the cache may list 44 TFs but only 38 are
+    expressed in adata.var.index. We intersect and compare on the
+    intersection (reported as `n_tfs_compared`).
     """
     import anndata as ad
 
@@ -174,40 +188,45 @@ def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path) -> dict:
         raise FileNotFoundError(
             f"Tier-3 cache incomplete: missing {scgpt_path}. Run scripts/run_fm_real_dgx.sh first."
         )
-    scgpt_perturb = np.load(scgpt_path)  # shape (n_tfs, n_genes)
+    scgpt_perturb = np.load(scgpt_path)  # shape (n_tfs_cache, n_genes_cache)
     if scgpt_perturb.shape[0] != len(tfs):
         raise ValueError(
-            f"scgpt_perturb shape {scgpt_perturb.shape} doesn't match tfs.txt length {len(tfs)}. "
-            "Were they extracted with the same TF list?"
+            f"scgpt_perturb shape {scgpt_perturb.shape} doesn't match tfs.txt length "
+            f"{len(tfs)}. Were they extracted with the same TF list?"
         )
-    scgpt_imp = np.linalg.norm(scgpt_perturb, axis=1)
+    scgpt_imp_full = np.linalg.norm(scgpt_perturb, axis=1)
 
-    jac_imp = _jacobian_importance_from_h5ad(adata, tfs)
-    if len(jac_imp) != len(tfs):
-        raise ValueError(
-            f"Jacobian importance length {len(jac_imp)} != tfs.txt length {len(tfs)}. "
-            "DGX agent: align the TF ordering."
-        )
+    jac_imp_kept, tfs_kept = _jacobian_importance_from_h5ad(adata, tfs)
+    keep_idx = np.array([tfs.index(t) for t in tfs_kept])
+    scgpt_imp = scgpt_imp_full[keep_idx]
+    assert len(jac_imp_kept) == len(scgpt_imp) == len(tfs_kept)
 
-    rho = _spearman(jac_imp, scgpt_imp)
-    overlap_10 = _top_k_overlap(jac_imp, scgpt_imp, k=10)
-    overlap_20 = _top_k_overlap(jac_imp, scgpt_imp, k=20)
-    eig_top_5 = _eig_rank_acquisition(jac_imp, scgpt_imp, budget=5)
-    eig_top_10 = _eig_rank_acquisition(jac_imp, scgpt_imp, budget=10)
+    rho = _spearman(jac_imp_kept, scgpt_imp)
+    overlap_10 = _top_k_overlap(jac_imp_kept, scgpt_imp, k=10)
+    overlap_20 = _top_k_overlap(jac_imp_kept, scgpt_imp, k=20)
+    eig_top_5 = _eig_rank_acquisition(jac_imp_kept, scgpt_imp, budget=5)
+    eig_top_10 = _eig_rank_acquisition(jac_imp_kept, scgpt_imp, budget=min(10, len(tfs_kept)))
 
     return {
         "mode": "real",
-        "n_tfs": len(tfs),
+        "h5ad": str(h5ad_path),
+        "cache_dir": str(cache_dir),
+        "tfs": str(tfs_path),
+        "n_tfs_in_cache": len(tfs),
+        "n_tfs_compared": len(tfs_kept),
+        "tfs_compared": tfs_kept,
         "spearman_jac_vs_scgpt": rho,
         "top10_overlap_jaccard": overlap_10,
         "top20_overlap_jaccard": overlap_20,
-        "eig_top_5_tfs": [tfs[i] for i in eig_top_5],
-        "eig_top_10_tfs": [tfs[i] for i in eig_top_10],
+        "eig_top_5_tfs": [tfs_kept[i] for i in eig_top_5],
+        "eig_top_10_tfs": [tfs_kept[i] for i in eig_top_10],
+        "jac_importance_by_tf": {tfs_kept[i]: float(jac_imp_kept[i]) for i in range(len(tfs_kept))},
+        "scgpt_importance_by_tf": {tfs_kept[i]: float(scgpt_imp[i]) for i in range(len(tfs_kept))},
         "note": (
-            "Real-mode result. The EIG-rank top-5/10 are the wet-lab BO loop's next-query "
-            "candidates (per docs/wetlab-program.md). Whichever Cycle ends up being run, "
-            "querying these TFs first maximises the expected information gain about which "
-            "of the two predictors is wrong where."
+            f"Real-mode on {h5ad_path.name} ({len(tfs_kept)}/{len(tfs)} TFs survived "
+            f"intersection with adata.var.index). The EIG-rank top-5/10 are the wet-lab "
+            f"BO loop's next-query candidates (per docs/wetlab-program.md). "
+            f"Anchor: stub-mode realistic-regime ρ ≈ 0.56 (see ablate_perturb_eig.py)."
         ),
     }
 

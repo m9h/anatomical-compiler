@@ -169,11 +169,114 @@ def _measure_stub(seed: int = 0) -> dict:
 # ----------------------------------------------------------------------------
 
 
-def _measure_real(edges_path: Path, cache_dir: Path, systems: list[str]) -> dict:
-    """Real-mode template. DGX agent fills in the system-specific bits
-    (which subset of the regulome corresponds to which benchmark system).
+def _seq_prior_per_gene(edges_df, motif_scores, evo_scores, borzoi_scores,
+                        target_genes: list[str]) -> tuple[np.ndarray, np.ndarray]:
+    """Aggregate per-edge sequence scores into per-(TF, gene) priors.
+
+    Returns
+    -------
+    seq_per_target : (n_target_genes,) — average seq score across TFs targeting each gene
+    tf_target_grid : (n_tfs, n_target_genes) — z-standardised seq scores for the
+        outer-product blend pattern. Missing (TF, gene) entries are filled with 0.
     """
     import pandas as pd
+
+    def stdz(v):
+        v = np.asarray(v, dtype=np.float32)
+        mask = np.isfinite(v) & (v != 0)
+        if mask.sum() < 2:
+            return v
+        mu = v[mask].mean()
+        sd = v[mask].std() + 1e-9
+        out = (v - mu) / sd
+        out[~mask] = 0.0
+        return out
+
+    motif_z = stdz(motif_scores)
+    evo_z = stdz(evo_scores)
+    borzoi_z = stdz(borzoi_scores)
+    combined = (motif_z + evo_z + borzoi_z) / 3.0
+
+    tfs = sorted(edges_df["tf"].unique())
+    tf_to_i = {t: i for i, t in enumerate(tfs)}
+    g_to_j = {g: j for j, g in enumerate(target_genes)}
+    grid = np.zeros((len(tfs), len(target_genes)), dtype=np.float32)
+    for idx, row in enumerate(edges_df.itertuples(index=False)):
+        j = g_to_j.get(row.target)
+        i = tf_to_i.get(row.tf)
+        if j is None or i is None:
+            continue
+        grid[i, j] = combined[idx]
+    per_target = grid.mean(axis=0)
+    return per_target, grid
+
+
+def _identifiability_score(eigvals: np.ndarray) -> float:
+    """Lab 4's NITMB modularity-identifiability heuristic:
+    mean(gaps[:10]) / std(eigvals[:10]).
+    """
+    if len(eigvals) < 2:
+        return 0.0
+    gaps = np.diff(eigvals[:11])
+    return float(np.mean(gaps[:10]) / (np.std(eigvals[:10]) + 1e-8))
+
+
+def _per_system_baseline_adjacency(adata, gene_list: list[str], n_top: int = 10) -> np.ndarray:
+    """Lab 4's correlation-incidence baseline restricted to the supplied
+    gene_list (so the seq-prior blend operates on the same gene set).
+    """
+    var_names = list(adata.var.index)
+    have = [g for g in gene_list if g in var_names]
+    if len(have) < 10:
+        raise ValueError(
+            f"only {len(have)}/{len(gene_list)} target genes are in the system's "
+            f"h5ad var.index — too few for a stable L0 spectrum"
+        )
+    keep_idx = [var_names.index(g) for g in have]
+    X = adata.X
+    if hasattr(X, "toarray"):
+        X_sub = X[:, keep_idx].toarray()
+    else:
+        X_sub = np.asarray(X)[:, keep_idx]
+    corr = np.corrcoef(X_sub.T)
+    corr = np.nan_to_num(corr, nan=0.0)
+    n = corr.shape[0]
+    incidence = np.zeros((n, n), dtype=np.float32)
+    k = min(n_top, n - 1)
+    for i in range(n):
+        top = np.argsort(np.abs(corr[i]))[-(k + 1):]  # self + k
+        incidence[top, i] = 1.0
+    return incidence, have
+
+
+def _l0_spectrum(adjacency: np.ndarray, n_keep: int = 100) -> np.ndarray:
+    """Normalised graph Laplacian eigenvalues, sorted ascending, drop ~0 mode."""
+    A = np.abs(adjacency).astype(np.float64)
+    np.fill_diagonal(A, 0.0)
+    d = A.sum(axis=1)
+    Dinv = 1.0 / np.sqrt(np.where(d < 1e-9, 1.0, d))
+    L = np.eye(A.shape[0]) - (Dinv[:, None] * A * Dinv[None, :])
+    ev = np.sort(np.real(np.linalg.eigvalsh(L)))
+    ev = ev[ev > 1e-6]
+    return ev[:n_keep]
+
+
+def _measure_real(edges_path: Path, cache_dir: Path,
+                  system_h5ads: dict[str, Path], n_hvg: int = 100) -> dict:
+    """Real-mode: per-system L0 spectrum, blended with sequence-prior adjacency.
+
+    Pipeline:
+      1. Load edges + Tier-3 cache; build a per-(TF,target) sequence prior grid.
+      2. For each system's h5ad, restrict to the regulome's target-gene set
+         and compute the correlation-incidence baseline (Lab 4 convention).
+      3. Build a sequence-prior adjacency: seq_adj[i,j] = grid[:, i] · grid[:, j]
+         (gene-gene similarity in their TF sequence-priority profiles).
+      4. Sweep α ∈ {0, …, 1}; blend `(1-α)·stdz(corr_adj) + α·stdz(seq_adj)`;
+         take L0 spectrum + identifiability score per system per α.
+      5. Spread = max(score) − min(score) across systems at each α; report.
+    """
+    import pandas as pd
+    import anndata as ad
 
     edges = pd.read_csv(edges_path)
     if not {"tf", "target"}.issubset(edges.columns):
@@ -188,24 +291,87 @@ def _measure_real(edges_path: Path, cache_dir: Path, systems: list[str]) -> dict
         raise FileNotFoundError(
             f"Tier-3 cache incomplete: missing {missing}. Run scripts/run_fm_real_dgx.sh first."
         )
+    motif = np.load(motif_path)
+    evo = np.load(evo_path)
+    borzoi = np.load(borzoi_path)
+    if not (len(motif) == len(evo) == len(borzoi) == len(edges)):
+        raise ValueError(
+            f"seq-prior cache lengths {len(motif)}/{len(evo)}/{len(borzoi)} "
+            f"don't match edges.csv ({len(edges)} rows)"
+        )
 
-    # The real-mode body needs per-system gene/edge subsets — typically
-    # filtered from the regulome via system-specific masks the DGX agent
-    # supplies. Pattern:
-    #   for sys in systems:
-    #       edges_sys = edges[edges['system'] == sys]  # or however the dataset labels them
-    #       pando_W = build_pando_matrix(edges_sys)
-    #       seq_W = align_seq_scores(motif/evo/borzoi, edges_sys)
-    #       for alpha in alphas:
-    #           A = _blend_to_adjacency(pando_W, seq_W, alpha)
-    #           mii = _mii_from_adjacency(A, k=3)
-    #           rows.append(...)
-    raise NotImplementedError(
-        f"Real-mode requires the system-specific edge-subset construction. "
-        f"DGX agent: implement the {systems} mask given the dataset's schema. "
-        f"All Tier-3 cache files are present ({motif_path}, {evo_path}, {borzoi_path}); "
-        f"the missing piece is the system-to-edge mapping."
+    target_genes = sorted(edges["target"].unique())
+    _seq_per_target, tf_target_grid = _seq_prior_per_gene(
+        edges, motif, evo, borzoi, target_genes
     )
+
+    alphas = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    rows = []
+    per_system_have_count: dict[str, int] = {}
+    for sys_name, h5_path in system_h5ads.items():
+        if not h5_path.exists():
+            warnings.warn(f"system h5ad missing: {h5_path}; skipping {sys_name}")
+            continue
+        adata = ad.read_h5ad(str(h5_path), backed="r").to_memory()
+        corr_adj, have = _per_system_baseline_adjacency(adata, target_genes)
+        have_idx = [target_genes.index(g) for g in have]
+        per_system_have_count[sys_name] = len(have)
+
+        sub_grid = tf_target_grid[:, have_idx]
+        # gene–gene similarity in their TF-sequence-priority profiles
+        seq_adj = (sub_grid.T @ sub_grid).astype(np.float32)
+        # standardise both to comparable scale
+        def stdz(M):
+            mu = M.mean()
+            sd = M.std() + 1e-9
+            return (M - mu) / sd
+        corr_z = stdz(corr_adj)
+        seq_z = stdz(seq_adj)
+
+        for a in alphas:
+            A = (1 - a) * corr_z + a * seq_z
+            ev = _l0_spectrum(A.astype(np.float32))
+            score = _identifiability_score(ev)
+            rows.append({
+                "system": sys_name,
+                "alpha": a,
+                "mii_heuristic": score,
+                "relative_eigengap": float((ev[2] - ev[0]) / max(ev[-1], 1e-9)) if len(ev) > 2 else 0.0,
+                "n_genes": len(have),
+            })
+
+    if not rows:
+        raise ValueError("no systems had loadable h5ads")
+
+    def spread(rows_at_alpha):
+        miis = [r["mii_heuristic"] for r in rows_at_alpha]
+        return max(miis) - min(miis) if miis else 0.0
+
+    spread_by_alpha = {a: spread([r for r in rows if r["alpha"] == a]) for a in alphas}
+    best_alpha = max(spread_by_alpha, key=lambda a: spread_by_alpha[a])
+
+    return {
+        "mode": "real",
+        "edges": str(edges_path),
+        "cache_dir": str(cache_dir),
+        "system_h5ads": {k: str(v) for k, v in system_h5ads.items()},
+        "per_system_have_count": per_system_have_count,
+        "alphas": alphas,
+        "rows": rows,
+        "spread_by_alpha": spread_by_alpha,
+        "baseline_spread_alpha_0": spread_by_alpha[0.0],
+        "best_alpha": best_alpha,
+        "best_spread": spread_by_alpha[best_alpha],
+        "delta_spread": spread_by_alpha[best_alpha] - spread_by_alpha[0.0],
+        "note": (
+            f"Real-mode on edges={edges_path.name} ({len(edges)} rows, "
+            f"{len(target_genes)} unique target genes). Each system's correlation-"
+            f"incidence adjacency restricted to those targets, blended with seq-prior "
+            f"grid (TF × target → gene-gene similarity). MII = NITMB identifiability "
+            f"heuristic (mean spectral gap / std). Anchor: baseline (α=0) ≈ "
+            f"{spread_by_alpha[0.0]:.3f} spread across systems."
+        ),
+    }
 
 
 # ----------------------------------------------------------------------------
@@ -219,28 +385,45 @@ def main(argv=None):
     p.add_argument("--edges", default=None, help="path to edges.csv with tf,target")
     p.add_argument("--cache", default=None, help="Tier-3 cache dir with motif/evo/borzoi .npy")
     p.add_argument(
-        "--systems",
-        default="brain_organoid,fetal_kidney,bioprinted_kidney",
-        help="comma-separated benchmark systems (real mode)",
+        "--system",
+        action="append",
+        default=None,
+        help="system spec name=path/to.h5ad — pass multiple times. "
+             "Default: bioprinted_kidney + brain_organoid + fetal_kidney_ref using "
+             "data/bioprinting/lawlor_2021_processed.h5ad, data/zenodo/RNA_all_velo.h5ad, "
+             "data/bioprinting/kidney_ref_processed.h5ad (the Lab 4 convention).",
     )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--output", default="figures/lab4_real_results")
     args = p.parse_args(argv)
 
-    systems = [s.strip() for s in args.systems.split(",")]
+    if args.system:
+        system_h5ads = {}
+        for spec in args.system:
+            if "=" not in spec:
+                print(f"error: --system arg must be 'name=path/to.h5ad'; got {spec!r}", file=sys.stderr)
+                return 2
+            name, path = spec.split("=", 1)
+            system_h5ads[name.strip()] = Path(path.strip())
+    else:
+        system_h5ads = {
+            "bioprinted_kidney": Path("data/bioprinting/lawlor_2021_processed.h5ad"),
+            "brain_organoid": Path("data/zenodo/RNA_all_velo.h5ad"),
+            "fetal_kidney_ref": Path("data/bioprinting/kidney_ref_processed.h5ad"),
+        }
 
     used_mode = args.mode
     if args.mode == "real":
         if args.edges is None or args.cache is None:
             print("error: --mode real requires --edges and --cache", file=sys.stderr)
             return 2
-        result = _measure_real(Path(args.edges), Path(args.cache), systems)
+        result = _measure_real(Path(args.edges), Path(args.cache), system_h5ads)
     elif args.mode == "stub":
         result = _measure_stub(seed=args.seed)
     else:
         if args.edges is not None and args.cache is not None:
             try:
-                result = _measure_real(Path(args.edges), Path(args.cache), systems)
+                result = _measure_real(Path(args.edges), Path(args.cache), system_h5ads)
                 used_mode = "real"
             except (FileNotFoundError, NotImplementedError, ValueError) as e:
                 warnings.warn(f"falling back to stub mode: {e}")
