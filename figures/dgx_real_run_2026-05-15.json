@@ -1,0 +1,98 @@
+{
+  "cache_dir_local": "/home/mhough/dev/anatomical-compiler/cache/real_run",
+  "cache_dir_nfs": "/data/mhough/cache/anatomical-compiler/real_run",
+  "date": "2026-05-15",
+  "host": "gx10-dgx-spark",
+  "inputs": {
+    "h5ad": "data/pollen_slice_geneformer.h5ad",
+    "edges_csv": "data/pollen_edges.csv (32000 edges, 44 TFs \u00d7 1963 unique targets, from data/pollen/processed/incidence.npy)",
+    "promoters_fa": "/data/mhough/refs/promoters_hg38_2kb.fa (78,724 records, 2kb upstream of TSS, GENCODE v47 + hg38)",
+    "jaspar_meme": "/data/mhough/refs/jaspar/JASPAR2024_CORE_vertebrates_non-redundant.meme (2346 motifs)",
+    "fm_image": "anatomical-compiler/fm:26.04 (built from Dockerfile.fm)"
+  },
+  "artifacts": [
+    {
+      "path": "pollen_edges_motif.npy",
+      "bytes": 128128,
+      "sha256_16": "d8d77bc0653e7d1b",
+      "shape": [
+        32000
+      ],
+      "dtype": "float32",
+      "n_finite": 26558,
+      "n_total": 32000,
+      "mean": 7.840491771697998,
+      "std": 4.223451137542725
+    },
+    {
+      "path": "pollen_edges_motif_manifest.json",
+      "bytes": 441,
+      "sha256_16": "36afbb509eeecefe",
+      "mode": "real",
+      "model": "motif"
+    },
+    {
+      "path": "pollen_slice_geneformer_geneformer.npy",
+      "bytes": 83321984,
+      "sha256_16": "f267cca8ef2bcae5",
+      "shape": [
+        18082,
+        1152
+      ],
+      "dtype": "float32",
+      "n_finite": 20830464,
+      "n_total": 20830464,
+      "mean": -0.004293124191462994,
+      "std": 0.3067445755004883
+    },
+    {
+      "path": "pollen_slice_geneformer_geneformer_manifest.json",
+      "bytes": 326,
+      "sha256_16": "b7c3dcc2d3eda943",
+      "mode": "real",
+      "model": "geneformer"
+    },
+    {
+      "path": "pollen_slice_geneformer_scgpt.npy",
+      "bytes": 37032064,
+      "sha256_16": "6d5fea935104581a",
+      "shape": [
+        18082,
+        512
+      ],
+      "dtype": "float32",
+      "n_finite": 9257984,
+      "n_total": 9257984,
+      "mean": 0.0006731522153131664,
+      "std": 0.044188909232616425
+    },
+    {
+      "path": "pollen_slice_geneformer_scgpt_manifest.json",
+      "bytes": 323,
+      "sha256_16": "c44d27dffba792d2",
+      "mode": "real",
+      "model": "scgpt"
+    },
+    {
+      "path": "pollen_slice_geneformer_uce.npy",
+      "bytes": 92579968,
+      "sha256_16": "63d4f5fe0c307201",
+      "shape": [
+        18082,
+        1280
+      ],
+      "dtype": "float32",
+      "n_finite": 23144960,
+      "n_total": 23144960,
+      "mean": 0.0006898724241182208,
+      "std": 0.027942320331931114
+    },
+    {
+      "path": "pollen_slice_geneformer_uce_manifest.json",
+      "bytes": 303,
+      "sha256_16": "7d1ac11c4ab21fe7",
+      "mode": "real",
+      "model": "uce"
+    }
+  ]
+}
