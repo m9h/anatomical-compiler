@@ -211,7 +211,11 @@ def _simulate_copasi(
 
     ant_text = ant_path.read_text(encoding="utf-8")
     sbml_text = te.antimonyToSBML(ant_text)
-    basico.load_model_from_string(sbml_text)
+    # `load_model` auto-detects filename / URL / raw string; older basico
+    # builds (notably the aarch64 wheel currently in Dockerfile.fm) don't
+    # re-export `load_model_from_string` at the top level even though it
+    # exists in `basico.model_io`.
+    basico.load_model(sbml_text)
     # basico exposes its tolerance settings via the time-course task params.
     df = basico.run_time_course(
         duration=t_final,

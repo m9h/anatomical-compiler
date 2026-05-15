@@ -1,6 +1,6 @@
 # Lab 1 — cross-simulator round-trip verification
 
-**Overall: FAIL**.
+**Overall: PASS**.
 
 Each cell compares the JAX/diffrax reference simulation of one of Lab 1's closed-form circuits against an independent SBML simulator integrating the *same* Antimony model. The JAX RHS is built from the Circuit's rate-rule strings via `sympy.lambdify` → `jax.numpy`, so all comparisons are on identical algebra (not hand-translated code, which would be a confounder).
 
@@ -8,12 +8,12 @@ Tolerance: per-species relative-L2 ≤ **0.05**. Integration horizon: **10.0** t
 
 ## Cross-simulator agreement
 
-| circuit | tellurium libroadrunner (worst rel-L2) | copasi basico (worst rel-L2) | vcell (worst rel-L2) | opencor (worst rel-L2) |
-|---|---:|---:|---:|---:|
-| `negative_autoregulation` | **PASS** (4.16e-07) | **ERROR** | _skipped_ | _skipped_ |
-| `toggle_switch` | **PASS** (9.52e-07) | **ERROR** | _skipped_ | _skipped_ |
-| `repressilator` | **PASS** (5.62e-06) | **ERROR** | _skipped_ | _skipped_ |
-| `positive_autoregulation` | **PASS** (1.89e-06) | **ERROR** | _skipped_ | _skipped_ |
+| circuit | tellurium libroadrunner (worst rel-L2) | copasi basico (worst rel-L2) | vcell (worst rel-L2) | opencor (worst rel-L2) | biosimulations api (worst rel-L2) |
+|---|---:|---:|---:|---:|---:|
+| `negative_autoregulation` | **PASS** (4.16e-07) | **PASS** (3.91e-07) | _skipped_ | _skipped_ | _skipped_ |
+| `toggle_switch` | **PASS** (9.52e-07) | **PASS** (7.65e-07) | _skipped_ | _skipped_ | _skipped_ |
+| `repressilator` | **PASS** (5.62e-06) | **PASS** (2.27e-06) | _skipped_ | _skipped_ | _skipped_ |
+| `positive_autoregulation` | **PASS** (1.85e-06) | **PASS** (7.09e-07) | _skipped_ | _skipped_ | _skipped_ |
 
 ## Backend provenance
 
