@@ -6,33 +6,39 @@ Blended graph: `(1−α)·stdz(Pando) + α·stdz(seq_prior)`. MII heuristic on t
 
 | α | spread |
 |---:|---:|
-| 0.0 | 0.012 |
-| 0.2 | 0.012 |
-| 0.4 | 0.012 |
-| 0.6 | 0.012 |
-| 0.8 | 0.012 |
+| 0.0 | 0.026 |
+| 0.2 | 0.051 |
+| 0.4 | 0.009 |
+| 0.6 | 0.004 |
+| 0.8 | 0.018 |
 | 1.0 | 0.000 |
 
-**Headline:** at α=0 (Pando alone) spread = 0.012; at best α = 0.4 spread = 0.012; Δ = **+0.000**.
+**Headline:** at α=0 (Pando alone) spread = 0.026; at best α = 0.2 spread = 0.051; Δ = **+0.025**.
 
-_Real-mode on edges=pollen_edges.csv (32000 rows, 1963 unique target genes). Each system's correlation-incidence adjacency restricted to those targets, blended with seq-prior grid (TF × target → gene-gene similarity). MII = NITMB identifiability heuristic (mean spectral gap / std). Anchor: baseline (α=0) ≈ 0.012 spread across systems._
+_Real-mode on edges=pollen_edges.csv (32000 rows, 1963 unique target genes). Each system's correlation-incidence adjacency restricted to those targets, blended with seq-prior grid (TF × target → gene-gene similarity). MII = NITMB identifiability heuristic (mean spectral gap / std). Anchor: baseline (α=0) ≈ 0.026 spread across systems._
 
 ## Per-system MII at each α
 
 | system | α | mii_heuristic | rel_eigengap |
 |---|---:|---:|---:|
-| fleck_organoid | 0.0 | 0.324 | 0.024 |
-| fleck_organoid | 0.2 | 0.324 | 0.024 |
-| fleck_organoid | 0.4 | 0.324 | 0.024 |
-| fleck_organoid | 0.6 | 0.324 | 0.024 |
-| fleck_organoid | 0.8 | 0.324 | 0.024 |
-| fleck_organoid | 1.0 | 0.000 | 0.000 |
-| pollen_slice | 0.0 | 0.336 | 0.030 |
-| pollen_slice | 0.2 | 0.336 | 0.030 |
-| pollen_slice | 0.4 | 0.336 | 0.030 |
-| pollen_slice | 0.6 | 0.336 | 0.030 |
-| pollen_slice | 0.8 | 0.336 | 0.030 |
-| pollen_slice | 1.0 | 0.000 | 0.000 |
+| bioprinted_kidney | 0.0 | 0.362 | 0.071 |
+| bioprinted_kidney | 0.2 | 0.383 | 0.087 |
+| bioprinted_kidney | 0.4 | 0.371 | 0.197 |
+| bioprinted_kidney | 0.6 | 0.355 | 0.272 |
+| bioprinted_kidney | 0.8 | 0.337 | 0.886 |
+| bioprinted_kidney | 1.0 | 0.360 | 0.290 |
+| brain_organoid | 0.0 | 0.352 | 0.060 |
+| brain_organoid | 0.2 | 0.338 | 0.064 |
+| brain_organoid | 0.4 | 0.369 | 0.184 |
+| brain_organoid | 0.6 | 0.359 | 0.269 |
+| brain_organoid | 0.8 | 0.355 | 0.293 |
+| brain_organoid | 1.0 | 0.360 | 0.290 |
+| fetal_kidney_ref | 0.0 | 0.336 | 0.064 |
+| fetal_kidney_ref | 0.2 | 0.332 | 0.067 |
+| fetal_kidney_ref | 0.4 | 0.362 | 0.170 |
+| fetal_kidney_ref | 0.6 | 0.356 | 0.266 |
+| fetal_kidney_ref | 0.8 | 0.353 | 0.292 |
+| fetal_kidney_ref | 1.0 | 0.360 | 0.291 |
 
 ## Interpretation
 
