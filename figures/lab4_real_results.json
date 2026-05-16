@@ -1,16 +1,14 @@
 {
   "mode": "real",
   "edges": "data/pollen_edges.csv",
-  "cache_dir": "/tmp/dgx_cache",
+  "cache_dir": "cache/real_run",
   "system_h5ads": {
-    "bioprinted_kidney": "data/bioprinting/lawlor_2021_processed.h5ad",
-    "brain_organoid": "data/zenodo/RNA_all_velo.h5ad",
-    "fetal_kidney_ref": "data/bioprinting/kidney_ref_processed.h5ad"
+    "fleck_organoid": "data/zenodo/RNA_all_velo.h5ad",
+    "pollen_slice": "data/pollen_slice_geneformer.h5ad"
   },
   "per_system_have_count": {
-    "bioprinted_kidney": 1956,
-    "brain_organoid": 1960,
-    "fetal_kidney_ref": 1933
+    "fleck_organoid": 1960,
+    "pollen_slice": 1961
   },
   "alphas": [
     0.0,
@@ -22,143 +20,101 @@
   ],
   "rows": [
     {
-      "system": "bioprinted_kidney",
+      "system": "fleck_organoid",
       "alpha": 0.0,
-      "mii_heuristic": 0.3621391014857849,
-      "relative_eigengap": 0.07120783738902357,
-      "n_genes": 1956
+      "mii_heuristic": 0.3240420980650711,
+      "relative_eigengap": 0.024312991397860223,
+      "n_genes": 1960
     },
     {
-      "system": "bioprinted_kidney",
+      "system": "fleck_organoid",
       "alpha": 0.2,
-      "mii_heuristic": 0.38277814135532995,
-      "relative_eigengap": 0.08749646235290728,
-      "n_genes": 1956
+      "mii_heuristic": 0.3240420982217552,
+      "relative_eigengap": 0.024312990896816867,
+      "n_genes": 1960
     },
     {
-      "system": "bioprinted_kidney",
+      "system": "fleck_organoid",
       "alpha": 0.4,
-      "mii_heuristic": 0.37100897317939197,
-      "relative_eigengap": 0.19654489844784573,
-      "n_genes": 1956
+      "mii_heuristic": 0.3240420981742412,
+      "relative_eigengap": 0.02431299104876037,
+      "n_genes": 1960
     },
     {
-      "system": "bioprinted_kidney",
+      "system": "fleck_organoid",
       "alpha": 0.6,
-      "mii_heuristic": 0.35502309736716464,
-      "relative_eigengap": 0.2722988719051218,
-      "n_genes": 1956
+      "mii_heuristic": 0.32404209822175195,
+      "relative_eigengap": 0.02431299089681709,
+      "n_genes": 1960
     },
     {
-      "system": "bioprinted_kidney",
+      "system": "fleck_organoid",
       "alpha": 0.8,
-      "mii_heuristic": 0.3370838595070035,
-      "relative_eigengap": 0.8863357101593247,
-      "n_genes": 1956
+      "mii_heuristic": 0.3240420982217552,
+      "relative_eigengap": 0.024312990896816867,
+      "n_genes": 1960
     },
     {
-      "system": "bioprinted_kidney",
+      "system": "fleck_organoid",
       "alpha": 1.0,
-      "mii_heuristic": 0.3597942250292282,
-      "relative_eigengap": 0.2900082342275943,
-      "n_genes": 1956
+      "mii_heuristic": 0.0,
+      "relative_eigengap": 0.0,
+      "n_genes": 1960
     },
     {
-      "system": "brain_organoid",
+      "system": "pollen_slice",
       "alpha": 0.0,
-      "mii_heuristic": 0.3515125953438588,
-      "relative_eigengap": 0.06012514445585094,
-      "n_genes": 1960
+      "mii_heuristic": 0.3360638050909827,
+      "relative_eigengap": 0.030379275286165224,
+      "n_genes": 1961
     },
     {
-      "system": "brain_organoid",
+      "system": "pollen_slice",
       "alpha": 0.2,
-      "mii_heuristic": 0.3380355181617486,
-      "relative_eigengap": 0.06374470645861369,
-      "n_genes": 1960
+      "mii_heuristic": 0.336063805164948,
+      "relative_eigengap": 0.030379275189453273,
+      "n_genes": 1961
     },
     {
-      "system": "brain_organoid",
+      "system": "pollen_slice",
       "alpha": 0.4,
-      "mii_heuristic": 0.3685673726902109,
-      "relative_eigengap": 0.18431408138761357,
-      "n_genes": 1960
+      "mii_heuristic": 0.3360638052882218,
+      "relative_eigengap": 0.030379275028266067,
+      "n_genes": 1961
     },
     {
-      "system": "brain_organoid",
+      "system": "pollen_slice",
       "alpha": 0.6,
-      "mii_heuristic": 0.35935960134935097,
-      "relative_eigengap": 0.2687806629940337,
-      "n_genes": 1960
+      "mii_heuristic": 0.33606380516494194,
+      "relative_eigengap": 0.030379275189451556,
+      "n_genes": 1961
     },
     {
-      "system": "brain_organoid",
+      "system": "pollen_slice",
       "alpha": 0.8,
-      "mii_heuristic": 0.35484010298349394,
-      "relative_eigengap": 0.29270235905030234,
-      "n_genes": 1960
+      "mii_heuristic": 0.336063805164948,
+      "relative_eigengap": 0.030379275189453273,
+      "n_genes": 1961
     },
     {
-      "system": "brain_organoid",
+      "system": "pollen_slice",
       "alpha": 1.0,
-      "mii_heuristic": 0.360137105811657,
-      "relative_eigengap": 0.2900471484756681,
-      "n_genes": 1960
-    },
-    {
-      "system": "fetal_kidney_ref",
-      "alpha": 0.0,
-      "mii_heuristic": 0.3362674363677681,
-      "relative_eigengap": 0.06350212087475261,
-      "n_genes": 1933
-    },
-    {
-      "system": "fetal_kidney_ref",
-      "alpha": 0.2,
-      "mii_heuristic": 0.3322004411093056,
-      "relative_eigengap": 0.0668292296763557,
-      "n_genes": 1933
-    },
-    {
-      "system": "fetal_kidney_ref",
-      "alpha": 0.4,
-      "mii_heuristic": 0.3621821728714323,
-      "relative_eigengap": 0.1697691620067531,
-      "n_genes": 1933
-    },
-    {
-      "system": "fetal_kidney_ref",
-      "alpha": 0.6,
-      "mii_heuristic": 0.3557984672290686,
-      "relative_eigengap": 0.2661332529867373,
-      "n_genes": 1933
-    },
-    {
-      "system": "fetal_kidney_ref",
-      "alpha": 0.8,
-      "mii_heuristic": 0.3534171315936944,
-      "relative_eigengap": 0.292083280138242,
-      "n_genes": 1933
-    },
-    {
-      "system": "fetal_kidney_ref",
-      "alpha": 1.0,
-      "mii_heuristic": 0.35971254417484305,
-      "relative_eigengap": 0.2911683049268295,
-      "n_genes": 1933
+      "mii_heuristic": 0.0,
+      "relative_eigengap": 0.0,
+      "n_genes": 1961
     }
   ],
   "spread_by_alpha": {
-    "0.0": 0.02587166511801675,
-    "0.2": 0.05057770024602437,
-    "0.4": 0.008826800307959681,
-    "0.6": 0.004336503982186324,
-    "0.8": 0.017756243476490463,
-    "1.0": 0.0004245616368139249
+    "0.0": 0.012021707025911599,
+    "0.2": 0.012021706943192767,
+    "0.4": 0.012021707113980595,
+    "0.6": 0.012021706943189991,
+    "0.8": 0.012021706943192767,
+    "1.0": 0.0
   },
-  "baseline_spread_alpha_0": 0.02587166511801675,
-  "best_alpha": 0.2,
-  "best_spread": 0.05057770024602437,
-  "delta_spread": 0.02470603512800762,
-  "note": "Real-mode on edges=pollen_edges.csv (32000 rows, 1963 unique target genes). Each system's correlation-incidence adjacency restricted to those targets, blended with seq-prior grid (TF \u00d7 target \u2192 gene-gene similarity). MII = NITMB identifiability heuristic (mean spectral gap / std). Anchor: baseline (\u03b1=0) \u2248 0.026 spread across systems."
+  "baseline_spread_alpha_0": 0.012021707025911599,
+  "best_alpha": 0.4,
+  "best_spread": 0.012021707113980595,
+  "delta_spread": 8.806899653990286e-11,
+  "note": "Real-mode on edges=pollen_edges.csv (32000 rows, 1963 unique target genes). Each system's correlation-incidence adjacency restricted to those targets, blended with seq-prior grid (TF \u00d7 target \u2192 gene-gene similarity). MII = NITMB identifiability heuristic (mean spectral gap / std). Anchor: baseline (\u03b1=0) \u2248 0.012 spread across systems."
 }

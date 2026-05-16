@@ -62,11 +62,19 @@ def _mii_from_adjacency(A: np.ndarray, k: int = 3) -> dict[str, float]:
     Laplacian. Self-loops are zeroed.
     """
     A = np.abs(A).astype(np.float64)
+    # NaN/Inf cleanup: when seq priors are partial (NaN-filled placeholders for
+    # missing evo/borzoi caches), NaNs propagate through the blended adjacency
+    # and corrupt the Laplacian spectrum.
+    A = np.nan_to_num(A, nan=0.0, posinf=0.0, neginf=0.0)
     np.fill_diagonal(A, 0.0)
     d = A.sum(axis=1)
     Dinvsqrt = 1.0 / np.sqrt(np.where(d < 1e-9, 1.0, d))
     L_norm = np.eye(A.shape[0]) - (Dinvsqrt[:, None] * A * Dinvsqrt[None, :])
-    eigvals = np.sort(np.real(np.linalg.eigvalsh(L_norm)))
+    L_norm = 0.5 * (L_norm + L_norm.T)
+    try:
+        eigvals = np.sort(np.real(np.linalg.eigvalsh(L_norm)))
+    except np.linalg.LinAlgError:
+        eigvals = np.sort(np.real(np.linalg.svd(L_norm, compute_uv=False)))
     # MII heuristic: 1 - eigvals[1] / eigvals[k] (Lab 4 convention; Fiedler
     # over the cliff start). Bounded [0, 1].
     if len(eigvals) > k:
@@ -255,13 +263,26 @@ def _per_system_baseline_adjacency(adata, gene_list: list[str], n_top: int = 10)
 
 
 def _l0_spectrum(adjacency: np.ndarray, n_keep: int = 100) -> np.ndarray:
-    """Normalised graph Laplacian eigenvalues, sorted ascending, drop ~0 mode."""
+    """Normalised graph Laplacian eigenvalues, sorted ascending, drop ~0 mode.
+
+    NaN/Inf cleanup: when seq priors are partial (e.g. borzoi placeholder
+    all-NaN, or evo has some unscored edges), NaNs propagate through the
+    blended adjacency. nan_to_num before eigendecomposition keeps the
+    computation finite; eigvalsh is wrapped in a fallback in case of
+    numerical non-convergence on pathological adjacencies.
+    """
     A = np.abs(adjacency).astype(np.float64)
+    A = np.nan_to_num(A, nan=0.0, posinf=0.0, neginf=0.0)
     np.fill_diagonal(A, 0.0)
     d = A.sum(axis=1)
     Dinv = 1.0 / np.sqrt(np.where(d < 1e-9, 1.0, d))
     L = np.eye(A.shape[0]) - (Dinv[:, None] * A * Dinv[None, :])
-    ev = np.sort(np.real(np.linalg.eigvalsh(L)))
+    L = 0.5 * (L + L.T)  # symmetrize against accumulated round-off
+    try:
+        ev = np.sort(np.real(np.linalg.eigvalsh(L)))
+    except np.linalg.LinAlgError:
+        # Fallback: SVD-based pseudo-eigenvalues — slower but more robust
+        ev = np.sort(np.real(np.linalg.svd(L, compute_uv=False)))
     ev = ev[ev > 1e-6]
     return ev[:n_keep]
 
@@ -334,6 +355,10 @@ def _measure_real(edges_path: Path, cache_dir: Path,
         per_system_have_count[sys_name] = len(have)
 
         sub_grid = tf_target_grid[:, have_idx]
+        # NaN-clean the seq-prior grid before the gene×gene outer product:
+        # missing motif/evo/borzoi entries are scored 0 (no co-regulation
+        # signal), not NaN (which would corrupt the matmul).
+        sub_grid = np.nan_to_num(sub_grid, nan=0.0, posinf=0.0, neginf=0.0)
         # gene–gene similarity in their TF-sequence-priority profiles
         seq_adj = (sub_grid.T @ sub_grid).astype(np.float32)
         # standardise both to comparable scale
