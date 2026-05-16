@@ -163,7 +163,9 @@ def _jacobian_importance_from_h5ad(adata, tfs: list[str]) -> tuple[np.ndarray, l
     return np.linalg.norm(B, axis=1), tfs_kept
 
 
-def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path) -> dict:
+def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path,
+                  perturb_cache: Path | None = None,
+                  perturb_source: str = "scgpt") -> dict:
     """Real-mode: load h5ad + scgpt_perturb cache, compute Jacobian importance,
     compare rankings.
 
@@ -183,15 +185,22 @@ def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path) -> dict:
         tfs = [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
 
     stem = h5ad_path.stem
-    scgpt_path = cache_dir / f"{stem}_scgpt_perturb.npy"
-    if not scgpt_path.exists():
-        raise FileNotFoundError(
-            f"Tier-3 cache incomplete: missing {scgpt_path}. Run scripts/run_fm_real_dgx.sh first."
-        )
+    if perturb_cache is not None:
+        if not perturb_cache.exists():
+            raise FileNotFoundError(f"--perturb-cache not found: {perturb_cache}")
+        scgpt_path = perturb_cache
+    else:
+        scgpt_path = cache_dir / f"{stem}_{perturb_source}_perturb.npy"
+        if not scgpt_path.exists():
+            raise FileNotFoundError(
+                f"perturb cache missing: {scgpt_path}. Either run "
+                f"scripts/fm_perturb_{perturb_source}.py first, or pass "
+                f"--perturb-cache PATH to point at a specific cache file."
+            )
     scgpt_perturb = np.load(scgpt_path)  # shape (n_tfs_cache, n_genes_cache)
     if scgpt_perturb.shape[0] != len(tfs):
         raise ValueError(
-            f"scgpt_perturb shape {scgpt_perturb.shape} doesn't match tfs.txt length "
+            f"perturb cache shape {scgpt_perturb.shape} doesn't match tfs length "
             f"{len(tfs)}. Were they extracted with the same TF list?"
         )
     scgpt_imp_full = np.linalg.norm(scgpt_perturb, axis=1)
@@ -211,6 +220,8 @@ def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path) -> dict:
         "mode": "real",
         "h5ad": str(h5ad_path),
         "cache_dir": str(cache_dir),
+        "perturb_cache": str(scgpt_path),
+        "perturb_source": perturb_source,
         "tfs": str(tfs_path),
         "n_tfs_in_cache": len(tfs),
         "n_tfs_compared": len(tfs_kept),
@@ -224,8 +235,9 @@ def _measure_real(h5ad_path: Path, cache_dir: Path, tfs_path: Path) -> dict:
         "scgpt_importance_by_tf": {tfs_kept[i]: float(scgpt_imp[i]) for i in range(len(tfs_kept))},
         "note": (
             f"Real-mode on {h5ad_path.name} ({len(tfs_kept)}/{len(tfs)} TFs survived "
-            f"intersection with adata.var.index). The EIG-rank top-5/10 are the wet-lab "
-            f"BO loop's next-query candidates (per docs/wetlab-program.md). "
+            f"intersection with adata.var.index). Perturb signal from "
+            f"{perturb_source!r} ({scgpt_path.name}). The EIG-rank top-5/10 are "
+            f"the wet-lab BO loop's next-query candidates (per docs/wetlab-program.md). "
             f"Anchor: stub-mode realistic-regime ρ ≈ 0.56 (see ablate_perturb_eig.py)."
         ),
     }
@@ -241,23 +253,47 @@ def main(argv=None):
     p.add_argument("--mode", choices=["stub", "real", "auto"], default="auto")
     p.add_argument("--h5ad", default=None)
     p.add_argument("--cache", default=None)
-    p.add_argument("--tfs", default=None, help="tfs.txt — one TF symbol per line")
+    p.add_argument("--tfs", default=None, help="tfs.txt or .json — one TF symbol per line / JSON list")
+    p.add_argument("--perturb-cache", default=None,
+                   help="explicit path to a (n_tfs, n_genes) .npy KD response cache "
+                        "(overrides the {stem}_{source}_perturb.npy lookup in --cache)")
+    p.add_argument("--perturb-source", default="scgpt",
+                   choices=["scgpt", "measured"],
+                   help="which perturb extractor's cache to consume (default scgpt; "
+                        "use 'measured' for fm_perturb_measured.py output)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--output", default="figures/lab6_real_results")
     args = p.parse_args(argv)
+
+    def _load_tfs_path(path: Path) -> Path:
+        # accept .json TF lists too — _measure_real reads via open() so swap
+        # to a tmp .txt if needed
+        if path.suffix.lower() == ".json":
+            tfs = json.loads(path.read_text())
+            tmp = Path("/tmp") / f"{path.stem}_tfs.txt"
+            tmp.write_text("\n".join(str(t) for t in tfs))
+            return tmp
+        return path
+
+    real_kwargs = dict(
+        perturb_cache=Path(args.perturb_cache) if args.perturb_cache else None,
+        perturb_source=args.perturb_source,
+    )
 
     used_mode = args.mode
     if args.mode == "real":
         if args.h5ad is None or args.cache is None or args.tfs is None:
             print("error: --mode real requires --h5ad, --cache, --tfs", file=sys.stderr)
             return 2
-        result = _measure_real(Path(args.h5ad), Path(args.cache), Path(args.tfs))
+        result = _measure_real(Path(args.h5ad), Path(args.cache),
+                               _load_tfs_path(Path(args.tfs)), **real_kwargs)
     elif args.mode == "stub":
         result = _measure_stub(seed=args.seed)
     else:
         if all(x is not None for x in (args.h5ad, args.cache, args.tfs)):
             try:
-                result = _measure_real(Path(args.h5ad), Path(args.cache), Path(args.tfs))
+                result = _measure_real(Path(args.h5ad), Path(args.cache),
+                                       _load_tfs_path(Path(args.tfs)), **real_kwargs)
                 used_mode = "real"
             except (FileNotFoundError, NotImplementedError, ValueError) as e:
                 warnings.warn(f"falling back to stub mode: {e}")
