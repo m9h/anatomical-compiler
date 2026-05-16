@@ -286,14 +286,25 @@ def _measure_real(edges_path: Path, cache_dir: Path,
     motif_path = cache_dir / f"{stem}_motif.npy"
     evo_path = cache_dir / f"{stem}_evo.npy"
     borzoi_path = cache_dir / f"{stem}_borzoi.npy"
-    missing = [p for p in (motif_path, evo_path, borzoi_path) if not p.exists()]
-    if missing:
+    # Motif is mandatory; evo/borzoi gracefully substitute with NaN-filled
+    # arrays (which the per-target aggregator handles) when the Tier-3 cache
+    # is partial. The blended seq prior degrades to motif-only in that case.
+    if not motif_path.exists():
         raise FileNotFoundError(
-            f"Tier-3 cache incomplete: missing {missing}. Run scripts/run_fm_real_dgx.sh first."
+            f"Tier-3 cache incomplete: missing motif at {motif_path}. "
+            "Run scripts/fm_edges_seq.py motif first."
         )
     motif = np.load(motif_path)
-    evo = np.load(evo_path)
-    borzoi = np.load(borzoi_path)
+    if evo_path.exists():
+        evo = np.load(evo_path)
+    else:
+        warnings.warn(f"evo cache missing at {evo_path}; using NaN placeholder")
+        evo = np.full(len(motif), np.nan, dtype=np.float32)
+    if borzoi_path.exists():
+        borzoi = np.load(borzoi_path)
+    else:
+        warnings.warn(f"borzoi cache missing at {borzoi_path}; using NaN placeholder")
+        borzoi = np.full(len(motif), np.nan, dtype=np.float32)
     if not (len(motif) == len(evo) == len(borzoi) == len(edges)):
         raise ValueError(
             f"seq-prior cache lengths {len(motif)}/{len(evo)}/{len(borzoi)} "
