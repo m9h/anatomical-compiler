@@ -1,0 +1,40 @@
+{
+  "mode": "real",
+  "h5ad": "/tmp/dgx_cache/pollen_slice_geneformer.h5ad",
+  "cache_dir": "/tmp/dgx_cache",
+  "context_col": "stage",
+  "context_a": "GW19",
+  "context_b": "GW22",
+  "n_genes": 37344,
+  "n_cells_a": 13548,
+  "n_cells_b": 3983,
+  "n_controls": 1040,
+  "tfs_evaluated": [
+    "ARX",
+    "NEUROD2",
+    "NR2E1",
+    "SOX2",
+    "ZNF219"
+  ],
+  "n_tfs_evaluated": 5,
+  "transfer_r_baseline": 0.18887220020680573,
+  "transfer_r_fm": 0.057707597320877886,
+  "delta": -0.13116460288592785,
+  "geneformer_cache_shape": [
+    18082,
+    1152
+  ],
+  "geneformer_was_per_cell": true,
+  "transfer_r_fm_geneformer_plus_uce": 0.05836071356966476,
+  "uce_cache_shape": [
+    18082,
+    1280
+  ],
+  "transfer_r_fm_scgpt": 0.05471292570495309,
+  "scgpt_cache_shape": [
+    18082,
+    512
+  ],
+  "transfer_r_fm_all": 0.05913722951031358,
+  "note": "Real-mode on pollen_slice_geneformer.h5ad (37344 genes, 13548+3983 cells across GW19/GW22). R_train computed on context GW19, R_test on GW22. Lab 3 baseline anchor: transfer-r \u2248 0.13 \u2014 delta should be read against that."
+}

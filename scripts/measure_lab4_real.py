@@ -182,20 +182,25 @@ def _seq_prior_per_gene(edges_df, motif_scores, evo_scores, borzoi_scores,
     import pandas as pd
 
     def stdz(v):
+        """Return z-standardised array, or None if the backend is absent
+        (all-NaN or all-zero — i.e. the cache file wasn't loaded).
+        """
         v = np.asarray(v, dtype=np.float32)
+        if not np.any(np.isfinite(v)) or np.allclose(v[np.isfinite(v)], 0.0):
+            return None
         mask = np.isfinite(v) & (v != 0)
         if mask.sum() < 2:
-            return v
+            return None
         mu = v[mask].mean()
         sd = v[mask].std() + 1e-9
         out = (v - mu) / sd
         out[~mask] = 0.0
         return out
 
-    motif_z = stdz(motif_scores)
-    evo_z = stdz(evo_scores)
-    borzoi_z = stdz(borzoi_scores)
-    combined = (motif_z + evo_z + borzoi_z) / 3.0
+    present = [z for z in (stdz(motif_scores), stdz(evo_scores), stdz(borzoi_scores)) if z is not None]
+    if not present:
+        raise ValueError("no usable seq-prior backends — all caches absent or all-zero")
+    combined = np.mean(np.stack(present), axis=0)
 
     tfs = sorted(edges_df["tf"].unique())
     tf_to_i = {t: i for i, t in enumerate(tfs)}
