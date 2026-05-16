@@ -1,4 +1,10 @@
-# Edge-prior ablation — Pando alone vs Pando + sequence prior
+# Edge-prior ablation — Pando alone vs Pando + sequence prior (SYNTHETIC CEILING)
+
+> **Methodology note (2026-05-15):** this synthetic ablation is a *ceiling*, not a
+> validation. Real-data behavior is in [`edge_prior_ablation_real.md`](edge_prior_ablation_real.md);
+> per CURE-Validation principles, only real-data results count as evidence for or
+> against the FM-prior hypothesis. The synthetic +0.109 lift here did **not**
+> transfer to the real Pollen regulome.
 
 Synthetic truth: 30 TFs × 300 genes, 15 edges/TF.
 Sequence-prior stub: model=motif, fpr=0.05, fnr=0.4.

@@ -12,6 +12,25 @@ This runbook is **tiered**. Run Tier 0 first; then proceed through Tier 1 → 2 
 
 Where the runbook is in execution. Updated as new tiers finish.
 
+### Methodological principle (added 2026-05-15)
+
+**Synthetic ablations are *ceilings*, not validations. Only real-data results count
+as evidence.** The synthetic ablations in `figures/edge_prior_ablation.{json,md}`
+and `figures/perturb_eig_ablation.{json,md}` show what would happen if our
+assumptions about FM priors and ground truth were perfectly correct — they are
+necessary as a sanity-check ceiling, but they are not validation. Where synthetic
+and real-data results diverge, **the real-data result wins**:
+
+| measurement | synthetic ceiling | real-data result | reconciliation |
+|---|---|---|---|
+| edge-prior ablation | +0.109 F1 lift (KEEP) | +0.000 F1 lift (NEUTRAL) | the synthetic truth had no co-expression-derived component; real Pando-derived truth is auto-correlated with the Pando baseline |
+| Lab 3 fidelity-triple | stub Δ = +0 (no signal) | Δ = −0.131 (FM worse) | cls-mode Geneformer is the wrong feature granularity for per-gene prediction; needs gene-mode re-run |
+
+This is the CURE-Validation discipline: real-data nulls are the publishable
+finding, not the synthetic ceilings. Tier 4 measurements that don't run on real
+data (Lab 4 blocked on missing kidney h5ads; Lab 6 pending fm_perturb_scgpt
+output) are *blocked*, not *partially-validated by stub*.
+
 **Container (`anatomical-compiler/fm:26.04`)**: ✅ built and self-sufficient. Subsumes both Tier-1 SBML verification (tellurium 2.2.7 + basico + libsbml/libsedml/libcombine + JAX/diffrax) and Tier-3 FM real-mode (geneformer + scgpt + UCE + evo + borzoi). Eight rebuild iterations resolved: cmake-4 vs libnuml legacy policy, swig for libcombine bindings, numpy<2 conflict post-SBML install, tellurium's `import imp` on Python 3.12 (shim at `/usr/local/lib/python3.12/dist-packages/imp.py`), apex.amp no-op shim for transformers.trainer, UCE chmod + torch.load weights_only=False sed.
 
 **Tier 0**: ✅ in container (5/5 imports). Partial on host venv — tellurium can't build on the conda-cmake-4 setup, but the container is the canonical environment.
