@@ -1,0 +1,26 @@
+{
+  "mode": "real",
+  "h5ad": "data/pollen_slice_geneformer.h5ad",
+  "cache_dir": "cache/real_run",
+  "context_col": "stage",
+  "context_train": "GW19",
+  "context_test": "GW20",
+  "tf_col": "Gene_target",
+  "n_single_tf_perturbations": 5,
+  "perturbations": [
+    "ARX",
+    "NEUROD2",
+    "NR2E1",
+    "SOX2",
+    "ZNF219"
+  ],
+  "n_cells_train": 13548,
+  "n_cells_test": 551,
+  "transfer_r_baseline": 0.5419569625427885,
+  "transfer_r_fm": 0.41055322835586533,
+  "delta": -0.13140373418692314,
+  "in_domain_r_baseline_A": 0.9999997545811086,
+  "in_domain_r_fm_A": 0.8995430717122425,
+  "fm_features_source": "geneformer cls-mode cell embeddings, expression-weighted-averaged to per-gene",
+  "note": "Fidelity-triple transfer-r \u2014 train predictor on cross-condition response in context A, test on context B. Compare baseline (gene one-hot features) vs FM (Geneformer-derived per-gene features). Lab 3 published baseline \u2248 0.13."
+}

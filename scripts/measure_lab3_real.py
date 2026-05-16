@@ -153,233 +153,156 @@ def _measure_stub(seed: int = 0) -> dict:
 # ----------------------------------------------------------------------------
 
 
-def _build_response_panel(X_ctx: np.ndarray,
-                          tf_labels: np.ndarray,
-                          control_mask_ctx: np.ndarray,
-                          tfs_use: list[str],
-                          min_cells: int = 10) -> tuple[np.ndarray, list[str]]:
-    """Per-gene mean KD response in a context.
+def _measure_real(h5ad_path: Path, cache_dir: Path) -> dict:
+    """Real-mode for the Pollen/Ding 2026 CRISPRi slice h5ad.
 
-    Returns
-    -------
-    panel : (n_genes, len(tfs_kept)) float32
-        panel[g, j] = mean(X over cells with tf_labels == tfs_kept[j], gene g)
-                    - mean(X over control cells, gene g)
-    tfs_kept : list[str]
-        TFs that had ≥ min_cells perturbed-cells in this context.
-    """
-    mu_ctrl = X_ctx[control_mask_ctx].mean(axis=0)
-    panel_cols = []
-    tfs_kept = []
-    for tf in tfs_use:
-        m = tf_labels == tf
-        if m.sum() < min_cells:
-            continue
-        panel_cols.append(X_ctx[m].mean(axis=0) - mu_ctrl)
-        tfs_kept.append(tf)
-    if not tfs_kept:
-        raise ValueError("no TFs had enough cells in this context for the response panel")
-    return np.stack(panel_cols, axis=1).astype(np.float32), tfs_kept
+    Schema-specific bindings:
+      context        = h5ad.obs['batch_name']    (SlicePS_L1 vs SlicePS_L2)
+      perturbed_tf   = h5ad.obs['Gene_target']   (single-TF rows only;
+                       combinations like "ARX,SOX2" and "non-targeting" are
+                       handled as control)
+    FM features:
+      Geneformer cache here is (n_cells, 1152) from emb_mode='cls', so we
+      project to per-gene features by *expression-weighted averaging* of
+      cell embeddings — gene g's feature = Σ_c (X[c,g] * emb[c,:]) / Σ_c X[c,g].
+      This gives each gene a context-aware representation derived from
+      the cell-level Geneformer.
 
-
-def _fit_predict_score(features: np.ndarray,
-                       R_train: np.ndarray,
-                       R_test: np.ndarray,
-                       ridge: float = 1.0,
-                       _onehot: bool = False) -> float:
-    """Ridge regression: features (n_genes × d) → R_train (n_genes × n_tfs);
-    score predicted vs held-out R_test by flattened Pearson r.
-
-    When `_onehot=True`, skip the explicit features @ B step: with A = I,
-    pred = R_train / (1 + ridge), so the correlation collapses to
-    corr(R_train, R_test) directly. Avoids O(n_genes²) memory allocation
-    for the identity baseline at Pollen scale (~6 GB for 38 k genes).
-    """
-    if _onehot:
-        if R_train.std() < 1e-8 or R_test.std() < 1e-8:
-            return 0.0
-        return float(np.corrcoef(R_train.ravel(), R_test.ravel())[0, 1])
-    A = features
-    AtA = A.T @ A + ridge * np.eye(A.shape[1], dtype=np.float32)
-    B = np.linalg.solve(AtA.astype(np.float32), A.T @ R_train.astype(np.float32))
-    pred = features @ B
-    if pred.std() < 1e-8 or R_test.std() < 1e-8:
-        return 0.0
-    return float(np.corrcoef(pred.ravel(), R_test.ravel())[0, 1])
-
-
-def _fm_to_gene_features(fm: np.ndarray, X: np.ndarray, n_genes: int, n_cells: int) -> np.ndarray:
-    """Project an FM embedding to per-gene features.
-
-    Supports two cache shapes:
-      - (n_genes, dim) — already per-gene (Geneformer V1 token embeddings,
-        stub geneformer); returned unchanged.
-      - (n_cells, dim) — per-cell (Geneformer V2 cls, scGPT, UCE); projected
-        to per-gene via cell-expression-weighted averaging:
-          gene_features[g, :] = sum_c (X[c, g] * cell_emb[c, :]) / sum_c X[c, g]
-        which is the centroid of the FM embedding over cells expressing gene g.
-
-    Raises a clear error otherwise.
-    """
-    if fm.shape[0] == n_genes:
-        return fm.astype(np.float32)
-    if fm.shape[0] == n_cells:
-        norm = X.sum(axis=0) + 1e-6                       # (n_genes,)
-        gene_feat = (X.T @ fm.astype(np.float32))         # (n_genes, dim)
-        return (gene_feat / norm[:, None]).astype(np.float32)
-    raise ValueError(
-        f"FM cache shape {fm.shape} matches neither n_genes={n_genes} "
-        f"nor n_cells={n_cells} along axis 0. Re-extract or check the h5ad stem."
-    )
-
-
-def _measure_real(h5ad_path: Path, cache_dir: Path,
-                  context_col: str = "timepoint",
-                  perturb_col: str = "Gene_target_single",
-                  perturb_status_col: str | None = "perturbation",
-                  control_label: str | None = "NT",
-                  na_label: str = "NA") -> dict:
-    """Real-mode: Pollen-style schema.
-
-    Default columns match `data/pollen/screen_annotated.h5ad`:
-      - obs['timepoint']           — cross-context split (D0 vs D7)
-      - obs['Gene_target_single']  — per-cell TF KD label ('NA' = no target)
-      - obs['perturbation']        — 'WT' / 'NT' (non-targeting) / 'Perturbed'
-
-    Cache shape handling:
-      - geneformer/scgpt/uce caches can be per-cell (V2 cls / per-cell scGPT /
-        UCE — the layout DGX actually produces) or per-gene (V1 token mode).
-        `_fm_to_gene_features` projects per-cell embeddings to per-gene via
-        expression-weighted averaging.
-
-    Override via CLI flags for other datasets.
+    Response construction:
+      R[g, tf] = mean_expression(KD cells for tf, context A) - mean_expression(NTC cells, context A)
+      Test against R[g, tf] in context B.
     """
     import anndata as ad
+    import pandas as pd
 
     adata = ad.read_h5ad(str(h5ad_path))
+    n_cells, n_genes = adata.shape
     stem = h5ad_path.stem
     geneformer_path = cache_dir / f"{stem}_geneformer.npy"
     uce_path = cache_dir / f"{stem}_uce.npy"
-    scgpt_path = cache_dir / f"{stem}_scgpt.npy"
     if not geneformer_path.exists():
-        raise FileNotFoundError(
-            f"Tier-3 cache incomplete: need {geneformer_path}. "
-            "Run scripts/run_fm_real_dgx.sh first."
-        )
-    geneformer = np.load(geneformer_path)
-    n_genes = adata.shape[1]
-    n_cells = adata.shape[0]
-    if geneformer.shape[0] not in (n_genes, n_cells):
-        raise ValueError(
-            f"Geneformer cache shape {geneformer.shape} matches neither n_genes={n_genes} "
-            f"nor n_cells={n_cells} along axis 0."
-        )
-    has_uce = uce_path.exists()
-    has_scgpt = scgpt_path.exists()
-    uce = np.load(uce_path) if has_uce else None
-    scgpt = np.load(scgpt_path) if has_scgpt else None
-
-    for col in (context_col, perturb_col):
-        if col not in adata.obs.columns:
-            raise ValueError(
-                f"h5ad.obs is missing required column '{col}'. "
-                f"Available: {list(adata.obs.columns)}"
-            )
-
-    contexts = list(adata.obs[context_col].unique())
-    if len(contexts) < 2:
-        raise ValueError(f"need ≥2 unique values in obs['{context_col}']; got {contexts}")
-    ctx_a, ctx_b = contexts[0], contexts[1]
-    mask_a = (adata.obs[context_col] == ctx_a).to_numpy()
-    mask_b = (adata.obs[context_col] == ctx_b).to_numpy()
-
-    # Control cell mask: prefer 'NT' rows in perturb_status_col if present,
-    # else fall back to perturb_col == na_label (e.g., 'NA' or 'WT').
-    if perturb_status_col is not None and perturb_status_col in adata.obs.columns and control_label is not None:
-        control_mask = (adata.obs[perturb_status_col] == control_label).to_numpy()
+        raise FileNotFoundError(f"Tier-3 cache incomplete: need {geneformer_path}")
+    geneformer = np.load(geneformer_path).astype(np.float32)
+    if uce_path.exists():
+        uce = np.load(uce_path).astype(np.float32)
     else:
-        control_mask = (adata.obs[perturb_col] == na_label).to_numpy()
-    if control_mask.sum() < 20:
-        raise ValueError(
-            f"<20 control cells found (looked for {perturb_status_col}=={control_label} "
-            f"or {perturb_col}=={na_label}). Total controls: {int(control_mask.sum())}."
-        )
+        uce = None
+        print(f"  (UCE cache missing; running geneformer-only)", file=sys.stderr)
+    print(f"  Geneformer cache: {geneformer.shape}", file=sys.stderr)
+    if uce is not None:
+        print(f"  UCE cache: {uce.shape}", file=sys.stderr)
 
-    tfs_use = sorted(
-        t for t in adata.obs[perturb_col].unique()
-        if isinstance(t, str) and t not in (na_label, "WT") and "," not in t
-    )
+    # Context split — `stage` (developmental age GW19/GW20/GW22) is the most
+    # biologically meaningful cross-context axis. batch_name is technical
+    # replicates → trivial transfer. Override with $LAB3_CONTEXT env var if needed.
+    import os
+    ctx_col = os.environ.get("LAB3_CONTEXT", "stage")
+    if ctx_col not in adata.obs.columns:
+        raise ValueError(f"h5ad.obs missing required column '{ctx_col}'")
+    contexts = sorted(adata.obs[ctx_col].unique())
+    if len(contexts) < 2:
+        raise ValueError(f"need ≥2 contexts; got {contexts}")
+    ctx_a, ctx_b = contexts[:2]
+    print(f"  cross-context split: A={ctx_a} vs B={ctx_b}", file=sys.stderr)
 
+    # Perturbation labels — single-TF only; "non-targeting" or any commaed combo is control
+    tf_col = "Gene_target"
+    if tf_col not in adata.obs.columns:
+        raise ValueError(f"h5ad.obs missing required column '{tf_col}'")
+    raw = adata.obs[tf_col].astype(str)
+    is_control = raw.isin(["non-targeting", "NT", "control"]) | raw.str.contains(",", na=False)
+    single_tf = raw.where(~is_control, other="__CTRL__")
+    tfs = sorted(t for t in single_tf.unique() if t != "__CTRL__")
+    print(f"  single-TF perturbations: {tfs}", file=sys.stderr)
+    if len(tfs) < 3:
+        raise ValueError(f"need ≥3 single-TF labels; got {tfs}")
+
+    # Get dense expression
     X = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
-    X_A = X[mask_a].astype(np.float32)
-    X_B = X[mask_b].astype(np.float32)
-    R_A, tfs_kept_A = _build_response_panel(
-        X_A, adata.obs[perturb_col].to_numpy()[mask_a],
-        control_mask[mask_a], tfs_use,
-    )
-    R_B, tfs_kept_B = _build_response_panel(
-        X_B, adata.obs[perturb_col].to_numpy()[mask_b],
-        control_mask[mask_b], tfs_use,
-    )
-    tfs_common = [t for t in tfs_kept_A if t in tfs_kept_B]
-    if not tfs_common:
-        raise ValueError("no TFs had ≥10 perturbed cells in both contexts")
-    idx_A = np.array([tfs_kept_A.index(t) for t in tfs_common])
-    idx_B = np.array([tfs_kept_B.index(t) for t in tfs_common])
-    R_A = R_A[:, idx_A]
-    R_B = R_B[:, idx_B]
+    X = X.astype(np.float32)
+    ctx_arr = adata.obs[ctx_col].to_numpy()
+    tf_arr = single_tf.to_numpy()
 
-    # One-hot baseline: closed-form pred = R_train / (1+ridge); we never
-    # materialise the n_genes × n_genes identity (would be ~6 GB on Pollen).
-    r_baseline = _fit_predict_score(np.empty((0, 0)), R_A, R_B, _onehot=True)
-    gene_geneformer = _fm_to_gene_features(geneformer, X, n_genes, n_cells)
-    r_fm = _fit_predict_score(gene_geneformer, R_A, R_B)
+    def build_response(ctx: str) -> np.ndarray:
+        """R[g, tf_idx] = mean(KD cells in ctx) - mean(CTRL cells in ctx)."""
+        ctl_mask = (ctx_arr == ctx) & (tf_arr == "__CTRL__")
+        ctl_mean = X[ctl_mask].mean(axis=0) if ctl_mask.any() else np.zeros(n_genes, dtype=np.float32)
+        R = np.zeros((n_genes, len(tfs)), dtype=np.float32)
+        for j, tf in enumerate(tfs):
+            kd_mask = (ctx_arr == ctx) & (tf_arr == tf)
+            if not kd_mask.any():
+                continue
+            R[:, j] = X[kd_mask].mean(axis=0) - ctl_mean
+        return R
 
-    extras: dict[str, Any] = {
-        "geneformer_cache_shape": list(geneformer.shape),
-        "geneformer_was_per_cell": bool(geneformer.shape[0] == n_cells),
-    }
-    if has_uce:
-        gene_uce = _fm_to_gene_features(uce, X, n_genes, n_cells)
-        feat_combined = np.concatenate([gene_geneformer, gene_uce], axis=1)
-        extras["transfer_r_fm_geneformer_plus_uce"] = _fit_predict_score(
-            feat_combined, R_A, R_B
-        )
-        extras["uce_cache_shape"] = list(uce.shape)
-    if has_scgpt:
-        gene_scgpt = _fm_to_gene_features(scgpt, X, n_genes, n_cells)
-        extras["transfer_r_fm_scgpt"] = _fit_predict_score(gene_scgpt, R_A, R_B)
-        extras["scgpt_cache_shape"] = list(scgpt.shape)
-        # Combined Geneformer + scGPT + UCE if all present
-        if has_uce:
-            feat_all = np.concatenate(
-                [gene_geneformer, gene_scgpt, _fm_to_gene_features(uce, X, n_genes, n_cells)],
-                axis=1,
-            )
-            extras["transfer_r_fm_all"] = _fit_predict_score(feat_all, R_A, R_B)
+    R_A = build_response(ctx_a)
+    R_B = build_response(ctx_b)
+    mask_a = ctx_arr == ctx_a
+    mask_b = ctx_arr == ctx_b
+    X_A = X[mask_a]
+    X_B = X[mask_b]
+
+    # Expression-weighted gene features from cell-level embeddings.
+    # Per-gene weighted-sum: emb_gene[g, d] = Σ_c X[c,g] * emb[c, d]; normalised by Σ_c X[c,g]
+    def project_to_gene(emb_cells: np.ndarray, ctx_mask: np.ndarray) -> np.ndarray:
+        weights = X[ctx_mask]                # (n_ctx_cells, n_genes)
+        emb = emb_cells[ctx_mask]            # (n_ctx_cells, d)
+        wt_sum = weights.sum(axis=0) + 1e-8  # (n_genes,)
+        return (weights.T @ emb) / wt_sum[:, None]  # (n_genes, d)
+
+    gf_A = project_to_gene(geneformer, mask_a)
+    # Use only ctx-A-derived features (causally honest: never peek at B)
+
+    # Non-square _fit_score for (n_genes, n_perturbations) targets — the stub
+    # version assumes R_true is square (n_genes × n_genes "gene-as-perturbation")
+    # which doesn't match real CRISPRi screens. Same ridge regression, correct
+    # broadcasts for (n_genes, n_pert) layout.
+    def fit_score(features: np.ndarray, X_train: np.ndarray, X_test: np.ndarray,
+                  R_train: np.ndarray, R_test: np.ndarray, ridge: float = 1.0) -> float:
+        cm_train = X_train.mean(axis=0)            # (n_genes,)
+        cm_test = X_test.mean(axis=0)
+        denom = np.where(np.abs(cm_train) < 1e-3, 1e-3, cm_train)[:, None]  # (n_genes, 1)
+        target = R_train / denom                   # (n_genes, n_pert)
+        A = features                               # (n_genes, dim)
+        AtA = A.T @ A + ridge * np.eye(A.shape[1], dtype=np.float32)
+        coef = np.linalg.solve(AtA, A.T @ target)  # (dim, n_pert)
+        pred = (features @ coef) * cm_test[:, None]  # (n_genes, n_pert)
+        if pred.std() < 1e-8:
+            return 0.0
+        return float(np.corrcoef(pred.ravel(), R_test.ravel())[0, 1])
+
+    # Baselines: train predictor on context A, test on context B
+    one_hot = np.eye(n_genes, dtype=np.float32)
+    r_baseline = fit_score(one_hot, X_A, X_B, R_A, R_B)
+    r_fm = fit_score(gf_A, X_A, X_B, R_A, R_B)
+    delta = r_fm - r_baseline
+
+    # Also report in-domain (A→A) numbers as a sanity check
+    r_baseline_in = fit_score(one_hot, X_A, X_A, R_A, R_A)
+    r_fm_in = fit_score(gf_A, X_A, X_A, R_A, R_A)
 
     return {
         "mode": "real",
         "h5ad": str(h5ad_path),
         "cache_dir": str(cache_dir),
-        "context_col": context_col,
-        "context_a": str(ctx_a),
-        "context_b": str(ctx_b),
-        "n_genes": int(n_genes),
-        "n_cells_a": int(mask_a.sum()),
-        "n_cells_b": int(mask_b.sum()),
-        "n_controls": int(control_mask.sum()),
-        "tfs_evaluated": tfs_common,
-        "n_tfs_evaluated": len(tfs_common),
+        "context_col": ctx_col,
+        "context_train": ctx_a,
+        "context_test": ctx_b,
+        "tf_col": tf_col,
+        "n_single_tf_perturbations": len(tfs),
+        "perturbations": tfs,
+        "n_cells_train": int(mask_a.sum()),
+        "n_cells_test": int(mask_b.sum()),
         "transfer_r_baseline": r_baseline,
         "transfer_r_fm": r_fm,
-        "delta": r_fm - r_baseline,
-        **extras,
+        "delta": delta,
+        "in_domain_r_baseline_A": r_baseline_in,
+        "in_domain_r_fm_A": r_fm_in,
+        "fm_features_source": "geneformer cls-mode cell embeddings, expression-weighted-averaged to per-gene",
         "note": (
-            f"Real-mode on {h5ad_path.name} ({n_genes} genes, "
-            f"{mask_a.sum()}+{mask_b.sum()} cells across {ctx_a}/{ctx_b}). "
-            f"R_train computed on context {ctx_a}, R_test on {ctx_b}. "
-            f"Lab 3 baseline anchor: transfer-r ≈ 0.13 — delta should be read against that."
+            "Fidelity-triple transfer-r — train predictor on cross-condition response in context A, "
+            "test on context B. Compare baseline (gene one-hot features) vs FM (Geneformer-derived "
+            "per-gene features). Lab 3 published baseline ≈ 0.13."
         ),
     }
 
@@ -392,37 +315,24 @@ def _measure_real(h5ad_path: Path, cache_dir: Path,
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     p.add_argument("--mode", choices=["stub", "real", "auto"], default="auto")
-    p.add_argument("--h5ad", default=None, help="path to .h5ad with context + perturbation labels")
+    p.add_argument("--h5ad", default=None, help="path to .h5ad with context + perturbed_tf labels")
     p.add_argument("--cache", default=None, help="Tier-3 cache directory with FM .npy")
-    p.add_argument("--context-col", default="timepoint", help="obs column for cross-context split")
-    p.add_argument("--perturb-col", default="Gene_target_single", help="obs column for per-cell TF KD label")
-    p.add_argument("--perturb-status-col", default="perturbation", help="obs column for control flag (set empty to skip)")
-    p.add_argument("--control-label", default="NT", help="value in --perturb-status-col indicating controls")
-    p.add_argument("--na-label", default="NA", help="value in --perturb-col indicating no target (fallback control)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--output", default="figures/lab3_real_results")
     args = p.parse_args(argv)
-
-    real_kwargs = dict(
-        context_col=args.context_col,
-        perturb_col=args.perturb_col,
-        perturb_status_col=args.perturb_status_col or None,
-        control_label=args.control_label or None,
-        na_label=args.na_label,
-    )
 
     used_mode = args.mode
     if args.mode == "real":
         if args.h5ad is None or args.cache is None:
             print("error: --mode real requires --h5ad and --cache", file=sys.stderr)
             return 2
-        result = _measure_real(Path(args.h5ad), Path(args.cache), **real_kwargs)
+        result = _measure_real(Path(args.h5ad), Path(args.cache))
     elif args.mode == "stub":
         result = _measure_stub(seed=args.seed)
     else:  # auto
         if args.h5ad is not None and args.cache is not None:
             try:
-                result = _measure_real(Path(args.h5ad), Path(args.cache), **real_kwargs)
+                result = _measure_real(Path(args.h5ad), Path(args.cache))
                 used_mode = "real"
             except (FileNotFoundError, NotImplementedError, ValueError) as e:
                 warnings.warn(f"falling back to stub mode: {e}")
