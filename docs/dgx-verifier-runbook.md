@@ -43,30 +43,44 @@ output) are *blocked*, not *partially-validated by stub*.
 
 **Tier 2** (VCell + OpenCOR): not installed; the script's stubs are correctly skip-gracefully. Lower priority per runbook's "if time-limited" order.
 
-**Tier 3**: 4/6 backends validated end-to-end on `data/pollen_slice_geneformer.h5ad` (18,082 cells, 37,344 mapped genes; built by `scripts/annotate_h5ad_for_geneformer.py` from `data/pollen_slice.h5ad` + GENCODE v47) and `data/pollen_edges.csv` (32,000 edges, 44 TFs × 1,963 unique targets from `data/pollen/processed/incidence.npy`):
+**Tier 3**: ✅ all 5 extractable backends validated end-to-end on `data/pollen_slice_geneformer.h5ad` (18,082 cells, 37,344 mapped genes) and `data/pollen_edges.csv` (32,000 edges, 44 TFs × 1,963 unique targets from `data/pollen/processed/incidence.npy`):
 
 | backend | shape | mode | wall-clock | cache |
 |---|---|---|---|---|
 | Geneformer (V2-104M) | (18082, 1152) | real | ~51 min | `cache/real_run/pollen_slice_geneformer_geneformer.npy` |
 | scGPT (perturblab/scgpt-human) | (18082, 512) | real | ~67 s | `…_scgpt.npy` |
 | Motif (JASPAR2024 + PSSM scan) | (32000,) — 27,508 scored | real | ~30 s | `…_motif.npy` |
+| Motif (full 120k candidate set) | (120516,) — 97,127 scored | real | ~2 min | `…_full_motif.npy` |
 | UCE (4-layer) | (18082, 1280) | real | ~5 min | `…_uce.npy` |
-| **Evo** (1-131k-base, 7B) | full 32k-edge run **in flight** (37.5% at 3h37m, ~6h remaining; ~1.1 s/edge) | real | ETA: another ~6 h | (pending) |
-| **Borzoi** (johahi/borzoi-replicate-0) | marginal-promoter-activity impl committed in `fcba1f8`; smoke test queued after evo finishes the GPU | real | TBD | (pending) |
+| Evo (1-131k-base, 7B) | (32000,) — 27,508 scored, mean LL -1.40 | real | ~9 h on GB10 | `pollen_edges_evo.npy` |
+| **Borzoi** (johahi/borzoi-replicate-0) | smoke test on 100 edges — only **3 unique values** (one per unique target due to caching); A-padded short promoters are non-informative for the marginal-track methodology | real | n/a meaningful | `cache/borzoi_smoke/edges_100_borzoi.npy` |
+| **fm_perturb_scgpt** | **structurally blocked** — perturblab/scgpt-human is the embedder, no `in_silico_kd` API | — | — | replaced by measured-CRISPRi path (see Lab 6 below) |
 
-The four committed extractors are mirrored to **NFS at `/data/mhough/cache/anatomical-compiler/real_run/`** so any host that mounts the NAS can consume them. SHA-256-fingerprinted manifest in `figures/dgx_real_run_2026-05-15.json`.
+Caches mirrored to **NFS at `/data/mhough/cache/anatomical-compiler/real_run/`**. SHA-256-fingerprinted manifest in `figures/dgx_real_run_2026-05-15.json`.
 
-Several script bugs in the original `_real_*` placeholders had to be fixed against the actual installed packages — full details in commits `49ff800`, `7b4d5d2`, `fcba1f8`. Summary: scGPT writes embeddings to `out.X` not `out.obsm`; biopython's "minimal" MEME parser captures only the accession (gene symbol parsed separately); PWM has no `.calculate()` (it's on PSSM); UCE's eval_single_anndata.py concatenates `args.dir + name` without a separator and needs `weights_only=False` patches across all `torch.load` calls. UCE also requires manual figshare-fetched model files in `/data/mhough/refs/uce/model_files/` (bind-mounted at runtime); figshare's AWS WAF blocks programmatic downloads. Evo's `Evo.score()` API was aspirational — actual API is `evo_obj.model(input_ids) → (logits, _)` with manual log-likelihood compute. Borzoi takes 524 kb input sequences (vs our 2 kb promoters), so the committed implementation is "marginal track activity over A-padded promoter" — biologically weaker than the masked-vs-unmasked Δ in the original docstring but exercises the real API.
+Script bugs the original `_real_*` placeholders had — fixed in commits `49ff800`, `7b4d5d2`, `fcba1f8`, `228daae`, `cab9655`. Detailed in the commit messages; the patterns: aspirational API calls (`Evo.score`, `scgpt.in_silico_kd`, `scgpt.embed_cells`, `uce.embed`), MEME format / parser mismatch (PWM vs PSSM, "MEME" XML vs "minimal" text), UCE figshare-WAF + path-concatenation bugs, transformers-numpy<2 vs Geneformer-numpy>=2 conflict, tellurium-2.2.7 `import imp` on Py 3.12, apex.amp dropped by NGC, libcombine swig + cmake-4 policy. All resolved.
 
-**Tier 4**: **starting now** with what's already validated.
-- **Lab 3** (fidelity-triple transfer-r with Geneformer + UCE priors) — CPU-bound, doesn't compete with Evo's GPU run. Starting first.
-- **Lab 4** (MII gap with sequence-edge priors blended) — motif-only pass now; rerun with evo when its full run finishes.
-- **Edge-prior ablation real-mode** (`ablate_edge_priors.py` consuming the motif cache) — runs after Lab 3.
-- **Lab 6** (in-silico KD TF agreement) — deferred until `scripts/fm_perturb_scgpt.py` is run (separate extractor not yet exercised; needs a TFs.txt input).
+**Tier 4**: ✅ 4/4 measurements landed (3 nulls + 1 modest positive — exactly the CURE-Validation real-data discipline applied):
 
-Push cadence: per-measurement commit with `figures/lab{3,4,6}_real_results.{json,md}` updated, following the runbook §Tier 4e pattern.
+| Measurement | Real-data result | Source commit |
+|---|---|---|
+| Lab 3 (fidelity-triple transfer-r) | **Δ = −0.131** (FM features worse than gene one-hot); parallel-validated across two independent methodologies (DGX + laptop) — both give identical Δ to 3 decimals | DGX `30eb0fe` + laptop `b25d967` |
+| Lab 4 (MII gap, 3 systems, motif+evo) | **Δ = +0.025** at best α=0.2 (motif-only was +0.013; evo nearly doubles the lift by raising bioprinted_kidney MII rather than depressing brain_organoid). 3 systems: bioprinted_kidney + brain_organoid + fetal_kidney_ref | laptop `b25d967`/`cca4269` (laptop has the kidney h5ads; DGX has only the brain ones) |
+| Lab 6 (controllability vs measured KD) | **Spearman ρ = +0.024, top-10 Jaccard = 0.111** — controllability ranking and the measured CRISPRi ranking are essentially uncorrelated. The wet-lab BO loop the project's after is exactly this disagreement signal | laptop `94ba4cd` — measured-CRISPRi path, unblocks the scGPT-perturbation structural blocker |
+| Edge-prior ablation (real-mode) | **Δ = +0.000** (motif doesn't lift F1 over Pando-derived truth — the truth IS Pando-derived, so the comparison is auto-correlated; needs an independent ChIP-seq-derived truth for the genuine motif-lift test) | DGX `cab9655` |
 
-**Tier 5**: not started. After Tier 4.
+**Cross-cutting findings:**
+- 3 of 4 measurements are real-data nulls. The synthetic ablations' optimistic signals don't transfer.
+- Lab 6's ρ ≈ 0 is the most striking signal: the linear-controllability LTI surrogate and the actual CRISPRi ground truth disagree completely — that's the BO-acquisition signal `ablate_perturb_eig` quantified in stub mode.
+- Lab 4's motif+evo +0.025 is the only positive real-data lift — Evo's per-edge log-likelihood adds signal beyond motif PSSM, specifically by raising the bioprinted kidney's MII.
+
+**Outstanding / deferred:**
+- Borzoi proper Δ-track scoring (needs chromosomal-context infrastructure + 2 forward passes per edge; the committed marginal-track scoring is real-but-non-informative on 2 kb A-padded promoters).
+- scGPT perturbation-fine-tuned checkpoint (`scgpt-norman` or `scgpt-replogle`) — would unblock Lab 6's FM-mediated framing; the measured-CRISPRi path is canonical for now.
+- Edge-prior ablation with independent (ChIP-seq) ground truth — would actually test the motif-lift hypothesis.
+- Lab 3 with `emb_mode='gene'` Geneformer (the cls-mode used here is the wrong granularity for per-gene prediction; cleaner re-run would take ~50 min GPU).
+
+**Tier 5**: not started. Tier 4 nulls are the project's actual headline; Tier 5 augmentations are credibility reinforcement on top of established findings.
 
 ---
 
