@@ -1,0 +1,14 @@
+{
+  "model": "borzoi",
+  "mode": "real",
+  "scale": "delta-track-prediction",
+  "n_edges": 100,
+  "n_promoters_provided": 78724,
+  "citation": "Linder, Kelley et al. 2025 (Google + Kundaje, Stanford)",
+  "checkpoint": "johahi/borzoi-replicate-0",
+  "dgx_estimated_gb": 16,
+  "seed": 0,
+  "fm_edges_seq_version": "0.1.0",
+  "edges_path": "/host_tmp/edges_100.csv",
+  "promoters_path": "/data/mhough/refs/promoters_hg38_2kb.fa"
+}

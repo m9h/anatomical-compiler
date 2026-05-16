@@ -1,17 +1,67 @@
 {
-  "cache_dir_local": "/home/mhough/dev/anatomical-compiler/cache/real_run",
+  "cache_dirs_local": {
+    "cache/real_run": "/home/mhough/dev/anatomical-compiler/cache/real_run",
+    "cache/borzoi_smoke": "/home/mhough/dev/anatomical-compiler/cache/borzoi_smoke"
+  },
   "cache_dir_nfs": "/data/mhough/cache/anatomical-compiler/real_run",
   "date": "2026-05-15",
   "host": "gx10-dgx-spark",
   "inputs": {
     "h5ad": "data/pollen_slice_geneformer.h5ad",
-    "edges_csv": "data/pollen_edges.csv (32000 edges, 44 TFs \u00d7 1963 unique targets, from data/pollen/processed/incidence.npy)",
-    "promoters_fa": "/data/mhough/refs/promoters_hg38_2kb.fa (78,724 records, 2kb upstream of TSS, GENCODE v47 + hg38)",
-    "jaspar_meme": "/data/mhough/refs/jaspar/JASPAR2024_CORE_vertebrates_non-redundant.meme (2346 motifs)",
-    "fm_image": "anatomical-compiler/fm:26.04 (built from Dockerfile.fm)"
+    "edges_truth_only": "data/pollen_edges.csv (32000 truth edges)",
+    "edges_full": "data/pollen_edges_full.csv (120516 candidates with truth label)",
+    "promoters_fa": "/data/mhough/refs/promoters_hg38_2kb.fa",
+    "jaspar_meme": "/data/mhough/refs/jaspar/JASPAR2024_CORE_vertebrates_non-redundant.meme",
+    "uce_model_files": "/data/mhough/refs/uce/model_files/",
+    "fm_image": "anatomical-compiler/fm:26.04"
   },
   "artifacts": [
     {
+      "cache": "cache/real_run",
+      "path": "pollen_edges_evo.npy",
+      "bytes": 128128,
+      "sha256_16": "c431cfb73a89f6b3",
+      "shape": [
+        32000
+      ],
+      "dtype": "float32",
+      "n_finite": 27508,
+      "n_total": 32000,
+      "mean": -1.3975586891174316,
+      "std": 0.17914056777954102
+    },
+    {
+      "cache": "cache/real_run",
+      "path": "pollen_edges_evo_manifest.json",
+      "bytes": 426,
+      "sha256_16": "14a0b1fc3ff33fd0",
+      "mode": "real",
+      "model": "evo"
+    },
+    {
+      "cache": "cache/real_run",
+      "path": "pollen_edges_full_motif.npy",
+      "bytes": 482192,
+      "sha256_16": "9a61d1fd9d051b23",
+      "shape": [
+        120516
+      ],
+      "dtype": "float32",
+      "n_finite": 97127,
+      "n_total": 120516,
+      "mean": 7.909305572509766,
+      "std": 4.207494258880615
+    },
+    {
+      "cache": "cache/real_run",
+      "path": "pollen_edges_full_motif_manifest.json",
+      "bytes": 447,
+      "sha256_16": "327863d5248767db",
+      "mode": "real",
+      "model": "motif"
+    },
+    {
+      "cache": "cache/real_run",
       "path": "pollen_edges_motif.npy",
       "bytes": 128128,
       "sha256_16": "d8d77bc0653e7d1b",
@@ -25,6 +75,7 @@
       "std": 4.223451137542725
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_edges_motif_manifest.json",
       "bytes": 441,
       "sha256_16": "36afbb509eeecefe",
@@ -32,6 +83,7 @@
       "model": "motif"
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_slice_geneformer_geneformer.npy",
       "bytes": 83321984,
       "sha256_16": "f267cca8ef2bcae5",
@@ -46,6 +98,7 @@
       "std": 0.3067445755004883
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_slice_geneformer_geneformer_manifest.json",
       "bytes": 326,
       "sha256_16": "b7c3dcc2d3eda943",
@@ -53,6 +106,7 @@
       "model": "geneformer"
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_slice_geneformer_scgpt.npy",
       "bytes": 37032064,
       "sha256_16": "6d5fea935104581a",
@@ -67,6 +121,7 @@
       "std": 0.044188909232616425
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_slice_geneformer_scgpt_manifest.json",
       "bytes": 323,
       "sha256_16": "c44d27dffba792d2",
@@ -74,6 +129,7 @@
       "model": "scgpt"
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_slice_geneformer_uce.npy",
       "bytes": 92579968,
       "sha256_16": "63d4f5fe0c307201",
@@ -88,11 +144,34 @@
       "std": 0.027942320331931114
     },
     {
+      "cache": "cache/real_run",
       "path": "pollen_slice_geneformer_uce_manifest.json",
       "bytes": 303,
       "sha256_16": "7d1ac11c4ab21fe7",
       "mode": "real",
       "model": "uce"
+    },
+    {
+      "cache": "cache/borzoi_smoke",
+      "path": "edges_100_borzoi.npy",
+      "bytes": 528,
+      "sha256_16": "e61a87b18e4efd96",
+      "shape": [
+        100
+      ],
+      "dtype": "float32",
+      "n_finite": 100,
+      "n_total": 100,
+      "mean": 0.04263836890459061,
+      "std": 0.00217719585634768
+    },
+    {
+      "cache": "cache/borzoi_smoke",
+      "path": "edges_100_borzoi_manifest.json",
+      "bytes": 427,
+      "sha256_16": "c60a53944e76eee7",
+      "mode": "real",
+      "model": "borzoi"
     }
   ]
 }

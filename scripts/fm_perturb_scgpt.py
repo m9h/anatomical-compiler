@@ -174,24 +174,40 @@ def _stub_response(
 
 
 def _real_response(adata, tfs: list[str], seed: int, **kwargs) -> np.ndarray:
-    """scGPT in-silico KD. Lazy-imports `scgpt`; raises if missing."""
-    try:
-        import scgpt  # type: ignore
-    except ImportError as e:
-        raise RuntimeError(
-            "fm_perturb_scgpt real-mode requires the `scgpt` package "
-            "(https://github.com/bowang-lab/scGPT). Fall back to --mode stub for "
-            "tutorial use; install scgpt + checkpoint on DGX Spark per "
-            "docs/dgx-spark-setup.md for real-mode."
-        ) from e
-    n_genes = adata.shape[1]
-    response = np.zeros((len(tfs), n_genes), dtype=np.float32)
-    for i, tf in enumerate(tfs):
-        # The real scGPT KD API returns per-cell deltas; we average to per-TF.
-        # Concrete call shape is pinned to the model card at run time.
-        delta = scgpt.in_silico_kd(adata, tf)  # type: ignore[attr-defined]
-        response[i] = np.asarray(delta).mean(axis=0).astype(np.float32)
-    return response
+    """scGPT in-silico KD — STRUCTURALLY BLOCKED on perturblab/scgpt-human.
+
+    The general scGPT cell-embedding model (`perturblab/scgpt-human`, the
+    checkpoint we have) does NOT expose a perturbation-prediction API.
+    `scgpt.tasks` contains only {GeneEmbedding, cell_emb, embed_data,
+    get_batch_cell_embeddings, grn} — no `in_silico_kd`, no `predict_perturbation`.
+
+    For Lab 6 (in-silico KD TF-agreement against the controllability ranking)
+    we would need ONE of:
+
+    (1) A scGPT *perturbation* fine-tune (e.g. scgpt-norman / scgpt-replogle),
+        trained on a Perturb-seq dataset. Available as separate HF checkpoints
+        in some forks but not in `perturblab/scgpt-human`. The bowang-lab/scGPT
+        repo's `tutorials/Tutorial_Perturbation.ipynb` walks through training
+        one; that's hours of compute and a separate cache directory.
+
+    (2) An alternative in-silico KD model — e.g. CellOT, scFoundation,
+        Pertrnet — exposing a per-TF response function on the same h5ad.
+        Adds a new dependency to Dockerfile.fm.
+
+    (3) A manual implementation: ablate the TF gene's token in the input,
+        forward through scGPT, compute Δ-cell-embedding, and project back to
+        gene space via the gene_emb head. Requires reaching into scGPT's
+        internals; non-trivial.
+
+    Until one of those lands, Lab 6 stays blocked (per CURE-Validation
+    principle, no stub-mode substitute).
+    """
+    raise RuntimeError(
+        "fm_perturb_scgpt real-mode is structurally blocked: the installed "
+        "scgpt-human checkpoint has no in_silico_kd / predict_perturbation API. "
+        "See TODO in scripts/fm_perturb_scgpt.py:_real_response for the three "
+        "unblock paths. Lab 6 of docs/dgx-verifier-runbook.md is blocked on this."
+    )
 
 
 # ----------------------------------------------------------------------------
