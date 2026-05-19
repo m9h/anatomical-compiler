@@ -144,7 +144,7 @@ logs/
 
 ## 5. Consuming the cache from notebooks
 
-[`notebooks/11_foundation_model_pipeline.ipynb`](../notebooks/11_foundation_model_pipeline.ipynb) loads `extract()` in-process by default for tutorial use. To consume a real-mode cache directory instead, replace the relevant cells with:
+Downstream labs / scripts consume a real-mode cache directory by loading the cached numpy arrays directly:
 
 ```python
 emb_uce        = np.load("cache/dgx_real_pollen/pollen_uce.npy")
@@ -152,7 +152,7 @@ emb_geneformer = np.load("cache/dgx_real_pollen/pollen_geneformer.npy")
 edge_scores    = np.load("cache/dgx_real_pollen/fleck_edges_motif.npy")
 ```
 
-The downstream code (predictor fitting, ablation, plotting) is **unchanged** — that's the integration-contract point of [`docs/foundation-models.md`](foundation-models.md): one numpy array per step, stub or real.
+The downstream code (predictor fitting, ablation, plotting) is identical between stub and real modes — that's the integration-contract point of [`docs/foundation-models.md`](foundation-models.md): one numpy array per step, stub or real.
 
 ---
 
@@ -181,4 +181,4 @@ The honest test the project's been waiting on. Pick a target benchmark and re-ru
 | [`scripts/ablate_perturb_eig.py`](../scripts/ablate_perturb_eig.py) | swap stub for real scGPT KD on a real perturbation dataset | Spearman ρ recovery vs known perturbation responses (e.g. CHOOSE / Replogle perturb-seq) |
 | [`docs/wetlab-program.md`](wetlab-program.md) capstone cycle | use the EIG-rank ranking from step 4 to pick the synNotch / KO cycle TFs | resolved ranking vs the wet-lab readout |
 
-These are the **measurements** that will answer "do FMs make a difference on the *project's* numbers" with real evidence — the stub-mode results in [`notebooks/11_foundation_model_pipeline.ipynb`](../notebooks/11_foundation_model_pipeline.ipynb), [`figures/edge_prior_ablation.md`](../figures/edge_prior_ablation.md), and [`figures/perturb_eig_ablation.md`](../figures/perturb_eig_ablation.md) are floors / sensitivities, not predictions for the real benchmarks.
+These are the **measurements** that will answer "do FMs make a difference on the *project's* numbers" with real evidence — the stub-mode results in [`figures/edge_prior_ablation.md`](../figures/edge_prior_ablation.md) and [`figures/perturb_eig_ablation.md`](../figures/perturb_eig_ablation.md) are floors / sensitivities, not predictions for the real benchmarks.

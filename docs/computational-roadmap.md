@@ -17,7 +17,7 @@ The families below are the major *missing* ones. They aren't a critique of what'
 - **scRNA-seq foundation models.** **scGPT** (Cui et al. 2024, *Nat Methods*), **Geneformer** (Theodoris et al. 2023, *Nature*), **scFoundation** (Hao et al. 2024, *Nat Methods*), **CellPLM** (Wen et al. 2024), and — the most directly relevant — **Prophet** (Theis Lab; already a TODO in `ROADMAP.md` §3D). These are pretrained on 30–100 M cells; zero-shot perturbation prediction routinely beats task-specific models on the kind of benchmarks Lab 3 runs.
 - **Causal discovery on interventional CRISPRi data.** The project treats CRISPRi as a *prediction* target; it's natively *interventional* data and a much richer signal. Mature methods: **NOTEARS** (Zheng et al. 2018 — continuous-optimisation DAG learning, naturally JAX-friendly), **DAG-GFlowNets** (Deleu et al. 2022), **dCDI** (Brouillard et al. 2020 — differentiable causal discovery *from interventions*), **JCI** (Mooij et al. 2020). A causally-learned GRN sits next to Pando's associative one, and is plausibly what the *transfer* failures of Lab 3 are diagnostic of: associative regulons that don't generalise under interventions in a new context.
 
-**Where it slots.** A new `Lab 11 — Foundation models & causal inference for perturbation prediction`, or extending Lab 3 with a Prophet / scGPT / NOTEARS comparator track. Effort: ~weeks. Impact: would shift the headline number that gates every downstream lab.
+**Where it slots.** Extending Lab 3 with a Prophet / scGPT / NOTEARS comparator track on *real* held-out perturbations (a previous attempt at a dedicated Lab 11 stub-mode demonstration was retired — its synthetic held-out-gene benchmark conflated structure-aware features with the pretraining lift). Effort: ~weeks. Impact: would shift the headline number that gates every downstream lab.
 
 ---
 
@@ -50,7 +50,7 @@ The families below are the major *missing* ones. They aren't a critique of what'
 **Why:** Lab 9's synNotch design needs a **channel-capacity** analysis — how many bits/cell-cell-contact does a synNotch carry, how many bits/dose does a morphoceutical schedule carry. The project does no information theory currently, and it's a natural fit given the regulatory-circuit framing.
 
 - **Mutual-information GRN inference.** **ARACNe** (Margolin et al. 2006), **PIDC** (Chan et al. 2017 — partial information decomposition), **MIIC** (Verny et al. 2017). Non-parametric, complementary to Pando's GLM.
-- **Information bottleneck** (Tishby–Pereira–Bialek 1999; Alemi et al. 2017 "Deep variational IB") for cell-state representation. The IB-optimal latent *is* the disentangled latent — links back to the [β-VAE / disentanglement discussion](../README.md#educational-track) on Lab 5.5.
+- **Information bottleneck** (Tishby–Pereira–Bialek 1999; Alemi et al. 2017 "Deep variational IB") for cell-state representation. The IB-optimal latent *is* a disentangled latent over cell state — a candidate interpretable coordinate system on top of Lab 5's Hypergraph Neural ODE.
 - **Channel capacity of synthetic circuits.** Concrete: bits/cell-cell-contact for a synNotch (Morsut/Toda receptors), bits/dose for a morphoceutical schedule (Murugan/Pio-Lopez), bits/Vₘₑₘ-level for a bioelectric prepattern. These are quantitative engineering specs that don't yet exist anywhere.
 - **Cheng et al. 2019** "Information flow in biological networks" — relate the Hodge spectrum and the GRN's information capacity directly. A bridge from Lab 4 to the synNotch / bioelectric layers.
 
@@ -91,7 +91,7 @@ The project uses VAEs / flows minimally. Mature alternatives:
 - **scVI / scANVI** (Lopez 2018; Xu 2021) — the canonical probabilistic VAE for single-cell. Mentioned in [the memo on three identifiabilities](../README.md) and the BETSE-JAX/ZILLNB discussion; would slot into Lab 8's SBI inverse if/when it's built.
 - **Diffusion / flow-matching models for perturbation prediction.** **CellOT** (Bunne et al. 2023), **scDiffEx**, **PerturbDiff** — predict the post-perturbation distribution from the pre-perturbation state via a learned diffusion bridge.
 - **Schiebinger 2019 "Waddington-OT" / CellFlow** — optimal-transport-based density estimation that scales to 100 k+ cells; modern revival is in **CellFlow** (Theis Lab; already a project TODO).
-- **Generative regulome design**: diffusion / score models *on regulome topology itself* — given a target circuit logic, sample plausible GRN graphs that implement it. A generative complement to the project's analysis-only posture, and a natural Lab 11+ direction.
+- **Generative regulome design**: diffusion / score models *on regulome topology itself* — given a target circuit logic, sample plausible GRN graphs that implement it. A generative complement to the project's analysis-only posture, and a natural post-Lab-10 direction.
 
 ---
 

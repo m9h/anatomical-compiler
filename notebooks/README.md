@@ -223,40 +223,6 @@ metrics → network control / the *anatomical compiler*) → **wet-lab synthetic
   `~/Workspace/betse-unified`.
 *(Not a course lab — a reproduction/benchmark artifact, living in `scripts/`:* **`scripts/organoid_hgx_colab.ipynb`** *— the GPU/Colab notebook that runs `hgx` on the Fleck et al. (2023) cerebral-organoid regulome end-to-end (preprocessing → the 7 publication figures → the 5 biological-validation checks → the hgx-vs-DHG speed/accuracy benchmark). The labs reference it where they touch the real pipeline; it's the "run the whole thing once on a GPU" companion to `scripts/run_all_real.py`.)*
 
-- **`05_5_disentangled_neural_ode.ipynb`** — **Lab 5.5** *(add-on, between Lab 5 and Lab 6)*: the DeepMind
-  face-patch analogue applied to cell-state. The question: does an unsupervised representation
-  learner recover axis-aligned, separable factors of variation in the regulome's latent space,
-  or does it entangle them across dimensions? Trains a vanilla AE and a β-VAE on the same
-  4-factor synthetic, computes per-(latent-dim, true-factor) |Pearson r| under Hungarian
-  permutation alignment, reports the disentanglement gap. β-VAE gives a *modest* gain on
-  the clean linear synthetic (≈+0.06 in the diag-vs-off-diag metric) — the lab is honest
-  about why (linear AEs settle into PCA-like bases from random init; β is a tiebreaker on
-  this regime, not a transformer). The big wins live on nonlinear / sparse-loading / high-dim
-  data — the exercises invite the student to find them. Architecturally: a β·KL term on
-  Lab 5's `hgx` Hypergraph Neural ODE latent would give an interpretable coordinate system
-  for Lab 6's controllability + Lab 8's anatomical compiler. Adds a **fourth identifiability**
-  to the project's diagnostic vocabulary (latent-level, distinct from structural / module /
-  practical — all three of which concern the *system*'s recoverability from data, where this
-  one concerns the *model*'s representation choice on top of it).
-
-- **`11_foundation_model_pipeline.ipynb`** — **Lab 11** *(add-on, post-Lab-10)*: foundation-model priors for
-  perturbation prediction. Operationalises [`docs/foundation-models.md`](../docs/foundation-models.md) — the
-  catalogue across UCSF (Geneformer, Gladstone), Stanford/CZI/Arc (UCE, Evo 2, Borzoi), Berkeley (scVI
-  lineage), Toronto/Vector (scGPT). The integration contract: **extract once via
-  [`scripts/fm_embed.py`](../scripts/fm_embed.py), cache as `.npy`, consume downstream as numpy arrays** —
-  no fine-tuning, the notebook code is unchanged between `--mode stub` and `--mode real`. Headline
-  demonstration: held-out-gene perturbation-response prediction, one-hot baseline (transfer-r = 0,
-  zero signal on unseen genes by construction) vs Geneformer-style co-expression-aware embedding
-  (transfer-r ≈ +1.0 on the synthetic; the *floor* of what real Geneformer adds, since the stub is a
-  structure-matched random projection lacking the 30 M-cell pretraining). Plus a UCE-stub property
-  check on the cell-level arm (1280-d cell embedding contains the latent factor structure;
-  cross-batch / sparsity / novel-cell-type robustness are properties of the pretrained checkpoint
-  the stub can't simulate — flagged honestly). Self-contained — synthetic 4-factor regulome, no
-  GPU, runs in seconds. Pipeline: [`scripts/fm_embed.py`](../scripts/fm_embed.py) (CLI subcommands
-  `uce` / `geneformer` / `scgpt`; modes `real` / `stub` / `auto` with informative fallback).
-  Companion docs: [`docs/foundation-models.md`](../docs/foundation-models.md),
-  [`docs/computational-roadmap.md`](../docs/computational-roadmap.md) §1.
-
 Companion worked examples live in the **`jaxctrl`** repo (the control-theory layer):
 [`examples/repressilator_control_demo.py`](https://github.com/m9h/jaxctrl/blob/main/examples/repressilator_control_demo.py)
 (quench a 3-gene oscillator: linearize → controllability → LQR → quench the nonlinear flow →
@@ -370,6 +336,14 @@ know the rest of it.
   differentiable solver behind it. The course's hooks: Lab 8's exercise (d) (the two-layer bioelectric→GRN
   compiler), Lab 9 §4 (bioelectric control) and §5 (biobots), Lab 10 §4 (the "normalise, don't kill"
   reframing — morphoceuticals). Refs 39a–39e in `REFERENCES.md`; the "manifesto" is Levin 2021 (Cell, ref 38).
+- **Formal courses on bioelectric / morphogenetic computation.** [**Tufts EE 123 — Computational
+  Bioelectricity**](https://www.ece.tufts.edu/ee/123) (Joel Grodstein) is the direct formal-course
+  companion to this track's bioelectric strand — EE / signal-processing-flavoured treatment of the
+  same Vmem / gap-junction / ion-channel dynamics BETSE-JAX makes differentiable. Pairs naturally with
+  Labs 9 §4 and 10 §4. The [**Levin Lab educational resources page**](https://drmichaellevin.org/resources/educational.html)
+  hosts the *three-layer* diagram (gene-regulatory networks · physical/mechanical forces · bioelectric
+  networks) and the *biological hardware/software* framing — the conceptual scaffold this course
+  inherits and that Lab 9 §1's "one control problem, four actuators" framing operationalises.
 - **Cellular-engineering research programmes** — the *wet-lab* communities this computational track
   is in dialogue with. The [**Center for Cellular Construction (CCC)**](https://centerforcellularconstruction.org)
   — an NSF Science and Technology Center headquartered at UCSF with the California Academy of Sciences

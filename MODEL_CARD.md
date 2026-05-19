@@ -69,7 +69,7 @@ The project's artifacts split into three classes:
 **Limitations.**
 - **The 0.13 transfer-r number is *the* exposed weakness** — it's why this project has a step-4 BO/EIG track at all.
 - **Cross-context generalisation is the hard problem** — same-context perturbation prediction is much easier (and not the published number).
-- The synthetic Lab 11 floor (one-hot 0.000 → Geneformer-stub +0.999) is *not* a prediction for real performance.
+- The FM-stub synthetic floor (one-hot 0.000 → Geneformer-stub +0.999, per `scripts/fm_embed.py`) is *not* a prediction for real performance; the held-out-gene baseline is mathematically forced to zero (no signal on unseen genes), so the lift measures "structure-aware feature beats one-hot" rather than "pretraining helps."
 
 **References.** Lab 3 notebook; `figures/{advanced_fidelity,system_maturity}_results.json`; [`docs/foundation-models.md`](docs/foundation-models.md); ref. 86 (CHOOSE).
 
@@ -118,8 +118,7 @@ The project's artifacts split into three classes:
 ## 6. Foundation-model prior caches — node + edge + perturbation priors
 
 **Substrate:** [`scripts/fm_embed.py`](scripts/fm_embed.py), [`scripts/fm_edges_seq.py`](scripts/fm_edges_seq.py), [`scripts/fm_perturb_scgpt.py`](scripts/fm_perturb_scgpt.py).
-**Lab:** [Lab 11 — `notebooks/11_foundation_model_pipeline.ipynb`](notebooks/11_foundation_model_pipeline.ipynb).
-**Doc:** [`docs/foundation-models.md`](docs/foundation-models.md), [`docs/dgx-spark-setup.md`](docs/dgx-spark-setup.md).
+**Doc:** [`docs/foundation-models.md`](docs/foundation-models.md), [`docs/dgx-spark-setup.md`](docs/dgx-spark-setup.md). *(Note: the former companion notebook `notebooks/11_foundation_model_pipeline.ipynb` has been retired — the synthetic held-out-gene benchmark conflated "structure-aware features" with "pretraining lift"; real-data evaluation per [`docs/dgx-spark-setup.md`](docs/dgx-spark-setup.md) is the appropriate measurement.)*
 
 **Intended use.** Three categories of zero-shot priors over the regulome:
 
@@ -132,7 +131,7 @@ Each tool ships in three modes — `real` (load HF checkpoint, GPU-required), `s
 **Source data.** Whatever h5ad / edges CSV / promoters FASTA / TFs list is passed. The DGX-Spark recipe is in [`docs/dgx-spark-setup.md`](docs/dgx-spark-setup.md).
 
 **Performance metrics.**
-- Stub-mode floor on the held-out-gene benchmark ([Lab 11](notebooks/11_foundation_model_pipeline.ipynb)): one-hot 0.000 → Geneformer-stub +0.999.
+- Stub-mode floor on a synthetic held-out-gene benchmark (`scripts/fm_embed.py`): one-hot 0.000 → Geneformer-stub +0.999. **Interpretation caveat**: the one-hot baseline is mathematically forced to zero on held-out genes, so the lift measures "any structure-aware feature beats no feature," not the pretraining contribution.
 - Stub-mode edge-prior ablation ([`figures/edge_prior_ablation.md`](figures/edge_prior_ablation.md)): Pando-alone F1=0.607 → combined at α=0.30 F1=0.716 (Δ=+0.109; +0.146 ± 0.032 across 5 seeds).
 - Stub-mode BO/EIG ablation ([`figures/perturb_eig_ablation.md`](figures/perturb_eig_ablation.md)): EIG-rank vs GREEDY-by-prior, Δ=+0.029 Spearman ρ at median budget in the realistic prior-quality regime.
 - **Real-mode numbers on actual Pollen / Biopunk data: not yet measured** — step 5 of the integration plan.
